@@ -12,3 +12,16 @@ python3 make_video.py --image illust.png --audio source.mov \
 - `--preview 1.5 10.0` で指定秒の静止画だけ書き出し
 - フォント: Dela Gothic One / Hachi Maru Pop（どちらも SIL OFL）
 - 音源・動画・フォントファイルはリポジトリに含めない
+
+## MV風バージョン (`make_mv.py`)
+
+カメラワーク（ズーム・パン・チルト）、レトロPC風ウィンドウ、ハート型の切り抜き、
+numpy 製の3Dオブジェクト（`render3d.py`）を使った、動きの多いバージョン。
+
+```
+python3 make_mv.py --image illust.png --audio source.mov \
+    --font-pop DelaGothicOne.ttf --font-cute HachiMaruPop.ttf --out mv.mp4
+```
+
+- シーン構成は `SCENES`（開始秒・終了秒・描画関数・入りのトランジション）
+- 3Dスプライトは初回にレンダリングして `--cache` のフォルダに保存する

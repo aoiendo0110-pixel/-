@@ -2,3 +2,6 @@
 *.mov
 *.ttf
 preview_*.png
+cache3d/
+__pycache__/
+mv_*.png
