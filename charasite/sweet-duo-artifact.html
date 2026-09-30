@@ -1,0 +1,778 @@
+<title>Sweet Duo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --pink: #ff8fb8;
+  --pink-deep: #f0609a;
+  --pink-pale: #ffe4ef;
+  --pink-milk: #fff5f9;
+  --cream: #fffaf3;
+  --choco: #7a4a52;
+  --text: #6b3f4b;
+  --sub: #b07a8b;
+  --lavender: #d9c2ff;
+  --mint: #bfeee0;
+  --radius: 28px;
+  --shadow: 0 10px 30px rgba(240, 96, 154, .18);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif;
+  color: var(--text);
+  line-height: 1.8;
+  background-color: var(--pink-milk);
+  background-image:
+    radial-gradient(circle, #ffd3e4 2px, transparent 2.5px),
+    radial-gradient(circle, #ffe9f2 2px, transparent 2.5px);
+  background-size: 28px 28px;
+  background-position: 0 0, 14px 14px;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+
+/* ---------- ヘッダー ---------- */
+.site-header {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
+  background: rgba(255, 245, 249, .88);
+  backdrop-filter: blur(8px);
+  border-bottom: 3px dotted var(--pink);
+}
+.site-header .inner {
+  max-width: 1080px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 16px;
+}
+.logo {
+  font-family: "Mochiy Pop One", sans-serif;
+  font-size: 1.35rem; color: var(--pink-deep);
+  text-decoration: none; letter-spacing: .04em;
+  text-shadow: 2px 2px 0 #fff;
+  white-space: nowrap;
+}
+.logo span { color: var(--choco); }
+.nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.nav a {
+  text-decoration: none; font-weight: 700; font-size: .9rem;
+  padding: 6px 14px; border-radius: 999px;
+  background: #fff; border: 2px solid var(--pink-pale);
+  transition: .2s;
+}
+.nav a:hover, .nav a[aria-current="page"] {
+  background: var(--pink); color: #fff; border-color: var(--pink);
+}
+
+/* ---------- 共通 ---------- */
+main { max-width: 1080px; margin: 0 auto; padding: 0 16px 80px; }
+section { margin-top: 72px; }
+.section-title {
+  text-align: center;
+  font-family: "Mochiy Pop One", sans-serif;
+  color: var(--pink-deep);
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  margin: 0 0 8px;
+}
+.section-title::before, .section-title::after { content: "♡"; margin: 0 .5em; color: var(--pink); font-size: .8em; }
+.section-sub { text-align: center; color: var(--sub); margin: 0 0 32px; letter-spacing: .2em; font-size: .85rem; }
+
+.frill-card {
+  position: relative;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px;
+}
+.frill-card::before {
+  content: ""; position: absolute; inset: 8px;
+  border: 2px dashed var(--pink-pale); border-radius: calc(var(--radius) - 8px);
+  pointer-events: none;
+}
+
+.btn {
+  display: inline-block; text-decoration: none; font-weight: 700;
+  padding: 12px 30px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--pink), var(--pink-deep));
+  color: #fff; box-shadow: 0 6px 0 #d94a86, var(--shadow);
+  transition: transform .15s, box-shadow .15s;
+}
+.btn:hover { transform: translateY(3px); box-shadow: 0 3px 0 #d94a86, var(--shadow); }
+.btn.ghost { background: #fff; color: var(--pink-deep); box-shadow: 0 6px 0 var(--pink-pale), var(--shadow); }
+
+/* ---------- ホーム：ヒーロー ---------- */
+.hero {
+  position: relative; text-align: center;
+  padding: 64px 16px 110px;
+  background: linear-gradient(180deg, #ffd6e7 0%, #ffeaf3 60%, var(--pink-milk) 100%);
+  overflow: hidden;
+}
+.hero::after { /* 下のスカラップ */
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 36px;
+  background: radial-gradient(circle at 18px 0, transparent 17px, var(--pink-milk) 18px) repeat-x;
+  background-size: 36px 36px;
+}
+.hero-kicker { letter-spacing: .35em; color: var(--pink-deep); font-weight: 700; font-size: .85rem; margin: 0; }
+.hero h1 {
+  font-family: "Mochiy Pop One", sans-serif;
+  font-size: clamp(2.2rem, 8vw, 4.4rem);
+  line-height: 1.25; margin: 12px 0 8px;
+  color: #fff;
+  text-shadow: 3px 3px 0 var(--pink-deep), -2px -2px 0 var(--pink-deep), 2px -2px 0 var(--pink-deep), -2px 2px 0 var(--pink-deep), 0 10px 24px rgba(240,96,154,.35);
+}
+.hero-lead { margin: 0 auto 28px; max-width: 520px; }
+.hero-duo {
+  display: flex; justify-content: center; align-items: flex-end; gap: clamp(8px, 4vw, 40px);
+  margin: 12px auto 28px;
+}
+.hero-duo img { width: min(38vw, 230px); filter: drop-shadow(0 12px 18px rgba(240,96,154,.25)); animation: bob 3.2s ease-in-out infinite; }
+.hero-duo img:last-child { animation-delay: -1.6s; }
+.hero-heart { font-size: clamp(1.8rem, 6vw, 3rem); color: var(--pink-deep); align-self: center; animation: beat 1.2s ease-in-out infinite; }
+.hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+@keyframes bob { 50% { transform: translateY(-10px) rotate(-1.5deg); } }
+@keyframes beat { 0%,100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+
+/* ---------- ホーム：キャラカード ---------- */
+.chara-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; }
+.chara-card {
+  text-decoration: none; display: flex; flex-direction: column; align-items: center; text-align: center;
+  transition: transform .25s;
+}
+.chara-card:hover { transform: translateY(-6px) rotate(-.6deg); }
+.chara-card .thumb {
+  width: 100%; aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center; margin-bottom: 16px;
+  background: var(--card-bg, var(--pink-pale));
+}
+.chara-card .thumb img { width: 78%; }
+.chara-card .name { font-family: "Mochiy Pop One", sans-serif; font-size: 1.6rem; color: var(--card-accent, var(--pink-deep)); margin: 0; }
+.chara-card .ruby { font-size: .8rem; letter-spacing: .25em; color: var(--sub); margin: 0 0 8px; }
+.chara-card .catch { margin: 0 0 16px; }
+.more { font-weight: 700; color: var(--card-accent, var(--pink-deep)); }
+
+/* ---------- ホーム：About / News ---------- */
+.about { display: grid; grid-template-columns: 1fr; gap: 12px; text-align: center; }
+.news-list { list-style: none; margin: 0; padding: 0; }
+.news-list li { display: flex; gap: 16px; padding: 12px 4px; border-bottom: 2px dotted var(--pink-pale); flex-wrap: wrap; }
+.news-list time { color: var(--pink-deep); font-weight: 700; min-width: 7em; }
+
+/* ---------- キャラページ ---------- */
+.profile-hero {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; align-items: center;
+  margin-top: 40px;
+}
+.profile-visual {
+  position: relative; border-radius: 40% 40% var(--radius) var(--radius);
+  background: var(--card-bg, var(--pink-pale)); padding: 24px;
+  box-shadow: var(--shadow);
+}
+.profile-visual img { width: 100%; animation: bob 3.4s ease-in-out infinite; }
+.profile-visual .badge {
+  position: absolute; top: 16px; left: 16px;
+  background: #fff; color: var(--card-accent); font-weight: 700; font-size: .8rem;
+  padding: 4px 14px; border-radius: 999px; box-shadow: var(--shadow);
+}
+.profile-name { font-family: "Mochiy Pop One", sans-serif; font-size: clamp(2rem, 6vw, 3.2rem); color: var(--card-accent); margin: 0; line-height: 1.3; }
+.profile-ruby { letter-spacing: .3em; color: var(--sub); margin: 0 0 12px; font-size: .9rem; }
+.profile-catch {
+  display: inline-block; background: var(--card-accent); color: #fff; font-weight: 700;
+  padding: 6px 18px; border-radius: 999px 999px 999px 6px; margin-bottom: 16px;
+}
+.quote {
+  font-size: 1.05rem; background: #fff; border-radius: 22px; padding: 16px 20px; position: relative;
+  box-shadow: var(--shadow);
+}
+.quote::before { content: "“"; position: absolute; top: -18px; left: 14px; font-size: 3rem; color: var(--card-accent); line-height: 1; }
+
+.status-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+.status-table th, .status-table td { padding: 10px 16px; text-align: left; }
+.status-table th {
+  width: 34%; background: var(--card-bg); color: var(--card-accent); border-radius: 999px 0 0 999px; white-space: nowrap;
+}
+.status-table td { background: var(--pink-milk); border-radius: 0 999px 999px 0; }
+
+.meters { display: grid; gap: 14px; }
+.meter-label { display: flex; justify-content: space-between; font-weight: 700; font-size: .9rem; }
+.meter { height: 16px; background: var(--pink-pale); border-radius: 999px; overflow: hidden; }
+.meter > span {
+  display: block; height: 100%; width: 0; border-radius: 999px;
+  background: repeating-linear-gradient(45deg, var(--card-accent) 0 10px, color-mix(in srgb, var(--card-accent) 70%, #fff) 10px 20px);
+  transition: width 1.2s cubic-bezier(.2,.9,.3,1.2);
+}
+
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; }
+.likes { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin: 0; }
+.likes li { background: var(--card-bg); color: var(--card-accent); font-weight: 700; padding: 6px 16px; border-radius: 999px; }
+.card-h { font-family: "Mochiy Pop One", sans-serif; color: var(--card-accent); margin: 0 0 16px; font-size: 1.2rem; }
+
+.lines { display: grid; gap: 14px; }
+.lines p { margin: 0; background: #fff; border-radius: 20px 20px 20px 6px; padding: 12px 18px; box-shadow: var(--shadow); max-width: 90%; width: fit-content; }
+.lines p:nth-child(even) { justify-self: end; border-radius: 20px 20px 6px 20px; }
+
+.next-chara { text-align: center; }
+
+/* テーマ色 */
+.theme-momo { --card-accent: #f0609a; --card-bg: #ffe0ec; }
+.theme-ruru { --card-accent: #a77be0; --card-bg: #f1e6ff; }
+
+/* ---------- フッター ---------- */
+.site-footer {
+  text-align: center; padding: 40px 16px 32px; color: #fff; font-size: .85rem;
+  background: var(--pink); position: relative;
+}
+.site-footer::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 18px;
+  background: radial-gradient(circle at 18px 18px, var(--pink) 17px, transparent 18px) repeat-x;
+  background-size: 36px 18px;
+}
+.site-footer p { margin: 4px 0; }
+
+/* ---------- ふわふわハート ---------- */
+.floaty {
+  position: fixed; top: -40px; pointer-events: none; z-index: 1;
+  color: var(--pink); opacity: .7; animation: fall linear forwards;
+}
+@keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+
+/* ---------- スクロールで出現 ---------- */
+.reveal { opacity: 1; }
+.reveal.show { opacity: 1; transform: none; }
+
+@media (max-width: 720px) {
+  .profile-hero { grid-template-columns: 1fr; }
+  .profile-text { text-align: center; }
+  .site-header .inner { flex-direction: column; gap: 6px; }
+  .frill-card { padding: 22px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+
+[hidden]{display:none!important}
+
+/* ---------- 編集モード ---------- */
+.nav .edit-btn { background: var(--pink-deep); color: #fff; border-color: var(--pink-deep); cursor: pointer; font: inherit; font-weight: 700; font-size: .9rem; }
+.nav .edit-btn:hover { filter: brightness(1.05); }
+body.editing .edit-btn { display: none; }
+body.editing [data-edit] { outline: 2px dashed var(--pink); outline-offset: 3px; border-radius: 6px; cursor: text; white-space: pre-line; }
+body.editing [data-edit]:focus { outline: 3px solid var(--pink-deep); background: rgba(255,255,255,.6); }
+[data-edit].edited { white-space: pre-line; }
+body.editing img[data-img] { cursor: pointer; outline: 3px dashed var(--pink-deep); outline-offset: 4px; border-radius: 16px; animation: none; }
+body.editing img[data-img]:hover { opacity: .75; }
+.edit-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255,255,255,.96); border-top: 3px dotted var(--pink);
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;
+  box-shadow: 0 -8px 24px rgba(240,96,154,.18);
+}
+.edit-bar p { margin: 0; font-size: .85rem; color: var(--sub); flex-basis: 100%; text-align: center; }
+.edit-bar button, .dialog button {
+  font: inherit; font-weight: 700; border: 0; cursor: pointer;
+  padding: 10px 24px; border-radius: 999px;
+}
+.btn-save { background: var(--pink-deep); color: #fff; }
+.btn-cancel { background: var(--pink-pale); color: var(--pink-deep); }
+.btn-save:disabled { opacity: .6; cursor: wait; }
+body.editing { padding-bottom: 120px; }
+.dialog-back {
+  position: fixed; inset: 0; z-index: 100; background: rgba(107,63,75,.35);
+  display: grid; place-items: center; padding: 16px;
+}
+.dialog {
+  background: #fff; border-radius: var(--radius); padding: 28px 24px; width: min(100%, 340px);
+  text-align: center; box-shadow: var(--shadow); display: grid; gap: 14px;
+}
+.dialog h2 { margin: 0; font-family: "Mochiy Pop One", sans-serif; color: var(--pink-deep); font-size: 1.2rem; }
+.dialog input {
+  font: inherit; font-size: 1.4rem; letter-spacing: .5em; text-align: center;
+  padding: 10px; border-radius: 16px; border: 2px solid var(--pink-pale); color: var(--text); background: var(--pink-milk);
+}
+.dialog input:focus { outline: none; border-color: var(--pink); }
+.dialog .err { color: #d93c6f; font-size: .85rem; margin: 0; min-height: 1.2em; }
+.dialog .row { display: flex; gap: 10px; justify-content: center; }
+.toast {
+  position: fixed; left: 50%; top: 80px; transform: translateX(-50%); z-index: 110;
+  background: var(--choco); color: #fff; padding: 10px 22px; border-radius: 999px; font-weight: 700; font-size: .9rem;
+  max-width: calc(100% - 32px); text-align: center;
+}
+button:focus-visible, a:focus-visible { outline: 3px solid var(--pink-deep); outline-offset: 2px; }
+
+</style>
+<header class="site-header">
+  <div class="inner">
+    <a class="logo" href="#home">Sweet<span>♡</span>Duo</a>
+    <nav class="nav">
+      <a href="#home" data-nav="home">ホーム</a>
+      <a href="#momo" data-nav="momo">もも</a>
+      <a href="#ruru" data-nav="ruru">るる</a>
+      <button type="button" class="edit-btn" id="edit-btn">✎ 編集</button>
+    </nav>
+  </div>
+</header>
+<div class="page" data-page="home">
+
+<div class="hero">
+  <p class="hero-kicker">CHARACTER SITE</p>
+  <h1>Sweet ♡ Duo</h1>
+  <p class="hero-lead">いちご大好き元気っ子と、マカロン片手のおねむ姫。<br>ふたりそろって、今日もあまあま日和♡</p>
+  <div class="hero-duo">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzIwIj4KICA8IS0tIOODhOOCpOODs+ODhuODvOODqyAtLT4KICA8ZyBmaWxsPSIjZmY5Y2MyIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyI+CiAgICA8cGF0aCBkPSJNNjIgMTEwIEMxMCAxMzAgOCAyMjAgNDAgMjYyIEM0OCAyMzAgNjAgMjAwIDc4IDE3MCBaIi8+CiAgICA8cGF0aCBkPSJNMjM4IDExMCBDMjkwIDEzMCAyOTIgMjIwIDI2MCAyNjIgQzI1MiAyMzAgMjQwIDIwMCAyMjIgMTcwIFoiLz4KICA8L2c+CiAgPCEtLSDkvZMgKOODreODquODvOOCv+acjSkgLS0+CiAgPHBhdGggZD0iTTk1IDI1MCBDOTUgMjI1IDEyMCAyMTIgMTUwIDIxMiBDMTgwIDIxMiAyMDUgMjI1IDIwNSAyNTAgTDIyMCAzMjAgTDgwIDMyMCBaIiBmaWxsPSIjZmZmIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik0xMTAgMjYyIFExNTAgMjgwIDE5MCAyNjIgTDIwMCAzMjAgTDEwMCAzMjAgWiIgZmlsbD0iI2ZmYzJkYSIvPgogIDxnIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2UwNjg5YSIgc3Ryb2tlLXdpZHRoPSIyIj4KICAgIDxjaXJjbGUgY3g9IjExMiIgY3k9IjMxOCIgcj0iOCIvPjxjaXJjbGUgY3g9IjEzMCIgY3k9IjMyMCIgcj0iOCIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjMyMSIgcj0iOCIvPjxjaXJjbGUgY3g9IjE3MCIgY3k9IjMyMCIgcj0iOCIvPjxjaXJjbGUgY3g9IjE4OCIgY3k9IjMxOCIgcj0iOCIvPgogIDwvZz4KICA8IS0tIOiDuOWFg+ODquODnOODsyAtLT4KICA8ZyBmaWxsPSIjZjA2MDlhIj48cGF0aCBkPSJNMTUwIDIzMiBMMTI2IDIyMCBMMTI4IDI0NiBaIi8+PHBhdGggZD0iTTE1MCAyMzIgTDE3NCAyMjAgTDE3MiAyNDYgWiIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjIzMyIgcj0iNyIvPjwvZz4KICA8IS0tIOmhlCAtLT4KICA8ZWxsaXBzZSBjeD0iMTUwIiBjeT0iMTQwIiByeD0iODQiIHJ5PSI4MCIgZmlsbD0iI2ZmZjFlYSIgc3Ryb2tlPSIjZTA2ODlhIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8IS0tIOWJjemrqiAtLT4KICA8cGF0aCBkPSJNNjYgMTQwIEM2MCA3MCAxMTAgNDggMTUwIDQ4IEMxOTAgNDggMjQwIDcwIDIzNCAxNDAgQzIyMiAxMTggMjEyIDEwNCAyMDAgOTYgQzE5NiAxMTIgMTg2IDEyMCAxNzQgMTI0IEMxNzIgMTA4IDE2NCAxMDAgMTU2IDk2IEMxNTAgMTEyIDEzMiAxMjIgMTE2IDEyNCBDMTE4IDExMiAxMTQgMTA0IDEwNiAxMDAgQzkyIDExMCA4MCAxMjIgNjYgMTQwIFoiIGZpbGw9IiNmZjljYzIiIHN0cm9rZT0iI2UwNjg5YSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPCEtLSDjgYTjgaHjgZTjga7jg5jjgqLjg5Tjg7MgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEyIDc4KSByb3RhdGUoMjApIj4KICAgIDxwYXRoIGQ9Ik0wIDAgQy0xNiAwIC0xOCAyMiAwIDM0IEMxOCAyMiAxNiAwIDAgMCBaIiBmaWxsPSIjZmY0ZDdlIiBzdHJva2U9IiNjOTMzNWYiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHBhdGggZD0iTS0xMCAtMiBMLTQgLTggTDAgLTIgTDQgLTggTDEwIC0yIFoiIGZpbGw9IiM2ZmNmOTciLz4KICAgIDxnIGZpbGw9IiNmZmUyN2EiPjxjaXJjbGUgY3g9Ii01IiBjeT0iMTAiIHI9IjEuNiIvPjxjaXJjbGUgY3g9IjUiIGN5PSIxMiIgcj0iMS42Ii8+PGNpcmNsZSBjeD0iMCIgY3k9IjIwIiByPSIxLjYiLz48Y2lyY2xlIGN4PSItNiIgY3k9IjIyIiByPSIxLjYiLz48Y2lyY2xlIGN4PSI2IiBjeT0iMjIiIHI9IjEuNiIvPjwvZz4KICA8L2c+CiAgPCEtLSDnm64gLS0+CiAgPGc+CiAgICA8ZWxsaXBzZSBjeD0iMTE4IiBjeT0iMTUyIiByeD0iMTQiIHJ5PSIxOCIgZmlsbD0iIzdhMmY0YyIvPgogICAgPGVsbGlwc2UgY3g9IjE4MiIgY3k9IjE1MiIgcng9IjE0IiByeT0iMTgiIGZpbGw9IiM3YTJmNGMiLz4KICAgIDxlbGxpcHNlIGN4PSIxMTgiIGN5PSIxNTgiIHJ4PSIxMCIgcnk9IjEwIiBmaWxsPSIjZjA2MDlhIi8+CiAgICA8ZWxsaXBzZSBjeD0iMTgyIiBjeT0iMTU4IiByeD0iMTAiIHJ5PSIxMCIgZmlsbD0iI2YwNjA5YSIvPgogICAgPGNpcmNsZSBjeD0iMTEyIiBjeT0iMTQ1IiByPSI1LjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxNzYiIGN5PSIxNDUiIHI9IjUuNSIgZmlsbD0iI2ZmZiIvPgogICAgPGNpcmNsZSBjeD0iMTIzIiBjeT0iMTYyIiByPSIyLjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxODciIGN5PSIxNjIiIHI9IjIuNSIgZmlsbD0iI2ZmZiIvPgogICAgPHBhdGggZD0iTTEwMCAxMzYgUTExOCAxMjYgMTM0IDEzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN2EyZjRjIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8cGF0aCBkPSJNMTY2IDEzNiBRMTgyIDEyNiAyMDAgMTM2IiBmaWxsPSJub25lIiBzdHJva2U9IiM3YTJmNGMiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8L2c+CiAgPCEtLSDjgbvjgaPjgbogLS0+CiAgPGVsbGlwc2UgY3g9Ijk2IiBjeT0iMTgyIiByeD0iMTQiIHJ5PSI4IiBmaWxsPSIjZmZhNmM0IiBvcGFjaXR5PSIuOCIvPgogIDxlbGxpcHNlIGN4PSIyMDQiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmE2YzQiIG9wYWNpdHk9Ii44Ii8+CiAgPCEtLSDlj6MgLS0+CiAgPHBhdGggZD0iTTE0MCAxODQgUTE1MCAxOTYgMTYwIDE4NCIgZmlsbD0iI2ZmN2FhNiIgc3Ryb2tlPSIjYzkzMzVmIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDwhLS0g6auq44K044OgKOODj+ODvOODiCkgLS0+CiAgPGcgZmlsbD0iI2YwNjA5YSI+PHBhdGggZD0iTTYyIDEwNiBjLTYgLTEwIDggLTE2IDEwIC02IGMyIC0xMCAxNiAtNCAxMCA2IGwtMTAgMTAgeiIvPjxwYXRoIGQ9Ik0yMTggMTA2IGMtNiAtMTAgOCAtMTYgMTAgLTYgYzIgLTEwIDE2IC00IDEwIDYgbC0xMCAxMCB6Ii8+PC9nPgo8L3N2Zz4K" alt="桃瀬もも">
+    <span class="hero-heart">♥</span>
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzIwIj4KICA8IS0tIOW+jOOCjemrqiAo44Ot44Oz44KwKSAtLT4KICA8cGF0aCBkPSJNNjAgMTMwIEM0MCAyMDAgNDQgMjgwIDcwIDMyMCBMMjMwIDMyMCBDMjU2IDI4MCAyNjAgMjAwIDI0MCAxMzAgWiIgZmlsbD0iI2Q3YzBmNSIgc3Ryb2tlPSIjOWE3MmQ2IiBzdHJva2Utd2lkdGg9IjMiLz4KICA8IS0tIOS9kyAtLT4KICA8cGF0aCBkPSJNMTAwIDI1MCBDMTAwIDIyNiAxMjIgMjE0IDE1MCAyMTQgQzE3OCAyMTQgMjAwIDIyNiAyMDAgMjUwIEwyMTIgMzIwIEw4OCAzMjAgWiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjOWE3MmQ2IiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cGF0aCBkPSJNMTEyIDI2NCBRMTUwIDI4MiAxODggMjY0IEwxOTYgMzIwIEwxMDQgMzIwIFoiIGZpbGw9IiNmZmQxZTMiLz4KICA8IS0tIOWkp+OBjeOBhOilnyAtLT4KICA8cGF0aCBkPSJNMTUwIDIyMiBMMTEyIDIxNiBRMTA4IDI0NCAxMzIgMjQ4IFogTTE1MCAyMjIgTDE4OCAyMTYgUTE5MiAyNDQgMTY4IDI0OCBaIiBmaWxsPSIjZmZmIiBzdHJva2U9IiM5YTcyZDYiIHN0cm9rZS13aWR0aD0iMi41Ii8+CiAgPGNpcmNsZSBjeD0iMTUwIiBjeT0iMjM2IiByPSI2IiBmaWxsPSIjZmY4ZmI4Ii8+CiAgPCEtLSDpoZQgLS0+CiAgPGVsbGlwc2UgY3g9IjE1MCIgY3k9IjE0MiIgcng9IjgyIiByeT0iNzgiIGZpbGw9IiNmZmY0ZWYiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPCEtLSDjgbHjgaPjgaTjgpPliY3pq6ogLS0+CiAgPHBhdGggZD0iTTY4IDE0NiBDNjAgNzYgMTA4IDUyIDE1MCA1MiBDMTkyIDUyIDI0MCA3NiAyMzIgMTQ2IEMyMzAgMTI4IDIyNiAxMTggMjIyIDExMiBMNzggMTEyIEM3NCAxMTggNzAgMTI4IDY4IDE0NiBaIiBmaWxsPSIjZDdjMGY1IiBzdHJva2U9IiM5YTcyZDYiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMDAgMTEyIHY4IE0xMjUgMTEyIHYxMCBNMTUwIDExMiB2OCBNMTc1IDExMiB2MTAgTTIwMCAxMTIgdjgiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8IS0tIOWkp+OBjeOBhOODquODnOODsyAtLT4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAgNTQpIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgICA8cGF0aCBkPSJNMCAwIEMtMzAgLTMwIC03MCAtMjAgLTY0IDggQy02MCAzMCAtMjQgMjAgMCAwIFoiIGZpbGw9IiNmZmIzY2YiLz4KICAgIDxwYXRoIGQ9Ik0wIDAgQzMwIC0zMCA3MCAtMjAgNjQgOCBDNjAgMzAgMjQgMjAgMCAwIFoiIGZpbGw9IiNmZmIzY2YiLz4KICAgIDxwYXRoIGQ9Ik0tNiA0IEwtMjQgNDAgTC0xMCAzNiBMLTQgNDggWiBNNiA0IEwyNCA0MCBMMTAgMzYgTDQgNDggWiIgZmlsbD0iI2ZmOGZiOCIvPgogICAgPGNpcmNsZSByPSIxMSIgZmlsbD0iI2ZmOGZiOCIvPgogIDwvZz4KICA8IS0tIOecoOOBn+OBkuOBquebriAtLT4KICA8Zz4KICAgIDxwYXRoIGQ9Ik0xMDAgMTU2IFExMTggMTcwIDEzNiAxNTYiIGZpbGw9IiM1YjNmODYiLz4KICAgIDxwYXRoIGQ9Ik0xNjQgMTU2IFExODIgMTcwIDIwMCAxNTYiIGZpbGw9IiM1YjNmODYiLz4KICAgIDxwYXRoIGQ9Ik05OCAxNTUgTDEzOCAxNTUiIHN0cm9rZT0iIzViM2Y4NiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xNjIgMTU1IEwyMDIgMTU1IiBzdHJva2U9IiM1YjNmODYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8Y2lyY2xlIGN4PSIxMTIiIGN5PSIxNjAiIHI9IjIuNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjE3NiIgY3k9IjE2MCIgcj0iMi41IiBmaWxsPSIjZmZmIi8+CiAgICA8cGF0aCBkPSJNOTggMTU1IGwtNiAtNCBNMjAyIDE1NSBsNiAtNCIgc3Ryb2tlPSIjNWIzZjg2IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KICA8IS0tIOOBu+OBo+OBuiAtLT4KICA8ZWxsaXBzZSBjeD0iOTgiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmIzY2YiIG9wYWNpdHk9Ii44NSIvPgogIDxlbGxpcHNlIGN4PSIyMDIiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmIzY2YiIG9wYWNpdHk9Ii44NSIvPgogIDwhLS0g5Y+jIC0tPgogIDxwYXRoIGQ9Ik0xNDMgMTg2IFExNTAgMTkxIDE1NyAxODYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwhLS0g5omL44Gr5oyB44Gj44Gf44Oe44Kr44Ot44OzIC0tPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIyMiAyNjIpIj4KICAgIDxlbGxpcHNlIGN4PSIwIiBjeT0iLTgiIHJ4PSIyMiIgcnk9IjEwIiBmaWxsPSIjYmZlZWUwIiBzdHJva2U9IiM2YmJmYTYiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iLTIwIiB5PSItNiIgd2lkdGg9IjQwIiBoZWlnaHQ9IjciIHJ4PSIzIiBmaWxsPSIjZmZmIiBzdHJva2U9IiNlMGM4YTgiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgICA8ZWxsaXBzZSBjeD0iMCIgY3k9IjYiIHJ4PSIyMiIgcnk9IjEwIiBmaWxsPSIjYmZlZWUwIiBzdHJva2U9IiM2YmJmYTYiIHN0cm9rZS13aWR0aD0iMiIvPgogIDwvZz4KICA8dGV4dCB4PSIyMjgiIHk9IjEwMCIgZm9udC1zaXplPSIyMiIgZmlsbD0iIzlhNzJkNiIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPno8L3RleHQ+CiAgPHRleHQgeD0iMjQ0IiB5PSI4MCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzlhNzJkNiIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPno8L3RleHQ+Cjwvc3ZnPgo=" alt="白雪るる">
+  </div>
+  <div class="hero-actions">
+    <a class="btn" href="#home-characters">キャラクターを見る</a>
+    <a class="btn ghost" href="#home-about">Sweet Duo って？</a>
+  </div>
+</div>
+
+<main>
+  <section id="home-characters">
+    <h2 class="section-title">CHARACTERS</h2>
+    <p class="section-sub">キャラクター紹介</p>
+    <div class="chara-grid">
+      <a class="chara-card frill-card theme-momo reveal" href="#momo">
+        <div class="thumb"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzIwIj4KICA8IS0tIOODhOOCpOODs+ODhuODvOODqyAtLT4KICA8ZyBmaWxsPSIjZmY5Y2MyIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyI+CiAgICA8cGF0aCBkPSJNNjIgMTEwIEMxMCAxMzAgOCAyMjAgNDAgMjYyIEM0OCAyMzAgNjAgMjAwIDc4IDE3MCBaIi8+CiAgICA8cGF0aCBkPSJNMjM4IDExMCBDMjkwIDEzMCAyOTIgMjIwIDI2MCAyNjIgQzI1MiAyMzAgMjQwIDIwMCAyMjIgMTcwIFoiLz4KICA8L2c+CiAgPCEtLSDkvZMgKOODreODquODvOOCv+acjSkgLS0+CiAgPHBhdGggZD0iTTk1IDI1MCBDOTUgMjI1IDEyMCAyMTIgMTUwIDIxMiBDMTgwIDIxMiAyMDUgMjI1IDIwNSAyNTAgTDIyMCAzMjAgTDgwIDMyMCBaIiBmaWxsPSIjZmZmIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik0xMTAgMjYyIFExNTAgMjgwIDE5MCAyNjIgTDIwMCAzMjAgTDEwMCAzMjAgWiIgZmlsbD0iI2ZmYzJkYSIvPgogIDxnIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2UwNjg5YSIgc3Ryb2tlLXdpZHRoPSIyIj4KICAgIDxjaXJjbGUgY3g9IjExMiIgY3k9IjMxOCIgcj0iOCIvPjxjaXJjbGUgY3g9IjEzMCIgY3k9IjMyMCIgcj0iOCIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjMyMSIgcj0iOCIvPjxjaXJjbGUgY3g9IjE3MCIgY3k9IjMyMCIgcj0iOCIvPjxjaXJjbGUgY3g9IjE4OCIgY3k9IjMxOCIgcj0iOCIvPgogIDwvZz4KICA8IS0tIOiDuOWFg+ODquODnOODsyAtLT4KICA8ZyBmaWxsPSIjZjA2MDlhIj48cGF0aCBkPSJNMTUwIDIzMiBMMTI2IDIyMCBMMTI4IDI0NiBaIi8+PHBhdGggZD0iTTE1MCAyMzIgTDE3NCAyMjAgTDE3MiAyNDYgWiIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjIzMyIgcj0iNyIvPjwvZz4KICA8IS0tIOmhlCAtLT4KICA8ZWxsaXBzZSBjeD0iMTUwIiBjeT0iMTQwIiByeD0iODQiIHJ5PSI4MCIgZmlsbD0iI2ZmZjFlYSIgc3Ryb2tlPSIjZTA2ODlhIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8IS0tIOWJjemrqiAtLT4KICA8cGF0aCBkPSJNNjYgMTQwIEM2MCA3MCAxMTAgNDggMTUwIDQ4IEMxOTAgNDggMjQwIDcwIDIzNCAxNDAgQzIyMiAxMTggMjEyIDEwNCAyMDAgOTYgQzE5NiAxMTIgMTg2IDEyMCAxNzQgMTI0IEMxNzIgMTA4IDE2NCAxMDAgMTU2IDk2IEMxNTAgMTEyIDEzMiAxMjIgMTE2IDEyNCBDMTE4IDExMiAxMTQgMTA0IDEwNiAxMDAgQzkyIDExMCA4MCAxMjIgNjYgMTQwIFoiIGZpbGw9IiNmZjljYzIiIHN0cm9rZT0iI2UwNjg5YSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPCEtLSDjgYTjgaHjgZTjga7jg5jjgqLjg5Tjg7MgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEyIDc4KSByb3RhdGUoMjApIj4KICAgIDxwYXRoIGQ9Ik0wIDAgQy0xNiAwIC0xOCAyMiAwIDM0IEMxOCAyMiAxNiAwIDAgMCBaIiBmaWxsPSIjZmY0ZDdlIiBzdHJva2U9IiNjOTMzNWYiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHBhdGggZD0iTS0xMCAtMiBMLTQgLTggTDAgLTIgTDQgLTggTDEwIC0yIFoiIGZpbGw9IiM2ZmNmOTciLz4KICAgIDxnIGZpbGw9IiNmZmUyN2EiPjxjaXJjbGUgY3g9Ii01IiBjeT0iMTAiIHI9IjEuNiIvPjxjaXJjbGUgY3g9IjUiIGN5PSIxMiIgcj0iMS42Ii8+PGNpcmNsZSBjeD0iMCIgY3k9IjIwIiByPSIxLjYiLz48Y2lyY2xlIGN4PSItNiIgY3k9IjIyIiByPSIxLjYiLz48Y2lyY2xlIGN4PSI2IiBjeT0iMjIiIHI9IjEuNiIvPjwvZz4KICA8L2c+CiAgPCEtLSDnm64gLS0+CiAgPGc+CiAgICA8ZWxsaXBzZSBjeD0iMTE4IiBjeT0iMTUyIiByeD0iMTQiIHJ5PSIxOCIgZmlsbD0iIzdhMmY0YyIvPgogICAgPGVsbGlwc2UgY3g9IjE4MiIgY3k9IjE1MiIgcng9IjE0IiByeT0iMTgiIGZpbGw9IiM3YTJmNGMiLz4KICAgIDxlbGxpcHNlIGN4PSIxMTgiIGN5PSIxNTgiIHJ4PSIxMCIgcnk9IjEwIiBmaWxsPSIjZjA2MDlhIi8+CiAgICA8ZWxsaXBzZSBjeD0iMTgyIiBjeT0iMTU4IiByeD0iMTAiIHJ5PSIxMCIgZmlsbD0iI2YwNjA5YSIvPgogICAgPGNpcmNsZSBjeD0iMTEyIiBjeT0iMTQ1IiByPSI1LjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxNzYiIGN5PSIxNDUiIHI9IjUuNSIgZmlsbD0iI2ZmZiIvPgogICAgPGNpcmNsZSBjeD0iMTIzIiBjeT0iMTYyIiByPSIyLjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxODciIGN5PSIxNjIiIHI9IjIuNSIgZmlsbD0iI2ZmZiIvPgogICAgPHBhdGggZD0iTTEwMCAxMzYgUTExOCAxMjYgMTM0IDEzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN2EyZjRjIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8cGF0aCBkPSJNMTY2IDEzNiBRMTgyIDEyNiAyMDAgMTM2IiBmaWxsPSJub25lIiBzdHJva2U9IiM3YTJmNGMiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8L2c+CiAgPCEtLSDjgbvjgaPjgbogLS0+CiAgPGVsbGlwc2UgY3g9Ijk2IiBjeT0iMTgyIiByeD0iMTQiIHJ5PSI4IiBmaWxsPSIjZmZhNmM0IiBvcGFjaXR5PSIuOCIvPgogIDxlbGxpcHNlIGN4PSIyMDQiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmE2YzQiIG9wYWNpdHk9Ii44Ii8+CiAgPCEtLSDlj6MgLS0+CiAgPHBhdGggZD0iTTE0MCAxODQgUTE1MCAxOTYgMTYwIDE4NCIgZmlsbD0iI2ZmN2FhNiIgc3Ryb2tlPSIjYzkzMzVmIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDwhLS0g6auq44K044OgKOODj+ODvOODiCkgLS0+CiAgPGcgZmlsbD0iI2YwNjA5YSI+PHBhdGggZD0iTTYyIDEwNiBjLTYgLTEwIDggLTE2IDEwIC02IGMyIC0xMCAxNiAtNCAxMCA2IGwtMTAgMTAgeiIvPjxwYXRoIGQ9Ik0yMTggMTA2IGMtNiAtMTAgOCAtMTYgMTAgLTYgYzIgLTEwIDE2IC00IDEwIDYgbC0xMCAxMCB6Ii8+PC9nPgo8L3N2Zz4K" alt=""></div>
+        <p class="name">桃瀬 もも</p>
+        <p class="ruby">MOMOSE MOMO</p>
+        <p class="catch">いちごみたいに甘酸っぱい、<br>元気いっぱいの看板娘！</p>
+        <span class="more">プロフィールを見る ▶</span>
+      </a>
+      <a class="chara-card frill-card theme-ruru reveal" href="#ruru">
+        <div class="thumb"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzIwIj4KICA8IS0tIOW+jOOCjemrqiAo44Ot44Oz44KwKSAtLT4KICA8cGF0aCBkPSJNNjAgMTMwIEM0MCAyMDAgNDQgMjgwIDcwIDMyMCBMMjMwIDMyMCBDMjU2IDI4MCAyNjAgMjAwIDI0MCAxMzAgWiIgZmlsbD0iI2Q3YzBmNSIgc3Ryb2tlPSIjOWE3MmQ2IiBzdHJva2Utd2lkdGg9IjMiLz4KICA8IS0tIOS9kyAtLT4KICA8cGF0aCBkPSJNMTAwIDI1MCBDMTAwIDIyNiAxMjIgMjE0IDE1MCAyMTQgQzE3OCAyMTQgMjAwIDIyNiAyMDAgMjUwIEwyMTIgMzIwIEw4OCAzMjAgWiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjOWE3MmQ2IiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cGF0aCBkPSJNMTEyIDI2NCBRMTUwIDI4MiAxODggMjY0IEwxOTYgMzIwIEwxMDQgMzIwIFoiIGZpbGw9IiNmZmQxZTMiLz4KICA8IS0tIOWkp+OBjeOBhOilnyAtLT4KICA8cGF0aCBkPSJNMTUwIDIyMiBMMTEyIDIxNiBRMTA4IDI0NCAxMzIgMjQ4IFogTTE1MCAyMjIgTDE4OCAyMTYgUTE5MiAyNDQgMTY4IDI0OCBaIiBmaWxsPSIjZmZmIiBzdHJva2U9IiM5YTcyZDYiIHN0cm9rZS13aWR0aD0iMi41Ii8+CiAgPGNpcmNsZSBjeD0iMTUwIiBjeT0iMjM2IiByPSI2IiBmaWxsPSIjZmY4ZmI4Ii8+CiAgPCEtLSDpoZQgLS0+CiAgPGVsbGlwc2UgY3g9IjE1MCIgY3k9IjE0MiIgcng9IjgyIiByeT0iNzgiIGZpbGw9IiNmZmY0ZWYiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPCEtLSDjgbHjgaPjgaTjgpPliY3pq6ogLS0+CiAgPHBhdGggZD0iTTY4IDE0NiBDNjAgNzYgMTA4IDUyIDE1MCA1MiBDMTkyIDUyIDI0MCA3NiAyMzIgMTQ2IEMyMzAgMTI4IDIyNiAxMTggMjIyIDExMiBMNzggMTEyIEM3NCAxMTggNzAgMTI4IDY4IDE0NiBaIiBmaWxsPSIjZDdjMGY1IiBzdHJva2U9IiM5YTcyZDYiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMDAgMTEyIHY4IE0xMjUgMTEyIHYxMCBNMTUwIDExMiB2OCBNMTc1IDExMiB2MTAgTTIwMCAxMTIgdjgiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8IS0tIOWkp+OBjeOBhOODquODnOODsyAtLT4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAgNTQpIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgICA8cGF0aCBkPSJNMCAwIEMtMzAgLTMwIC03MCAtMjAgLTY0IDggQy02MCAzMCAtMjQgMjAgMCAwIFoiIGZpbGw9IiNmZmIzY2YiLz4KICAgIDxwYXRoIGQ9Ik0wIDAgQzMwIC0zMCA3MCAtMjAgNjQgOCBDNjAgMzAgMjQgMjAgMCAwIFoiIGZpbGw9IiNmZmIzY2YiLz4KICAgIDxwYXRoIGQ9Ik0tNiA0IEwtMjQgNDAgTC0xMCAzNiBMLTQgNDggWiBNNiA0IEwyNCA0MCBMMTAgMzYgTDQgNDggWiIgZmlsbD0iI2ZmOGZiOCIvPgogICAgPGNpcmNsZSByPSIxMSIgZmlsbD0iI2ZmOGZiOCIvPgogIDwvZz4KICA8IS0tIOecoOOBn+OBkuOBquebriAtLT4KICA8Zz4KICAgIDxwYXRoIGQ9Ik0xMDAgMTU2IFExMTggMTcwIDEzNiAxNTYiIGZpbGw9IiM1YjNmODYiLz4KICAgIDxwYXRoIGQ9Ik0xNjQgMTU2IFExODIgMTcwIDIwMCAxNTYiIGZpbGw9IiM1YjNmODYiLz4KICAgIDxwYXRoIGQ9Ik05OCAxNTUgTDEzOCAxNTUiIHN0cm9rZT0iIzViM2Y4NiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xNjIgMTU1IEwyMDIgMTU1IiBzdHJva2U9IiM1YjNmODYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8Y2lyY2xlIGN4PSIxMTIiIGN5PSIxNjAiIHI9IjIuNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjE3NiIgY3k9IjE2MCIgcj0iMi41IiBmaWxsPSIjZmZmIi8+CiAgICA8cGF0aCBkPSJNOTggMTU1IGwtNiAtNCBNMjAyIDE1NSBsNiAtNCIgc3Ryb2tlPSIjNWIzZjg2IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KICA8IS0tIOOBu+OBo+OBuiAtLT4KICA8ZWxsaXBzZSBjeD0iOTgiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmIzY2YiIG9wYWNpdHk9Ii44NSIvPgogIDxlbGxpcHNlIGN4PSIyMDIiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmIzY2YiIG9wYWNpdHk9Ii44NSIvPgogIDwhLS0g5Y+jIC0tPgogIDxwYXRoIGQ9Ik0xNDMgMTg2IFExNTAgMTkxIDE1NyAxODYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwhLS0g5omL44Gr5oyB44Gj44Gf44Oe44Kr44Ot44OzIC0tPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIyMiAyNjIpIj4KICAgIDxlbGxpcHNlIGN4PSIwIiBjeT0iLTgiIHJ4PSIyMiIgcnk9IjEwIiBmaWxsPSIjYmZlZWUwIiBzdHJva2U9IiM2YmJmYTYiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iLTIwIiB5PSItNiIgd2lkdGg9IjQwIiBoZWlnaHQ9IjciIHJ4PSIzIiBmaWxsPSIjZmZmIiBzdHJva2U9IiNlMGM4YTgiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgICA8ZWxsaXBzZSBjeD0iMCIgY3k9IjYiIHJ4PSIyMiIgcnk9IjEwIiBmaWxsPSIjYmZlZWUwIiBzdHJva2U9IiM2YmJmYTYiIHN0cm9rZS13aWR0aD0iMiIvPgogIDwvZz4KICA8dGV4dCB4PSIyMjgiIHk9IjEwMCIgZm9udC1zaXplPSIyMiIgZmlsbD0iIzlhNzJkNiIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPno8L3RleHQ+CiAgPHRleHQgeD0iMjQ0IiB5PSI4MCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzlhNzJkNiIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPno8L3RleHQ+Cjwvc3ZnPgo=" alt=""></div>
+        <p class="name">白雪 るる</p>
+        <p class="ruby">SHIRAYUKI RURU</p>
+        <p class="catch">ふわふわおねむなマイペース姫。<br>マカロンがあれば起きるかも？</p>
+        <span class="more">プロフィールを見る ▶</span>
+      </a>
+    </div>
+  </section>
+
+  <section id="home-about">
+    <h2 class="section-title">ABOUT</h2>
+    <p class="section-sub">Sweet Duo について</p>
+    <div class="frill-card about reveal">
+      <p>小さなパティスリー「シュガーリボン」で働く、幼なじみの女の子ふたり組。</p>
+      <p>元気なももが売り場をくるくる走り回って、<br>おっとりしたるるが奥でこっそりスイーツを味見中……。</p>
+      <p>正反対なのにいつも一緒、<strong>甘さ200%のゆるふわコンビ</strong>です♡</p>
+    </div>
+  </section>
+
+  <section id="home-news">
+    <h2 class="section-title">NEWS</h2>
+    <p class="section-sub">おしらせ</p>
+    <div class="frill-card reveal">
+      <ul class="news-list">
+        <li><time datetime="2026-09-30">2026.09.30</time><span>キャラクター紹介サイトをオープンしました♡</span></li>
+        <li><time datetime="2026-09-20">2026.09.20</time><span>ももの新しいいちごヘアピンのデザインを公開！</span></li>
+        <li><time datetime="2026-09-10">2026.09.10</time><span>るるのお昼寝タイムが1時間延長されました（本人談）</span></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+</div>
+<div class="page theme-momo" data-page="momo" hidden>
+
+<main>
+  <div class="profile-hero">
+    <div class="profile-visual reveal">
+      <span class="badge">No.01</span>
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzIwIj4KICA8IS0tIOODhOOCpOODs+ODhuODvOODqyAtLT4KICA8ZyBmaWxsPSIjZmY5Y2MyIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyI+CiAgICA8cGF0aCBkPSJNNjIgMTEwIEMxMCAxMzAgOCAyMjAgNDAgMjYyIEM0OCAyMzAgNjAgMjAwIDc4IDE3MCBaIi8+CiAgICA8cGF0aCBkPSJNMjM4IDExMCBDMjkwIDEzMCAyOTIgMjIwIDI2MCAyNjIgQzI1MiAyMzAgMjQwIDIwMCAyMjIgMTcwIFoiLz4KICA8L2c+CiAgPCEtLSDkvZMgKOODreODquODvOOCv+acjSkgLS0+CiAgPHBhdGggZD0iTTk1IDI1MCBDOTUgMjI1IDEyMCAyMTIgMTUwIDIxMiBDMTgwIDIxMiAyMDUgMjI1IDIwNSAyNTAgTDIyMCAzMjAgTDgwIDMyMCBaIiBmaWxsPSIjZmZmIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik0xMTAgMjYyIFExNTAgMjgwIDE5MCAyNjIgTDIwMCAzMjAgTDEwMCAzMjAgWiIgZmlsbD0iI2ZmYzJkYSIvPgogIDxnIGZpbGw9IiNmZmYiIHN0cm9rZT0iI2UwNjg5YSIgc3Ryb2tlLXdpZHRoPSIyIj4KICAgIDxjaXJjbGUgY3g9IjExMiIgY3k9IjMxOCIgcj0iOCIvPjxjaXJjbGUgY3g9IjEzMCIgY3k9IjMyMCIgcj0iOCIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjMyMSIgcj0iOCIvPjxjaXJjbGUgY3g9IjE3MCIgY3k9IjMyMCIgcj0iOCIvPjxjaXJjbGUgY3g9IjE4OCIgY3k9IjMxOCIgcj0iOCIvPgogIDwvZz4KICA8IS0tIOiDuOWFg+ODquODnOODsyAtLT4KICA8ZyBmaWxsPSIjZjA2MDlhIj48cGF0aCBkPSJNMTUwIDIzMiBMMTI2IDIyMCBMMTI4IDI0NiBaIi8+PHBhdGggZD0iTTE1MCAyMzIgTDE3NCAyMjAgTDE3MiAyNDYgWiIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjIzMyIgcj0iNyIvPjwvZz4KICA8IS0tIOmhlCAtLT4KICA8ZWxsaXBzZSBjeD0iMTUwIiBjeT0iMTQwIiByeD0iODQiIHJ5PSI4MCIgZmlsbD0iI2ZmZjFlYSIgc3Ryb2tlPSIjZTA2ODlhIiBzdHJva2Utd2lkdGg9IjMiLz4KICA8IS0tIOWJjemrqiAtLT4KICA8cGF0aCBkPSJNNjYgMTQwIEM2MCA3MCAxMTAgNDggMTUwIDQ4IEMxOTAgNDggMjQwIDcwIDIzNCAxNDAgQzIyMiAxMTggMjEyIDEwNCAyMDAgOTYgQzE5NiAxMTIgMTg2IDEyMCAxNzQgMTI0IEMxNzIgMTA4IDE2NCAxMDAgMTU2IDk2IEMxNTAgMTEyIDEzMiAxMjIgMTE2IDEyNCBDMTE4IDExMiAxMTQgMTA0IDEwNiAxMDAgQzkyIDExMCA4MCAxMjIgNjYgMTQwIFoiIGZpbGw9IiNmZjljYzIiIHN0cm9rZT0iI2UwNjg5YSIgc3Ryb2tlLXdpZHRoPSIzIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CiAgPCEtLSDjgYTjgaHjgZTjga7jg5jjgqLjg5Tjg7MgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEyIDc4KSByb3RhdGUoMjApIj4KICAgIDxwYXRoIGQ9Ik0wIDAgQy0xNiAwIC0xOCAyMiAwIDM0IEMxOCAyMiAxNiAwIDAgMCBaIiBmaWxsPSIjZmY0ZDdlIiBzdHJva2U9IiNjOTMzNWYiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHBhdGggZD0iTS0xMCAtMiBMLTQgLTggTDAgLTIgTDQgLTggTDEwIC0yIFoiIGZpbGw9IiM2ZmNmOTciLz4KICAgIDxnIGZpbGw9IiNmZmUyN2EiPjxjaXJjbGUgY3g9Ii01IiBjeT0iMTAiIHI9IjEuNiIvPjxjaXJjbGUgY3g9IjUiIGN5PSIxMiIgcj0iMS42Ii8+PGNpcmNsZSBjeD0iMCIgY3k9IjIwIiByPSIxLjYiLz48Y2lyY2xlIGN4PSItNiIgY3k9IjIyIiByPSIxLjYiLz48Y2lyY2xlIGN4PSI2IiBjeT0iMjIiIHI9IjEuNiIvPjwvZz4KICA8L2c+CiAgPCEtLSDnm64gLS0+CiAgPGc+CiAgICA8ZWxsaXBzZSBjeD0iMTE4IiBjeT0iMTUyIiByeD0iMTQiIHJ5PSIxOCIgZmlsbD0iIzdhMmY0YyIvPgogICAgPGVsbGlwc2UgY3g9IjE4MiIgY3k9IjE1MiIgcng9IjE0IiByeT0iMTgiIGZpbGw9IiM3YTJmNGMiLz4KICAgIDxlbGxpcHNlIGN4PSIxMTgiIGN5PSIxNTgiIHJ4PSIxMCIgcnk9IjEwIiBmaWxsPSIjZjA2MDlhIi8+CiAgICA8ZWxsaXBzZSBjeD0iMTgyIiBjeT0iMTU4IiByeD0iMTAiIHJ5PSIxMCIgZmlsbD0iI2YwNjA5YSIvPgogICAgPGNpcmNsZSBjeD0iMTEyIiBjeT0iMTQ1IiByPSI1LjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxNzYiIGN5PSIxNDUiIHI9IjUuNSIgZmlsbD0iI2ZmZiIvPgogICAgPGNpcmNsZSBjeD0iMTIzIiBjeT0iMTYyIiByPSIyLjUiIGZpbGw9IiNmZmYiLz48Y2lyY2xlIGN4PSIxODciIGN5PSIxNjIiIHI9IjIuNSIgZmlsbD0iI2ZmZiIvPgogICAgPHBhdGggZD0iTTEwMCAxMzYgUTExOCAxMjYgMTM0IDEzNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjN2EyZjRjIiBzdHJva2Utd2lkdGg9IjMuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8cGF0aCBkPSJNMTY2IDEzNiBRMTgyIDEyNiAyMDAgMTM2IiBmaWxsPSJub25lIiBzdHJva2U9IiM3YTJmNGMiIHN0cm9rZS13aWR0aD0iMy41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8L2c+CiAgPCEtLSDjgbvjgaPjgbogLS0+CiAgPGVsbGlwc2UgY3g9Ijk2IiBjeT0iMTgyIiByeD0iMTQiIHJ5PSI4IiBmaWxsPSIjZmZhNmM0IiBvcGFjaXR5PSIuOCIvPgogIDxlbGxpcHNlIGN4PSIyMDQiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmE2YzQiIG9wYWNpdHk9Ii44Ii8+CiAgPCEtLSDlj6MgLS0+CiAgPHBhdGggZD0iTTE0MCAxODQgUTE1MCAxOTYgMTYwIDE4NCIgZmlsbD0iI2ZmN2FhNiIgc3Ryb2tlPSIjYzkzMzVmIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDwhLS0g6auq44K044OgKOODj+ODvOODiCkgLS0+CiAgPGcgZmlsbD0iI2YwNjA5YSI+PHBhdGggZD0iTTYyIDEwNiBjLTYgLTEwIDggLTE2IDEwIC02IGMyIC0xMCAxNiAtNCAxMCA2IGwtMTAgMTAgeiIvPjxwYXRoIGQ9Ik0yMTggMTA2IGMtNiAtMTAgOCAtMTYgMTAgLTYgYzIgLTEwIDE2IC00IDEwIDYgbC0xMCAxMCB6Ii8+PC9nPgo8L3N2Zz4K" alt="桃瀬 もも">
+    </div>
+    <div class="profile-text reveal">
+      <p class="profile-name">桃瀬 もも</p>
+      <p class="profile-ruby">MOMOSE MOMO</p>
+      <span class="profile-catch">いちごみたいに甘酸っぱい看板娘</span>
+      <p class="quote">いらっしゃいませ〜っ！今日のおすすめは、ももが選んだいちごタルトだよっ♡</p>
+    </div>
+  </div>
+  <section>
+    <h2 class="section-title">PROFILE</h2>
+    <p class="section-sub">プロフィール</p>
+    <div class="two-col">
+      <div class="frill-card reveal">
+        <h3 class="card-h">♡ データ</h3>
+        <table class="status-table">
+          <tr><th>誕生日</th><td>4月15日（いちごの日）</td></tr>
+          <tr><th>年齢</th><td>16歳</td></tr>
+          <tr><th>身長</th><td>152cm</td></tr>
+          <tr><th>血液型</th><td>O型</td></tr>
+          <tr><th>担当</th><td>売り場・接客</td></tr>
+          <tr><th>チャームポイント</th><td>ツインテールといちごのヘアピン</td></tr>
+        </table>
+      </div>
+      <div class="frill-card reveal">
+        <h3 class="card-h">♡ ステータス</h3>
+        <div class="meters">
+          <div><div class="meter-label"><span>げんき</span><span>MAX</span></div><div class="meter"><span data-value="100" style="width:100%"></span></div></div>
+          <div><div class="meter-label"><span>あまさ</span><span>85</span></div><div class="meter"><span data-value="85" style="width:85%"></span></div></div>
+          <div><div class="meter-label"><span>おしゃべり</span><span>95</span></div><div class="meter"><span data-value="95" style="width:95%"></span></div></div>
+          <div><div class="meter-label"><span>おかし作り</span><span>60</span></div><div class="meter"><span data-value="60" style="width:60%"></span></div></div>
+          <div><div class="meter-label"><span>おちつき</span><span>20</span></div><div class="meter"><span data-value="20" style="width:20%"></span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">STORY</h2>
+    <p class="section-sub">どんな子？</p>
+    <div class="frill-card reveal">
+      <p>パティスリー「シュガーリボン」の元気な看板娘。笑顔と声の大きさはお店いちばんで、常連さんからは「いちごちゃん」と呼ばれている。</p>
+      <p>思い立ったらすぐ行動するタイプで、新作ケーキのアイデアを思いつくと閉店後でも厨房に駆け込んでしまう。ただし作るのはちょっと苦手で、よくクリームを顔につけている。</p>
+      <p>幼なじみのるるのことが大好きで、寝ているるるを起こすのが毎朝の日課。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="two-col">
+      <div class="frill-card reveal">
+        <h3 class="card-h">♡ すきなもの</h3>
+        <ul class="likes"><li>いちご</li><li>ショートケーキ</li><li>リボン</li><li>るる</li><li>お祭り</li><li>ピンクのもの全部</li></ul>
+      </div>
+      <div class="frill-card reveal">
+        <h3 class="card-h">♡ にがてなもの</h3>
+        <ul class="likes"><li>ピーマン</li><li>おるすばん</li><li>じっとしてること</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">VOICE</h2>
+    <p class="section-sub">ももの口ぐせ</p>
+    <div class="lines reveal">
+      <p>「あまいものは、正義っ！」</p>
+      <p>「るる〜！起きて〜！朝だよ〜っ！」</p>
+      <p>「えへへ、ちょっとだけ味見……しただけだもん！」</p>
+      <p>「今日もいちにち、あまあまにいこっ♡」</p>
+    </div>
+  </section>
+
+  <section class="next-chara">
+    <a class="btn" href="#ruru">相方の るる を見る ▶</a>
+  </section>
+</main>
+</div>
+<div class="page theme-ruru" data-page="ruru" hidden>
+
+<main>
+  <div class="profile-hero">
+    <div class="profile-visual reveal">
+      <span class="badge">No.02</span>
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMDAgMzIwIj4KICA8IS0tIOW+jOOCjemrqiAo44Ot44Oz44KwKSAtLT4KICA8cGF0aCBkPSJNNjAgMTMwIEM0MCAyMDAgNDQgMjgwIDcwIDMyMCBMMjMwIDMyMCBDMjU2IDI4MCAyNjAgMjAwIDI0MCAxMzAgWiIgZmlsbD0iI2Q3YzBmNSIgc3Ryb2tlPSIjOWE3MmQ2IiBzdHJva2Utd2lkdGg9IjMiLz4KICA8IS0tIOS9kyAtLT4KICA8cGF0aCBkPSJNMTAwIDI1MCBDMTAwIDIyNiAxMjIgMjE0IDE1MCAyMTQgQzE3OCAyMTQgMjAwIDIyNiAyMDAgMjUwIEwyMTIgMzIwIEw4OCAzMjAgWiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjOWE3MmQ2IiBzdHJva2Utd2lkdGg9IjMiLz4KICA8cGF0aCBkPSJNMTEyIDI2NCBRMTUwIDI4MiAxODggMjY0IEwxOTYgMzIwIEwxMDQgMzIwIFoiIGZpbGw9IiNmZmQxZTMiLz4KICA8IS0tIOWkp+OBjeOBhOilnyAtLT4KICA8cGF0aCBkPSJNMTUwIDIyMiBMMTEyIDIxNiBRMTA4IDI0NCAxMzIgMjQ4IFogTTE1MCAyMjIgTDE4OCAyMTYgUTE5MiAyNDQgMTY4IDI0OCBaIiBmaWxsPSIjZmZmIiBzdHJva2U9IiM5YTcyZDYiIHN0cm9rZS13aWR0aD0iMi41Ii8+CiAgPGNpcmNsZSBjeD0iMTUwIiBjeT0iMjM2IiByPSI2IiBmaWxsPSIjZmY4ZmI4Ii8+CiAgPCEtLSDpoZQgLS0+CiAgPGVsbGlwc2UgY3g9IjE1MCIgY3k9IjE0MiIgcng9IjgyIiByeT0iNzgiIGZpbGw9IiNmZmY0ZWYiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIzIi8+CiAgPCEtLSDjgbHjgaPjgaTjgpPliY3pq6ogLS0+CiAgPHBhdGggZD0iTTY4IDE0NiBDNjAgNzYgMTA4IDUyIDE1MCA1MiBDMTkyIDUyIDI0MCA3NiAyMzIgMTQ2IEMyMzAgMTI4IDIyNiAxMTggMjIyIDExMiBMNzggMTEyIEM3NCAxMTggNzAgMTI4IDY4IDE0NiBaIiBmaWxsPSIjZDdjMGY1IiBzdHJva2U9IiM5YTcyZDYiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIDxwYXRoIGQ9Ik0xMDAgMTEyIHY4IE0xMjUgMTEyIHYxMCBNMTUwIDExMiB2OCBNMTc1IDExMiB2MTAgTTIwMCAxMTIgdjgiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICA8IS0tIOWkp+OBjeOBhOODquODnOODsyAtLT4KICA8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxNTAgNTQpIiBzdHJva2U9IiNlMDY4OWEiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+CiAgICA8cGF0aCBkPSJNMCAwIEMtMzAgLTMwIC03MCAtMjAgLTY0IDggQy02MCAzMCAtMjQgMjAgMCAwIFoiIGZpbGw9IiNmZmIzY2YiLz4KICAgIDxwYXRoIGQ9Ik0wIDAgQzMwIC0zMCA3MCAtMjAgNjQgOCBDNjAgMzAgMjQgMjAgMCAwIFoiIGZpbGw9IiNmZmIzY2YiLz4KICAgIDxwYXRoIGQ9Ik0tNiA0IEwtMjQgNDAgTC0xMCAzNiBMLTQgNDggWiBNNiA0IEwyNCA0MCBMMTAgMzYgTDQgNDggWiIgZmlsbD0iI2ZmOGZiOCIvPgogICAgPGNpcmNsZSByPSIxMSIgZmlsbD0iI2ZmOGZiOCIvPgogIDwvZz4KICA8IS0tIOecoOOBn+OBkuOBquebriAtLT4KICA8Zz4KICAgIDxwYXRoIGQ9Ik0xMDAgMTU2IFExMTggMTcwIDEzNiAxNTYiIGZpbGw9IiM1YjNmODYiLz4KICAgIDxwYXRoIGQ9Ik0xNjQgMTU2IFExODIgMTcwIDIwMCAxNTYiIGZpbGw9IiM1YjNmODYiLz4KICAgIDxwYXRoIGQ9Ik05OCAxNTUgTDEzOCAxNTUiIHN0cm9rZT0iIzViM2Y4NiIgc3Ryb2tlLXdpZHRoPSI0IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KICAgIDxwYXRoIGQ9Ik0xNjIgMTU1IEwyMDIgMTU1IiBzdHJva2U9IiM1YjNmODYiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CiAgICA8Y2lyY2xlIGN4PSIxMTIiIGN5PSIxNjAiIHI9IjIuNSIgZmlsbD0iI2ZmZiIvPjxjaXJjbGUgY3g9IjE3NiIgY3k9IjE2MCIgcj0iMi41IiBmaWxsPSIjZmZmIi8+CiAgICA8cGF0aCBkPSJNOTggMTU1IGwtNiAtNCBNMjAyIDE1NSBsNiAtNCIgc3Ryb2tlPSIjNWIzZjg2IiBzdHJva2Utd2lkdGg9IjMiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwvZz4KICA8IS0tIOOBu+OBo+OBuiAtLT4KICA8ZWxsaXBzZSBjeD0iOTgiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmIzY2YiIG9wYWNpdHk9Ii44NSIvPgogIDxlbGxpcHNlIGN4PSIyMDIiIGN5PSIxODIiIHJ4PSIxNCIgcnk9IjgiIGZpbGw9IiNmZmIzY2YiIG9wYWNpdHk9Ii44NSIvPgogIDwhLS0g5Y+jIC0tPgogIDxwYXRoIGQ9Ik0xNDMgMTg2IFExNTAgMTkxIDE1NyAxODYiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlhNzJkNiIgc3Ryb2tlLXdpZHRoPSIyLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDwhLS0g5omL44Gr5oyB44Gj44Gf44Oe44Kr44Ot44OzIC0tPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDIyMiAyNjIpIj4KICAgIDxlbGxpcHNlIGN4PSIwIiBjeT0iLTgiIHJ4PSIyMiIgcnk9IjEwIiBmaWxsPSIjYmZlZWUwIiBzdHJva2U9IiM2YmJmYTYiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iLTIwIiB5PSItNiIgd2lkdGg9IjQwIiBoZWlnaHQ9IjciIHJ4PSIzIiBmaWxsPSIjZmZmIiBzdHJva2U9IiNlMGM4YTgiIHN0cm9rZS13aWR0aD0iMS41Ii8+CiAgICA8ZWxsaXBzZSBjeD0iMCIgY3k9IjYiIHJ4PSIyMiIgcnk9IjEwIiBmaWxsPSIjYmZlZWUwIiBzdHJva2U9IiM2YmJmYTYiIHN0cm9rZS13aWR0aD0iMiIvPgogIDwvZz4KICA8dGV4dCB4PSIyMjgiIHk9IjEwMCIgZm9udC1zaXplPSIyMiIgZmlsbD0iIzlhNzJkNiIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPno8L3RleHQ+CiAgPHRleHQgeD0iMjQ0IiB5PSI4MCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzlhNzJkNiIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiPno8L3RleHQ+Cjwvc3ZnPgo=" alt="白雪 るる">
+    </div>
+    <div class="profile-text reveal">
+      <p class="profile-name">白雪 るる</p>
+      <p class="profile-ruby">SHIRAYUKI RURU</p>
+      <span class="profile-catch">ふわふわおねむなマイペース姫</span>
+      <p class="quote">……ん。マカロン、くれるの……？じゃあ、ちょっとだけ起きる……</p>
+    </div>
+  </div>
+  <section>
+    <h2 class="section-title">PROFILE</h2>
+    <p class="section-sub">プロフィール</p>
+    <div class="two-col">
+      <div class="frill-card reveal">
+        <h3 class="card-h">♡ データ</h3>
+        <table class="status-table">
+          <tr><th>誕生日</th><td>12月24日</td></tr>
+          <tr><th>年齢</th><td>16歳</td></tr>
+          <tr><th>身長</th><td>158cm</td></tr>
+          <tr><th>血液型</th><td>AB型</td></tr>
+          <tr><th>担当</th><td>厨房・デコレーション</td></tr>
+          <tr><th>チャームポイント</th><td>大きなリボンとぱっつん前髪</td></tr>
+        </table>
+      </div>
+      <div class="frill-card reveal">
+        <h3 class="card-h">♡ ステータス</h3>
+        <div class="meters">
+          <div><div class="meter-label"><span>ねむけ</span><span>MAX</span></div><div class="meter"><span data-value="100" style="width:100%"></span></div></div>
+          <div><div class="meter-label"><span>あまさ</span><span>90</span></div><div class="meter"><span data-value="90" style="width:90%"></span></div></div>
+          <div><div class="meter-label"><span>おかし作り</span><span>98</span></div><div class="meter"><span data-value="98" style="width:98%"></span></div></div>
+          <div><div class="meter-label"><span>おしゃべり</span><span>25</span></div><div class="meter"><span data-value="25" style="width:25%"></span></div></div>
+          <div><div class="meter-label"><span>マイペース</span><span>95</span></div><div class="meter"><span data-value="95" style="width:95%"></span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">STORY</h2>
+    <p class="section-sub">どんな子？</p>
+    <div class="frill-card reveal">
+      <p>「シュガーリボン」の厨房担当。いつも眠たそうで、気づくとソファで丸くなっている。けれどお菓子作りの腕は天才的で、るるのデコレーションケーキは予約が数か月待ち。</p>
+      <p>言葉数は少ないけれど、ももの無茶なアイデアを一番おいしい形にしてくれるのはいつもるる。</p>
+      <p>マカロンの色は気分で決める。今日はミント味らしい。</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="two-col">
+      <div class="frill-card reveal">
+        <h3 class="card-h">♡ すきなもの</h3>
+        <ul class="likes"><li>マカロン</li><li>お昼寝</li><li>ふかふかのクッション</li><li>ホットミルク</li><li>もも</li></ul>
+      </div>
+      <div class="frill-card reveal">
+        <h3 class="card-h">♡ にがてなもの</h3>
+        <ul class="likes"><li>目覚まし時計</li><li>大きい音</li><li>急ぐこと</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="section-title">VOICE</h2>
+    <p class="section-sub">るるの口ぐせ</p>
+    <div class="lines reveal">
+      <p>「……あと5分……いや、あと50分……」</p>
+      <p>「もものアイデア、かたちにするのは……るるの仕事」</p>
+      <p>「あまいの食べたら……しあわせで、また眠くなる……」</p>
+      <p>「……おやすみ♡」</p>
+    </div>
+  </section>
+
+  <section class="next-chara">
+    <a class="btn" href="#momo">◀ 相方の もも を見る</a>
+  </section>
+</main>
+</div>
+<footer class="site-footer">
+  <p>Sweet ♡ Duo — いちごとマカロンのキャラクター紹介</p>
+  <p>© 2026 Sweet Duo</p>
+</footer>
+
+<div class="dialog-back" id="pass-dialog" hidden>
+  <form class="dialog" id="pass-form">
+    <h2>編集モード</h2>
+    <label for="pass-input">パスコードを入れてな</label>
+    <input id="pass-input" type="password" inputmode="numeric" autocomplete="off" maxlength="12">
+    <p class="err" id="pass-err"></p>
+    <div class="row">
+      <button type="button" class="btn-cancel" id="pass-cancel">やめる</button>
+      <button type="submit" class="btn-save">はじめる</button>
+    </div>
+  </form>
+</div>
+<div class="edit-bar" id="edit-bar" hidden>
+  <p>点線の文字をタップして書きかえ・画像をタップして入れかえできるで</p>
+  <button type="button" class="btn-cancel" id="edit-cancel">キャンセル</button>
+  <button type="button" class="btn-save" id="edit-save">保存する</button>
+</div>
+<input type="file" id="img-input" accept="image/*" hidden>
+<script type="application/json" id="site-state">{"text":{},"img":{}}</script>
+<script>
+function route() {
+  const h = location.hash.slice(1);
+  const page = ["momo","ruru"].includes(h) ? h : "home";
+  document.querySelectorAll(".page").forEach(p => p.hidden = p.dataset.page !== page);
+  document.querySelectorAll("[data-nav]").forEach(a => a.toggleAttribute("aria-current", a.dataset.nav === page));
+  const target = h && h !== page ? document.getElementById(h) : null;
+  if (target) target.scrollIntoView(); else window.scrollTo(0, 0);
+}
+
+/* ---------- 編集機能 ---------- */
+// 最初の状態のページを保存用のひな形として覚えておく
+const TEMPLATE = document.body.innerHTML;
+const PASS_HASH = "7423fd48de59154f5fb4cbd03067d2e539c1fe9fdd4b43e7016c31f8bc00c24f";
+const EDIT_SELECTOR = [
+  ".hero-kicker", ".hero h1", ".hero-lead", ".section-title", ".section-sub",
+  ".chara-card .name", ".chara-card .ruby", ".chara-card .catch", ".chara-card .more",
+  ".about p", ".news-list time", ".news-list span",
+  ".profile-visual .badge", ".profile-name", ".profile-ruby", ".profile-catch", ".quote",
+  ".card-h", ".status-table th", ".status-table td", ".meter-label span",
+  ".frill-card > p", ".likes li", ".lines p", ".site-footer p"
+].join(",");
+
+let state = { text: {}, img: {} };
+try { state = Object.assign(state, JSON.parse(document.getElementById("site-state").textContent)); } catch (e) {}
+
+// 編集できる場所に番号をふる (ひな形が同じなので毎回同じ番号になる)
+document.querySelectorAll(".page").forEach((page) => {
+  page.querySelectorAll(EDIT_SELECTOR).forEach((el, i) => { el.dataset.edit = page.dataset.page + "-" + i; });
+});
+document.querySelectorAll('.page img').forEach((img) => {
+  const alt = img.getAttribute("alt") || "";
+  const card = img.closest(".theme-momo, .theme-ruru, .page");
+  let key = alt.includes("もも") ? "momo" : alt.includes("るる") ? "ruru" : null;
+  if (!key && card) key = card.classList.contains("theme-momo") || card.dataset.page === "momo" ? "momo" : "ruru";
+  img.dataset.img = key;
+});
+
+function syncMeters() {
+  document.querySelectorAll(".meters > div").forEach((row) => {
+    const label = row.querySelectorAll(".meter-label span")[1];
+    const bar = row.querySelector(".meter > span");
+    if (!label || !bar) return;
+    const t = label.textContent.trim();
+    const n = /max/i.test(t) ? 100 : parseFloat(t);
+    if (!isNaN(n)) bar.style.width = Math.max(0, Math.min(100, n)) + "%";
+  });
+}
+
+function applyState() {
+  for (const [k, v] of Object.entries(state.text)) {
+    const el = document.querySelector('[data-edit="' + k + '"]');
+    if (el) { el.textContent = v; el.classList.add("edited"); }
+  }
+  for (const [k, v] of Object.entries(state.img)) {
+    if (typeof v === "string" && v.startsWith("data:image/"))
+      document.querySelectorAll('img[data-img="' + k + '"]').forEach((img) => (img.src = v));
+  }
+  syncMeters();
+}
+applyState();
+
+const $ = (id) => document.getElementById(id);
+let editing = false;
+let pendingImg = {};
+let imgTarget = null;
+
+function toast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+async function sha256(s) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+$("edit-btn").addEventListener("click", () => {
+  $("pass-err").textContent = ""; $("pass-input").value = "";
+  $("pass-dialog").hidden = false; $("pass-input").focus();
+});
+$("pass-cancel").addEventListener("click", () => ($("pass-dialog").hidden = true));
+$("pass-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if ((await sha256($("pass-input").value.trim())) !== PASS_HASH) {
+    $("pass-err").textContent = "パスコードがちがうみたい…"; return;
+  }
+  $("pass-dialog").hidden = true;
+  startEditing();
+});
+
+function startEditing() {
+  editing = true; pendingImg = {};
+  document.body.classList.add("editing");
+  document.querySelectorAll("[data-edit]").forEach((el) => {
+    el.contentEditable = "plaintext-only";
+    if (el.contentEditable !== "plaintext-only") el.contentEditable = "true";
+  });
+  $("edit-bar").hidden = false;
+}
+
+// 編集中はリンクで飛ばないようにする
+document.addEventListener("click", (e) => {
+  if (!editing) return;
+  const img = e.target.closest("img[data-img]");
+  if (img) { e.preventDefault(); imgTarget = img.dataset.img; $("img-input").value = ""; $("img-input").click(); return; }
+  if (e.target.closest("[data-edit]")) e.preventDefault();
+}, true);
+// 貼り付けは文字だけにする
+document.addEventListener("paste", (e) => {
+  if (!editing || !e.target.closest("[data-edit]")) return;
+  e.preventDefault();
+  document.execCommand("insertText", false, (e.clipboardData || window.clipboardData).getData("text/plain"));
+});
+document.addEventListener("input", (e) => { if (editing && e.target.closest(".meter-label")) syncMeters(); });
+
+$("img-input").addEventListener("change", async () => {
+  const file = $("img-input").files[0];
+  if (!file || !imgTarget) return;
+  try {
+    const url = await shrink(file, 800);
+    pendingImg[imgTarget] = url;
+    document.querySelectorAll('img[data-img="' + imgTarget + '"]').forEach((img) => (img.src = url));
+  } catch (err) { toast("この画像は読みこめへんかった…"); }
+});
+
+// 画像を小さくして埋めこめるサイズにする
+function shrink(file, max) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const src = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.naturalWidth * scale); c.height = Math.round(img.naturalHeight * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(src);
+      let url = c.toDataURL("image/webp", 0.88);
+      if (!url.startsWith("data:image/webp")) url = c.toDataURL("image/png");
+      resolve(url);
+    };
+    img.onerror = () => { URL.revokeObjectURL(src); reject(new Error("load")); };
+    img.src = src;
+  });
+}
+
+$("edit-cancel").addEventListener("click", () => location.reload());
+
+$("edit-save").addEventListener("click", async () => {
+  const next = { text: {}, img: Object.assign({}, state.img, pendingImg) };
+  const tmp = document.createElement("div");
+  tmp.innerHTML = TEMPLATE;
+  // ひな形の文字と違うところだけ保存する
+  const orig = {};
+  tmp.querySelectorAll(".page").forEach((page) => {
+    page.querySelectorAll(EDIT_SELECTOR).forEach((el, i) => { orig[page.dataset.page + "-" + i] = el.textContent; });
+  });
+  document.querySelectorAll("[data-edit]").forEach((el) => {
+    const v = el.innerText.replace(/\n{3,}/g, "\n\n").trim();
+    if (v !== (orig[el.dataset.edit] || "").trim()) next.text[el.dataset.edit] = v;
+  });
+  const json = JSON.stringify(next).replace(/</g, "\\u003c");
+  const body = TEMPLATE.replace(
+    /(<script type="application\/json" id="site-state">)[\s\S]*?(<\/script>)/,
+    (_, a, b) => a + json + b
+  );
+  const doc = '<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>' +
+    (document.head.querySelector("style") ? document.head.querySelector("style").textContent : "") + '</style></head><body>' + body + '</body></html>';
+
+  $("edit-save").disabled = true; $("edit-save").textContent = "保存中…";
+  const artifact = window.claude ? await window.claude.use("artifact").catch(() => null) : null;
+  if (!artifact) {
+    toast("ここでは保存できへんみたい（編集できる権限の人だけ保存できるで）");
+    $("edit-save").disabled = false; $("edit-save").textContent = "保存する"; return;
+  }
+  try {
+    await artifact.publish(doc);
+    toast("保存したで♡");
+  } catch (err) {
+    const msg = {
+      conflict: "ほかの場所で先に更新されたから、最新のページを読みこみなおすで",
+      not_writer: "このページを編集する権限がないみたい",
+      not_granted: "保存が許可されへんかった",
+      too_large: "画像が大きすぎるみたい。もっと小さい画像にしてな",
+      rate_limited: "保存が続きすぎやから、ちょっと待ってからもう一回してな",
+    }[err && err.code] || "保存できへんかった…もう一回ためしてな";
+    toast(msg);
+    $("edit-save").disabled = false; $("edit-save").textContent = "保存する";
+  }
+});
+
+addEventListener("hashchange", route); route();
+(() => {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const marks = ["♡","♥","✿","❀","✦"];
+  setInterval(() => {
+    const el = document.createElement("span");
+    el.className = "floaty";
+    el.textContent = marks[Math.floor(Math.random()*marks.length)];
+    el.style.left = Math.random()*100 + "vw";
+    el.style.fontSize = 12 + Math.random()*16 + "px";
+    el.style.animationDuration = 7 + Math.random()*6 + "s";
+    document.body.appendChild(el);
+    el.addEventListener("animationend", () => el.remove());
+  }, 900);
+})();
+</script>
