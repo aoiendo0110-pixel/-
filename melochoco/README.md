@@ -57,7 +57,7 @@ python3 make_cafe_mv.py --frames frames --anchors anchors --image illust.png --a
 ## イラストを動かす (`animate_illust.py`)
 
 イラスト1枚に、まばたき・頭の傾き・ツインテールの揺れ・泡立て器を振る腕・脚・呼吸・ふわふわ浮遊をつけた10秒ループ動画。
-閉じ目は目の部分を肌で埋めて描き足し、体は `cv2.remap` の変形場で動かす (座標は元イラスト 4409x3206 基準)。
+閉じ目は目の部分を肌で埋めて描き足し、体は `cv2.remap` の変形場で動かす。肘から先 (泡立て器) は別レイヤーに切り抜いて形を保ったまま回す (座標は元イラスト 4409x3206 基準)。
 
 ```
 pip install opencv-python-headless pillow numpy imageio-ffmpeg

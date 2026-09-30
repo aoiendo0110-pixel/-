@@ -153,10 +153,15 @@ class Rig:
         self.w_curl_r = soft_poly((h, w), [(1385, 110), (1545, 100), (1560, 480), (1395, 480)], s, pad, 14) \
             * smooth(120, 330, Y)
         self.p_curl_r = (1420, 105)
-        # 泡立て器を持つ腕: 肘まわりで回す
-        self.w_arm = soft_poly((h, w), [(1545, 380), (1840, 380), (1840, 700), (1640, 800), (1560, 770)], s, pad, 16) \
-            * smooth(0, 60, np.hypot(X - 1575, Y - 745))
-        self.p_arm = (1575, 745)
+        # 泡立て器を持つ腕: 肘から先 (前腕・手袋・泡立て器) を別レイヤーに切り抜き、肘で回す。
+        # 回転角は肘の根元だけ 0 からなめらかに立ち上げ、前腕の途中から先は形を変えない (剛体)
+        self.m_arm = soft_poly((h, w), [(1588, 800), (1597, 752), (1622, 690), (1650, 630), (1642, 592),
+                                         (1648, 545), (1640, 470), (1655, 330), (1700, 190), (1905, 190),
+                                         (1905, 560), (1790, 600), (1765, 690), (1690, 810), (1640, 822)], s, pad, 0.8)
+        self.p_arm = (1612, 790)
+        ex, ey = 1700 - 1612, 600 - 790
+        u = ((X - 1612) * ex + (Y - 790) * ey) / math.hypot(ex, ey)  # 肘→手首方向の距離
+        self.r_arm = smooth(15, 95, u).astype(np.float32)
         # 浮いている脚 (網タイツ側): 膝で回す。膝の近くは動かさない
         self.w_leg = soft_poly((h, w), [(80, 640), (320, 610), (690, 450), (880, 430), (940, 560), (700, 650),
                                          (405, 770), (385, 890), (300, 925), (80, 925)], s, pad, 10) \
@@ -177,7 +182,8 @@ class Rig:
         T = 2 * math.pi * t / DUR  # 10秒で1周 → ループ
         head = 2.2 * math.sin(2 * T) + 0.8 * math.sin(4 * T + 0.6)
         curl = 2.6 * math.sin(4 * T - 0.9) + 1.0 * math.sin(8 * T - 1.4)
-        arm = 5.0 * math.sin(8 * T) ** 3 + 1.5 * math.sin(2 * T)
+        # シャカシャカ振る (0.83秒周期) + ゆっくり大きな振り
+        arm = 4.0 * math.sin(12 * T) + 2.0 * math.sin(2 * T - 0.5)
         leg = 3.0 * math.sin(4 * T + 1.2)
         dx = np.zeros_like(self.gx)
         dy = np.zeros_like(self.gx)
@@ -185,7 +191,6 @@ class Rig:
         for w, p, deg in ((self.w_head, self.p_head, head),
                           (self.w_curl_l, self.p_curl_l, curl),
                           (self.w_curl_r, self.p_curl_r, curl * 0.9),
-                          (self.w_arm, self.p_arm, arm),
                           (self.w_leg, self.p_leg, leg)):
             ux, uy = self.rot(p, deg)
             dx += w * ux
@@ -202,7 +207,16 @@ class Rig:
         qx, qy = x0 * c - y0 * sn + cx, x0 * sn + y0 * c + cy
         ix = np.clip(np.round(qx), 0, self.gx.shape[1] - 1).astype(np.int32)
         iy = np.clip(np.round(qy), 0, self.gx.shape[0] - 1).astype(np.int32)
-        return (qx - dx[iy, ix]).astype(np.float32), (qy - dy[iy, ix]).astype(np.float32)
+        # 呼吸ぶん (肘の位置で) ついていき、あとは肘まわりの剛体回転
+        by = dy[round(self.p_arm[1] * D * self.s + self.pad), round(self.p_arm[0] * D * self.s + self.pad)]
+        a = np.float32(math.radians(-arm)) * self.r_arm[iy, ix]
+        px, py = self.p_arm[0] * D * self.s + self.pad, self.p_arm[1] * D * self.s + self.pad
+        rx, ry = qx - px, qy - by * self.r_arm[iy, ix] - py
+        ca, sa = np.cos(a), np.sin(a)
+        ax = rx * ca - ry * sa + px
+        ay = rx * sa + ry * ca + py
+        body = ((qx - dx[iy, ix]).astype(np.float32), (qy - dy[iy, ix]).astype(np.float32))
+        return body, (ax.astype(np.float32), ay.astype(np.float32))
 
 
 def openness(t):
@@ -251,10 +265,23 @@ def main():
         e["lid"] = [(x + pad / s, y + pad / s) for x, y in e["lid"]]
     rig = Rig(H, W, s, pad)
 
+    arm_a = rig.m_arm
+
     def frame(t):
-        img = blink_frame(open_img, closed_img, openness(t), s)
-        mx, my = rig.maps(t)
-        return cv2.remap(img, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
+        img = blink_frame(open_img, closed_img, openness(t), s).astype(np.float32)
+        (bx, by), (ax, ay) = rig.maps(t)
+        # 腕レイヤーと残りをプリマルチプライドで分けて、それぞれ動かしてから足し合わせる
+        img[..., :3] *= img[..., 3:] / 255
+        arm = img * arm_a[..., None]
+        img *= 1 - arm_a[..., None]
+        warp = lambda im, mx, my: cv2.remap(im, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT,
+                                             borderValue=(0, 0, 0, 0))
+        f, b = warp(arm, ax, ay), warp(img, bx, by)
+        out = f + b
+        oa = np.clip(out[..., 3:], 1e-3, 255)
+        rgb = out[..., :3] * 255 / oa
+        return np.clip(np.concatenate([rgb, out[..., 3:]], -1), 0, 255).astype(np.uint8)
+
 
     if a.preview is not None:
         for t in a.preview:
