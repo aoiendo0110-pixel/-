@@ -53,3 +53,15 @@ python3 cafe3d.py --font Mochiy.ttf --out anchors --anchors-only
 python3 make_cafe_mv.py --frames frames --anchors anchors --image illust.png --audio source.mov \
     --font Mochiy.ttf --font-sub Hachi.ttf --out cafe_mv.mp4
 ```
+
+## イラストを動かす (`animate_illust.py`)
+
+イラスト1枚に、まばたき・頭の傾き・ツインテールの揺れ・泡立て器を振る腕・脚・呼吸・ふわふわ浮遊をつけた10秒ループ動画。
+閉じ目は目の部分を肌で埋めて描き足し、体は `cv2.remap` の変形場で動かす (座標は元イラスト 4409x3206 基準)。
+
+```
+pip install opencv-python-headless pillow numpy imageio-ffmpeg
+python3 animate_illust.py --image illust.png --out anim.mp4 --webm anim_alpha.webm
+```
+
+- `--webm` は背景透過の VP9。`--preview 1.8 3.0` で指定秒の静止画だけ書き出し
