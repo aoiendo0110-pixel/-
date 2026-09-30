@@ -25,3 +25,14 @@ python3 make_mv.py --image illust.png --audio source.mov \
 
 - シーン構成は `SCENES`（開始秒・終了秒・描画関数・入りのトランジション）
 - 3Dスプライトは初回にレンダリングして `--cache` のフォルダに保存する
+
+## ゴテゴテ可愛い版 (`make_cute.py`)
+
+お菓子作り × チョコ × バレンタイン × ロリータ仕様。チョコ垂れ・パール・3段フリル・レースのフレーム、
+キルティングやギンガムの背景、3Dのお菓子（マカロン・いちご・カップケーキ・クッキー・リボンなど）入り。
+装飾パーツは `deco.py`。
+
+```
+python3 make_cute.py --image illust.png --audio source.mov \
+    --font MochiyPopOne.ttf --font-sub HachiMaruPop.ttf --out cute.mp4
+```

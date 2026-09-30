@@ -84,7 +84,7 @@ def c_choco_heart(p, n):
 def c_gift(p, n):
     base = np.broadcast_to(np.array([255, 150, 195], np.float32) / 255, p.shape).copy()
     rib = (np.abs(p[..., 0]) < 0.13) | (np.abs(p[..., 1]) < 0.13) | (p[..., 2] > 0.48)
-    base[rib] = np.array([255, 250, 250]) / 255
+    base[rib] = np.array([222, 28, 62]) / 255
     dots = (np.sin(p[..., 0] * 22) * np.sin(p[..., 2] * 22) > 0.8) & ~rib
     base[dots] = np.array([255, 225, 238]) / 255
     return base
@@ -179,6 +179,162 @@ def render(fn, col_fn, size, rx, spin, roll=0.0, steps=72, gloss=1.0):
     return im.resize((size, size), Image.LANCZOS)
 
 
+
+# ---- お菓子の追加形状 ----------------------------------------------------------
+def ell(x, y, z, cx, cy, cz, rx, ry, rz):
+    return ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2 - 1
+
+
+def f_macaron(x, y, z):
+    top = ell(x, y, z, 0, 0, 0.26, 0.8, 0.8, 0.3)
+    bot = ell(x, y, z, 0, 0, -0.26, 0.8, 0.8, 0.3)
+    fill = ell(x, y, z, 0, 0, 0, 0.7, 0.7, 0.17)
+    return np.minimum(np.minimum(top, bot), fill)
+
+
+def c_macaron(shell):
+    def f(p, n):
+        x, y, z = p[..., 0], p[..., 1], p[..., 2]
+        base = np.broadcast_to(np.array(shell, np.float32) / 255, p.shape).copy()
+        th = np.arctan2(y, x)
+        feet = (np.abs(z) > 0.07) & (np.abs(z) < 0.15 + 0.03 * np.sin(th * 28))
+        base[feet] = np.minimum(np.array(shell) / 255 * 1.12, 1)
+        base[np.abs(z) <= 0.07] = np.array([255, 246, 232]) / 255
+        return base
+    return f
+
+
+def f_strawberry(x, y, z):
+    w = 0.42 + 0.36 * np.clip((z + 0.95) / 1.25, 0, 1)
+    body = (x * x + y * y) / (w * w) + ((z - 0.02) / 0.9) ** 2 - 1
+    leaves = ell(x, y, z, 0, 0, 0.8, 0.5, 0.5, 0.08)
+    stem = ell(x, y, z, 0, 0, 0.95, 0.06, 0.06, 0.16)
+    return np.minimum(body, np.minimum(leaves, stem))
+
+
+def c_strawberry(p, n):
+    x, y, z = p[..., 0], p[..., 1], p[..., 2]
+    base = np.broadcast_to(np.array([228, 32, 64], np.float32) / 255, p.shape).copy()
+    a = np.arctan2(y, x)
+    h = np.sin(np.floor(a * 5) * 12.9898 + np.floor(z * 9) * 78.233) * 43758.5
+    h -= np.floor(h)
+    fa = (a * 5) % 1
+    fz = (z * 9) % 1
+    seed = (np.abs(fa - 0.5) < 0.16) & (np.abs(fz - 0.5) < 0.2) & (z < 0.7)
+    base[seed] = np.array([255, 220, 90]) / 255
+    base[z > 0.72] = np.array([90, 180, 90]) / 255
+    return base
+
+
+def f_cupcake(x, y, z):
+    r = np.sqrt(x * x + y * y)
+    th = np.arctan2(y, x)
+    rc = (0.5 + 0.2 * (z + 0.95) / 0.8) * (1 + 0.035 * np.cos(th * 16))
+    cup = np.maximum(r - rc, np.maximum(-0.95 - z, z + 0.12))
+    fr = None
+    for R, rr, zc in ((0.56, 0.21, -0.05), (0.4, 0.18, 0.2), (0.22, 0.15, 0.42)):
+        q = r - R
+        t = q * q + (z - zc) ** 2 - rr * rr
+        fr = t if fr is None else np.minimum(fr, t)
+    cherry = ell(x, y, z, 0, 0, 0.72, 0.19, 0.19, 0.19)
+    return np.minimum(np.minimum(cup, fr), cherry)
+
+
+def c_cupcake(p, n):
+    x, y, z = p[..., 0], p[..., 1], p[..., 2]
+    base = np.broadcast_to(np.array([255, 196, 220], np.float32) / 255, p.shape).copy()
+    th = np.arctan2(y, x)
+    cup = z < -0.12
+    stripe = np.sin(th * 8) > 0
+    base[cup & stripe] = np.array([255, 110, 160]) / 255
+    base[cup & ~stripe] = np.array([255, 250, 250]) / 255
+    base[z > 0.55] = np.array([220, 20, 55]) / 255
+    h = np.sin(np.floor(x * 16) * 12.9898 + np.floor(y * 16) * 78.233 + np.floor(z * 16) * 3.1) * 43758.5
+    h -= np.floor(h)
+    sp = (z > -0.12) & (z < 0.55) & (h > 0.88)
+    cols = np.array([[255, 255, 255], [255, 220, 90], [110, 55, 35], [230, 30, 70]]) / 255
+    base[sp] = cols[(h[sp] * 100).astype(int) % 4]
+    return base
+
+
+def f_cookie(x, y, z):
+    return f_heart(x, y * 2.4, z)
+
+
+def c_cookie(p, n):
+    x, y, z = p[..., 0], p[..., 1], p[..., 2]
+    base = np.broadcast_to(np.array([236, 180, 105], np.float32) / 255, p.shape).copy()
+    icing = (f_heart(x * 1.18, y * 0, z * 1.18 + 0.02) < 0) & (y < 0)
+    base[icing] = np.array([255, 140, 185]) / 255
+    ring = (f_heart(x * 1.1, y * 0, z * 1.1 + 0.01) < 0) & ~icing & (y < 0)
+    base[ring] = np.array([255, 255, 255]) / 255
+    dots = icing & (np.sin(x * 20) * np.sin(z * 20) > 0.85)
+    base[dots] = np.array([255, 255, 255]) / 255
+    return base
+
+
+def f_bow(x, y, z):
+    parts = []
+    for s in (-1, 1):
+        u, v = x - s * 0.48, z - 0.12
+        c, sn = math.cos(0.35), math.sin(0.35) * s
+        uu, vv = u * c + v * sn, -u * sn + v * c
+        parts.append((uu / 0.5) ** 2 + (y / 0.2) ** 2 + (vv / 0.3) ** 2 - 1)
+        u, v = x - s * 0.3, z + 0.52
+        c, sn = math.cos(0.4), math.sin(0.4) * s
+        uu, vv = u * c + v * sn, -u * sn + v * c
+        parts.append((uu / 0.14) ** 2 + (y / 0.08) ** 2 + (vv / 0.48) ** 2 - 1)
+    parts.append(ell(x, y, z, 0, -0.02, 0.1, 0.2, 0.24, 0.22))
+    out = parts[0]
+    for q in parts[1:]:
+        out = np.minimum(out, q)
+    return out
+
+
+def c_bow(main, dot=(255, 255, 255)):
+    def f(p, n):
+        x, y, z = p[..., 0], p[..., 1], p[..., 2]
+        base = np.broadcast_to(np.array(main, np.float32) / 255, p.shape).copy()
+        dots = (np.sin(x * 16) * np.sin(z * 16) > 0.75) & (np.abs(x) > 0.22)
+        base[dots] = np.array(dot) / 255
+        return base
+    return f
+
+
+def f_cherry(x, y, z):
+    a = ell(x, y, z, -0.33, 0, -0.4, 0.36, 0.36, 0.36)
+    b = ell(x, y, z, 0.33, 0, -0.4, 0.36, 0.36, 0.36)
+    s1 = ell(x + 0.33 * (z - 0.55) / 0.9, y, z, 0, 0, 0.1, 0.045, 0.045, 0.55)
+    s2 = ell(x - 0.33 * (z - 0.55) / 0.9, y, z, 0, 0, 0.1, 0.045, 0.045, 0.55)
+    return np.minimum(np.minimum(a, b), np.minimum(s1, s2))
+
+
+def c_cherry(p, n):
+    base = np.broadcast_to(np.array([215, 20, 50], np.float32) / 255, p.shape).copy()
+    base[p[..., 2] > -0.05] = np.array([110, 60, 35]) / 255
+    return base
+
+
+def f_candy(x, y, z):
+    mid = ell(x, y, z, 0, 0, 0, 0.46, 0.38, 0.38)
+    ends = []
+    for s in (-1, 1):
+        k = np.clip((np.abs(x) - 0.4) / 0.45, 0, 1)
+        ends.append(np.maximum(((y / 0.1) ** 2 + (z / (0.1 + 0.28 * k)) ** 2 - 1),
+                               np.maximum(0.4 - s * x, s * x - 0.88)))
+    return np.minimum(mid, np.minimum(ends[0], ends[1]))
+
+
+def c_candy(a, b):
+    def f(p, n):
+        x, y, z = p[..., 0], p[..., 1], p[..., 2]
+        base = np.broadcast_to(np.array(a, np.float32) / 255, p.shape).copy()
+        st = np.sin(x * 9 + np.arctan2(z, y) * 2) > 0
+        base[st & (np.abs(x) < 0.46)] = np.array(b) / 255
+        return base
+    return f
+
+
 OBJECTS = {
     "heart": (f_heart, c_const((255, 110, 165)), 0.25, 1.0),
     "heart_white": (f_heart, c_const((255, 236, 244)), 0.25, 1.0),
@@ -187,6 +343,18 @@ OBJECTS = {
     "donut": (f_torus, c_donut, -0.9, 0.7),
     "pearl": (f_sphere, c_const((255, 225, 238)), 0.0, 1.3),
     "bar": (f_bar, c_bar, 0.2, 1.0),
+    "macaron": (f_macaron, c_macaron((255, 160, 195)), 0.55, 0.8),
+    "macaron_y": (f_macaron, c_macaron((255, 214, 100)), 0.55, 0.8),
+    "macaron_c": (f_macaron, c_macaron((150, 90, 60)), 0.55, 0.8),
+    "strawberry": (f_strawberry, c_strawberry, 0.2, 1.1),
+    "cupcake": (f_cupcake, c_cupcake, 0.35, 0.9),
+    "cookie": (f_cookie, c_cookie, 0.15, 0.6),
+    "bow": (f_bow, c_bow((220, 25, 60)), 0.1, 1.2),
+    "bow_pink": (f_bow, c_bow((255, 130, 180)), 0.1, 1.2),
+    "bow_bw": (f_bow, c_bow((34, 30, 32)), 0.1, 1.3),
+    "cherry": (f_cherry, c_cherry, 0.1, 1.3),
+    "candy": (f_candy, c_candy((255, 215, 90), (255, 255, 255)), 0.2, 1.2),
+    "candy_p": (f_candy, c_candy((255, 120, 170), (255, 255, 255)), 0.2, 1.2),
 }
 
 
