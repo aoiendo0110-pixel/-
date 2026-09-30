@@ -7,3 +7,7 @@ __pycache__/
 mv_*.png
 melochoco/clips/*.mov
 melochoco/props_out/tex/
+melochoco/clips/seq_*/
+melochoco/clips/*.zip
+melochoco/clips/*_anim.png
+melochoco/clips/*_preview.mp4
