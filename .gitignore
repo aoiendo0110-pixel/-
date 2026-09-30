@@ -6,3 +6,4 @@ cache3d/
 __pycache__/
 mv_*.png
 melochoco/clips/*.mov
+melochoco/props_out/tex/
