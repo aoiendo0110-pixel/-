@@ -36,3 +36,20 @@ python3 make_mv.py --image illust.png --audio source.mov \
 python3 make_cute.py --image illust.png --audio source.mov \
     --font MochiyPopOne.ttf --font-sub HachiMaruPop.ttf --out cute.mp4
 ```
+
+## 3Dカフェ版 (`cafe3d.py` + `make_cafe_mv.py`)
+
+Blender (`pip install bpy`) でピンクのお菓子カフェ＆キッチンを丸ごとコードで作り、
+カメラが部屋の中を移動する3D映像をレンダリング。そこにキャラと歌詞を合成する。
+歌詞は、各行が出ている間の顔の位置を調べて、顔に重ならない場所へ自動で配置する。
+
+```
+# 1) 3D (Workbench, 1280x720) をレンダリング。2プロセスに分けると速い
+python3 cafe3d.py --font Mochiy.ttf --out frames --start 0 --end 464
+python3 cafe3d.py --font Mochiy.ttf --out frames --start 464 --end 928
+# キャラ位置 (アンカー) だけ作り直すとき
+python3 cafe3d.py --font Mochiy.ttf --out anchors --anchors-only
+# 2) 合成
+python3 make_cafe_mv.py --frames frames --anchors anchors --image illust.png --audio source.mov \
+    --font Mochiy.ttf --font-sub Hachi.ttf --out cafe_mv.mp4
+```
