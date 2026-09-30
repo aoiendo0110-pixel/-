@@ -1,0 +1,249 @@
+:root {
+  --pink: #ff8fb8;
+  --pink-deep: #f0609a;
+  --pink-pale: #ffe4ef;
+  --pink-milk: #fff5f9;
+  --cream: #fffaf3;
+  --choco: #7a4a52;
+  --text: #6b3f4b;
+  --sub: #b07a8b;
+  --lavender: #d9c2ff;
+  --mint: #bfeee0;
+  --radius: 28px;
+  --shadow: 0 10px 30px rgba(240, 96, 154, .18);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif;
+  color: var(--text);
+  line-height: 1.8;
+  background-color: var(--pink-milk);
+  background-image:
+    radial-gradient(circle, #ffd3e4 2px, transparent 2.5px),
+    radial-gradient(circle, #ffe9f2 2px, transparent 2.5px);
+  background-size: 28px 28px;
+  background-position: 0 0, 14px 14px;
+  overflow-x: hidden;
+}
+a { color: inherit; }
+img { max-width: 100%; display: block; }
+
+/* ---------- ヘッダー ---------- */
+.site-header {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(255, 245, 249, .88);
+  backdrop-filter: blur(8px);
+  border-bottom: 3px dotted var(--pink);
+}
+.site-header .inner {
+  max-width: 1080px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 16px;
+}
+.logo {
+  font-family: "Mochiy Pop One", sans-serif;
+  font-size: 1.35rem; color: var(--pink-deep);
+  text-decoration: none; letter-spacing: .04em;
+  text-shadow: 2px 2px 0 #fff;
+  white-space: nowrap;
+}
+.logo span { color: var(--choco); }
+.nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.nav a {
+  text-decoration: none; font-weight: 700; font-size: .9rem;
+  padding: 6px 14px; border-radius: 999px;
+  background: #fff; border: 2px solid var(--pink-pale);
+  transition: .2s;
+}
+.nav a:hover, .nav a[aria-current="page"] {
+  background: var(--pink); color: #fff; border-color: var(--pink);
+}
+
+/* ---------- 共通 ---------- */
+main { max-width: 1080px; margin: 0 auto; padding: 0 16px 80px; }
+section { margin-top: 72px; }
+.section-title {
+  text-align: center;
+  font-family: "Mochiy Pop One", sans-serif;
+  color: var(--pink-deep);
+  font-size: clamp(1.5rem, 4vw, 2.1rem);
+  margin: 0 0 8px;
+}
+.section-title::before, .section-title::after { content: "♡"; margin: 0 .5em; color: var(--pink); font-size: .8em; }
+.section-sub { text-align: center; color: var(--sub); margin: 0 0 32px; letter-spacing: .2em; font-size: .85rem; }
+
+.frill-card {
+  position: relative;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px;
+}
+.frill-card::before {
+  content: ""; position: absolute; inset: 8px;
+  border: 2px dashed var(--pink-pale); border-radius: calc(var(--radius) - 8px);
+  pointer-events: none;
+}
+
+.btn {
+  display: inline-block; text-decoration: none; font-weight: 700;
+  padding: 12px 30px; border-radius: 999px;
+  background: linear-gradient(135deg, var(--pink), var(--pink-deep));
+  color: #fff; box-shadow: 0 6px 0 #d94a86, var(--shadow);
+  transition: transform .15s, box-shadow .15s;
+}
+.btn:hover { transform: translateY(3px); box-shadow: 0 3px 0 #d94a86, var(--shadow); }
+.btn.ghost { background: #fff; color: var(--pink-deep); box-shadow: 0 6px 0 var(--pink-pale), var(--shadow); }
+
+/* ---------- ホーム：ヒーロー ---------- */
+.hero {
+  position: relative; text-align: center;
+  padding: 64px 16px 110px;
+  background: linear-gradient(180deg, #ffd6e7 0%, #ffeaf3 60%, var(--pink-milk) 100%);
+  overflow: hidden;
+}
+.hero::after { /* 下のスカラップ */
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 36px;
+  background: radial-gradient(circle at 18px 0, transparent 17px, var(--pink-milk) 18px) repeat-x;
+  background-size: 36px 36px;
+}
+.hero-kicker { letter-spacing: .35em; color: var(--pink-deep); font-weight: 700; font-size: .85rem; margin: 0; }
+.hero h1 {
+  font-family: "Mochiy Pop One", sans-serif;
+  font-size: clamp(2.2rem, 8vw, 4.4rem);
+  line-height: 1.25; margin: 12px 0 8px;
+  color: #fff;
+  text-shadow: 3px 3px 0 var(--pink-deep), -2px -2px 0 var(--pink-deep), 2px -2px 0 var(--pink-deep), -2px 2px 0 var(--pink-deep), 0 10px 24px rgba(240,96,154,.35);
+}
+.hero-lead { margin: 0 auto 28px; max-width: 520px; }
+.hero-duo {
+  display: flex; justify-content: center; align-items: flex-end; gap: clamp(8px, 4vw, 40px);
+  margin: 12px auto 28px;
+}
+.hero-duo img { width: min(38vw, 230px); filter: drop-shadow(0 12px 18px rgba(240,96,154,.25)); animation: bob 3.2s ease-in-out infinite; }
+.hero-duo img:last-child { animation-delay: -1.6s; }
+.hero-heart { font-size: clamp(1.8rem, 6vw, 3rem); color: var(--pink-deep); align-self: center; animation: beat 1.2s ease-in-out infinite; }
+.hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+@keyframes bob { 50% { transform: translateY(-10px) rotate(-1.5deg); } }
+@keyframes beat { 0%,100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+
+/* ---------- ホーム：キャラカード ---------- */
+.chara-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; }
+.chara-card {
+  text-decoration: none; display: flex; flex-direction: column; align-items: center; text-align: center;
+  transition: transform .25s;
+}
+.chara-card:hover { transform: translateY(-6px) rotate(-.6deg); }
+.chara-card .thumb {
+  width: 100%; aspect-ratio: 1; border-radius: 50%;
+  display: grid; place-items: center; margin-bottom: 16px;
+  background: var(--card-bg, var(--pink-pale));
+}
+.chara-card .thumb img { width: 78%; }
+.chara-card .name { font-family: "Mochiy Pop One", sans-serif; font-size: 1.6rem; color: var(--card-accent, var(--pink-deep)); margin: 0; }
+.chara-card .ruby { font-size: .8rem; letter-spacing: .25em; color: var(--sub); margin: 0 0 8px; }
+.chara-card .catch { margin: 0 0 16px; }
+.more { font-weight: 700; color: var(--card-accent, var(--pink-deep)); }
+
+/* ---------- ホーム：About / News ---------- */
+.about { display: grid; grid-template-columns: 1fr; gap: 12px; text-align: center; }
+.news-list { list-style: none; margin: 0; padding: 0; }
+.news-list li { display: flex; gap: 16px; padding: 12px 4px; border-bottom: 2px dotted var(--pink-pale); flex-wrap: wrap; }
+.news-list time { color: var(--pink-deep); font-weight: 700; min-width: 7em; }
+
+/* ---------- キャラページ ---------- */
+.profile-hero {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 32px; align-items: center;
+  margin-top: 40px;
+}
+.profile-visual {
+  position: relative; border-radius: 40% 40% var(--radius) var(--radius);
+  background: var(--card-bg, var(--pink-pale)); padding: 24px;
+  box-shadow: var(--shadow);
+}
+.profile-visual img { width: 100%; animation: bob 3.4s ease-in-out infinite; }
+.profile-visual .badge {
+  position: absolute; top: 16px; left: 16px;
+  background: #fff; color: var(--card-accent); font-weight: 700; font-size: .8rem;
+  padding: 4px 14px; border-radius: 999px; box-shadow: var(--shadow);
+}
+.profile-name { font-family: "Mochiy Pop One", sans-serif; font-size: clamp(2rem, 6vw, 3.2rem); color: var(--card-accent); margin: 0; line-height: 1.3; }
+.profile-ruby { letter-spacing: .3em; color: var(--sub); margin: 0 0 12px; font-size: .9rem; }
+.profile-catch {
+  display: inline-block; background: var(--card-accent); color: #fff; font-weight: 700;
+  padding: 6px 18px; border-radius: 999px 999px 999px 6px; margin-bottom: 16px;
+}
+.quote {
+  font-size: 1.05rem; background: #fff; border-radius: 22px; padding: 16px 20px; position: relative;
+  box-shadow: var(--shadow);
+}
+.quote::before { content: "“"; position: absolute; top: -18px; left: 14px; font-size: 3rem; color: var(--card-accent); line-height: 1; }
+
+.status-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+.status-table th, .status-table td { padding: 10px 16px; text-align: left; }
+.status-table th {
+  width: 34%; background: var(--card-bg); color: var(--card-accent); border-radius: 999px 0 0 999px; white-space: nowrap;
+}
+.status-table td { background: var(--pink-milk); border-radius: 0 999px 999px 0; }
+
+.meters { display: grid; gap: 14px; }
+.meter-label { display: flex; justify-content: space-between; font-weight: 700; font-size: .9rem; }
+.meter { height: 16px; background: var(--pink-pale); border-radius: 999px; overflow: hidden; }
+.meter > span {
+  display: block; height: 100%; width: 0; border-radius: 999px;
+  background: repeating-linear-gradient(45deg, var(--card-accent) 0 10px, color-mix(in srgb, var(--card-accent) 70%, #fff) 10px 20px);
+  transition: width 1.2s cubic-bezier(.2,.9,.3,1.2);
+}
+
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; }
+.likes { display: flex; flex-wrap: wrap; gap: 10px; list-style: none; padding: 0; margin: 0; }
+.likes li { background: var(--card-bg); color: var(--card-accent); font-weight: 700; padding: 6px 16px; border-radius: 999px; }
+.card-h { font-family: "Mochiy Pop One", sans-serif; color: var(--card-accent); margin: 0 0 16px; font-size: 1.2rem; }
+
+.lines { display: grid; gap: 14px; }
+.lines p { margin: 0; background: #fff; border-radius: 20px 20px 20px 6px; padding: 12px 18px; box-shadow: var(--shadow); max-width: 90%; width: fit-content; }
+.lines p:nth-child(even) { justify-self: end; border-radius: 20px 20px 6px 20px; }
+
+.next-chara { text-align: center; }
+
+/* テーマ色 */
+.theme-momo { --card-accent: #f0609a; --card-bg: #ffe0ec; }
+.theme-ruru { --card-accent: #a77be0; --card-bg: #f1e6ff; }
+
+/* ---------- フッター ---------- */
+.site-footer {
+  text-align: center; padding: 40px 16px 32px; color: #fff; font-size: .85rem;
+  background: var(--pink); position: relative;
+}
+.site-footer::before {
+  content: ""; position: absolute; left: 0; right: 0; top: -18px; height: 18px;
+  background: radial-gradient(circle at 18px 18px, var(--pink) 17px, transparent 18px) repeat-x;
+  background-size: 36px 18px;
+}
+.site-footer p { margin: 4px 0; }
+
+/* ---------- ふわふわハート ---------- */
+.floaty {
+  position: fixed; top: -40px; pointer-events: none; z-index: 1;
+  color: var(--pink); opacity: .7; animation: fall linear forwards;
+}
+@keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
+
+/* ---------- スクロールで出現 ---------- */
+.reveal { opacity: 0; transform: translateY(24px); transition: .7s ease; }
+.reveal.show { opacity: 1; transform: none; }
+
+@media (max-width: 720px) {
+  .profile-hero { grid-template-columns: 1fr; }
+  .profile-text { text-align: center; }
+  .site-header .inner { flex-direction: column; gap: 6px; }
+  .frill-card { padding: 22px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
