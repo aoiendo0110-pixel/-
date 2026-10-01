@@ -87,12 +87,13 @@ python3 animate_illust.py --image illust.png --out anim.mp4 --webm anim_alpha.we
 | bokeh | 8 (loop) | レンズに光が入ったときの丸いボケ玉がポワポワ漂う |
 | leak_bokeh | 8 (loop) | ライトリーク + ボケ玉 |
 | lightleak_white / bokeh_white / leak_bokeh_white | 8 (loop) | 上の3つの白バージョン |
+| glitter_leak / glitter_leak_white | 8 (loop) | ライトリーク + 光の当たる所で瞬くラメと星 (カラー / 白) |
 
 ```
 python3 make_fx.py --out fx_out            # 全部
 python3 make_fx.py --out fx_out pop hearts # 一部だけ
 ```
 
-- sparkle / steam / shine / aurora / lightleak / bokeh / leak_bokeh (と白版) はスクリーン・加算合成用の黒背景版 (`_blackback.mp4`) も出る
+- sparkle / steam / shine / aurora / lightleak / bokeh / leak_bokeh / glitter_leak (と白版) はスクリーン・加算合成用の黒背景版 (`_blackback.mp4`) も出る
 - 湯気・光・粉砂糖のような半透明のものは、グリーンバックだと緑が透けるので透過版を推奨
 - shine はお菓子のレイヤーでクリッピング (またはスクリーン合成) して使う想定

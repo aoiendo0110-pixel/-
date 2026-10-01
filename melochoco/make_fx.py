@@ -680,6 +680,88 @@ def setup_leak_bokeh_white(rng, D):
     return P
 
 
+# ---------------------------------------------------------------- 15/16. キラキラのライトリーク (loop)
+# ライトリークの上に、光の当たっている所ほど強く瞬くラメと星を足す.
+
+def glint_light(L, cx, cy, size, ang, col, amp):
+    x0, x1 = max(int(cx - size), 0), min(int(cx + size) + 2, W)
+    y0, y1 = max(int(cy - size), 0), min(int(cy + size) + 2, H)
+    if x0 >= x1 or y0 >= y1 or amp <= 0:
+        return
+    ys, xs = np.mgrid[y0:y1, x0:x1].astype(np.float32)
+    u, v = rot((xs + 0.5 - cx) / size, (ys + 0.5 - cy) / size, ang)
+
+    def rays(p, q, w):
+        t = clip01(1 - np.abs(p))
+        return np.exp(-(q / (w * t ** 1.5 + 1e-4)) ** 2) * t
+
+    d1, d2 = (u + v) * 1.6, (u - v) * 1.6
+    ray = np.maximum.reduce([rays(u, v, 0.06), rays(v, u, 0.06), 0.5 * rays(d1, d2, 0.08), 0.5 * rays(d2, d1, 0.08)])
+    r = np.hypot(u, v)
+    v_ = (ray * 1.5 + 2.5 * np.exp(-(r / 0.08) ** 2) + 0.4 * np.exp(-(r / 0.3) ** 2)) * amp
+    L[y0:y1, x0:x1] += v_[..., None] * col
+
+
+def setup_glitter_leak(rng, D, white=False):
+    leak = setup_leak(rng, D)
+    if white:
+        whiten(leak, rng)
+        for p in leak:
+            p["amp"] *= 0.55
+        leak[0]["streak"] = WHITE
+    gcols = ([rgb((255, 255, 255)), rgb((255, 250, 235))] if white else
+             [rgb((255, 255, 255)), rgb((255, 225, 150)), rgb((255, 190, 215))])
+    stars, dots = [], []
+    for i in range(70):
+        k = int(rng.choice([3, 4, 5, 6]))
+        side = rng.random() < 0.5
+        pos = [((rng.beta(1.3, 4) if side else 1 - rng.beta(1.3, 4)) * W, rng.uniform(0, H)) for _ in range(k)]
+        stars.append(dict(k=k, ph=rng.random(), pos=pos, size=rng.uniform(25, 90) * (1.6 if i % 7 == 0 else 1),
+                          ang=rng.uniform(-0.3, 0.3), col=gcols[i % len(gcols)]))
+    for i in range(420):
+        side = rng.random() < 0.5
+        dots.append(dict(x=(rng.beta(1.2, 3) if side else 1 - rng.beta(1.2, 3)) * W, y=rng.uniform(0, H),
+                         k=int(rng.choice([4, 6, 8, 10])), ph=rng.random(), sig=rng.uniform(1.0, 2.6),
+                         dy=rng.uniform(-50, -10), col=gcols[i % len(gcols)]))
+    return dict(leak=leak, stars=stars, dots=dots)
+
+
+def setup_glitter_leak_white(rng, D):
+    return setup_glitter_leak(rng, D, white=True)
+
+
+def fx_glitter_leak(F, t, P, D):
+    L = leak_light(t, P["leak"], D)
+    lum = 1 - np.exp(-L.max(-1))      # 光の当たり具合 (ラメの強さに使う)
+
+    def lit(x, y):
+        return 0.3 + 0.7 * float(lum[min(max(int(y), 0), H - 1), min(max(int(x), 0), W - 1)])
+
+    w1 = TAU * t / D
+    for p in P["dots"]:
+        tw = max(0.0, math.sin(TAU * (p["k"] * t / D + p["ph"]))) ** 6
+        if tw < 0.02:
+            continue
+        x, y = p["x"], (p["y"] + p["dy"] * math.sin(w1 + p["ph"] * TAU)) % H
+        sg = p["sig"]
+        x0, x1 = max(int(x - 3 * sg), 0), min(int(x + 3 * sg) + 2, W)
+        y0, y1 = max(int(y - 3 * sg), 0), min(int(y + 3 * sg) + 2, H)
+        if x0 >= x1 or y0 >= y1:
+            continue
+        ys, xs = np.mgrid[y0:y1, x0:x1].astype(np.float32)
+        g = np.exp(-((xs + 0.5 - x) ** 2 + (ys + 0.5 - y) ** 2) / (2 * sg * sg)) * 3.0 * tw * lit(x, y)
+        L[y0:y1, x0:x1] += g[..., None] * p["col"]
+    for p in P["stars"]:
+        c = t / D * p["k"] + p["ph"]
+        idx, u = int(c) % p["k"], c % 1
+        if u > 0.5:
+            continue
+        e = math.sin(math.pi * u / 0.5) ** 2
+        x, y = p["pos"][idx]
+        glint_light(L, x, y, p["size"] * e, p["ang"] + 0.6 * u, p["col"], e * lit(x, y))
+    light_to_frame(F, L)
+
+
 # ---------------------------------------------------------------- 一覧
 
 # name: (秒数, 描画関数, セットアップ関数, seed, loop か)
@@ -701,11 +783,13 @@ EFFECTS = {
     "lightleak_white":  (8, fx_lightleak, setup_leak_white, 12, True),
     "bokeh_white":      (8, fx_bokeh, setup_bokeh_white, 13, True),
     "leak_bokeh_white": (8, fx_leak_bokeh, setup_leak_bokeh_white, 14, True),
+    "glitter_leak":       (8, fx_glitter_leak, setup_glitter_leak, 15, True),
+    "glitter_leak_white": (8, fx_glitter_leak, setup_glitter_leak_white, 15, True),
 }
 
 # 光りもの. スクリーン/加算合成用の黒背景版 (<name>_blackback.mp4) も書き出す
 GLOW = {"sparkle", "steam", "shine", "aurora", "lightleak", "bokeh", "leak_bokeh",
-        "lightleak_white", "bokeh_white", "leak_bokeh_white"}
+        "lightleak_white", "bokeh_white", "leak_bokeh_white", "glitter_leak", "glitter_leak_white"}
 BLACK = np.zeros(3, np.float32)
 
 _cache = {}
