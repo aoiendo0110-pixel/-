@@ -65,3 +65,28 @@ python3 animate_illust.py --image illust.png --out anim.mp4 --webm anim_alpha.we
 ```
 
 - `--webm` は背景透過の VP9。`--preview 1.8 3.0` で指定秒の静止画だけ書き出し
+
+## 合成用エフェクト素材 (`make_fx.py`)
+
+3Dのお菓子・チョコの動画に重ねて使う汎用エフェクト。1920x1080 / 30fps で、
+透過 ProRes 4444 (`.mov`)・透過 VP9 (`.webm`)・グリーンバック (`_greenback.mp4`) を書き出す。
+
+| 名前 | 秒 | 内容 |
+|---|---|---|
+| sparkle | 8 (loop) | キラキラが瞬く (画面中央は少なめ) |
+| sprinkles | 8 (loop) | カラースプレーが回りながら降る |
+| hearts | 8 (loop) | ぷっくりハートがゆらゆら上る |
+| confetti | 7 | 左右下からクラッカーの紙吹雪 |
+| steam | 8 (loop) | 下中央から立ちのぼる湯気 |
+| sugar | 10 (loop) | 粉砂糖がふわふわ舞い落ちる (奥行きぼかし付き) |
+| shine | 5 | 斜めの光が2回スーッと通る (ツヤ出し用) |
+| pop | 5 | 登場時の「ポン!」(閃光・リング・集中線・ハートと星が飛び散る) |
+| drip_choco / drip_berry | 6 | 画面上からチョコ / いちごチョコが垂れてくる |
+
+```
+python3 make_fx.py --out fx_out            # 全部
+python3 make_fx.py --out fx_out pop hearts # 一部だけ
+```
+
+- 湯気・光・粉砂糖のような半透明のものは、グリーンバックだと緑が透けるので透過版を推奨
+- shine はお菓子のレイヤーでクリッピング (またはスクリーン合成) して使う想定
