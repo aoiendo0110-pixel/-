@@ -552,6 +552,104 @@ def fx_aurora(F, t, P, D):
     F.over(0, 0, rgb((255, 255, 255)), big)
 
 
+# ---------------------------------------------------------------- 12〜14. ライトリーク・ボケ玉 (loop)
+# 光は足し算で重ねて最後に 1-exp(-x) で丸め、アルファ = RGB の最大値にする.
+# 黒背景版にスクリーン/加算合成すると、レンズに光が入ったような見え方になる.
+
+def light_to_frame(F, L):
+    light = 1 - np.exp(-L)
+    F.px[..., :3] = light
+    F.px[..., 3] = light.max(-1)
+
+
+LEAK_COLS = [rgb(c) for c in [(255, 110, 25), (255, 60, 120), (255, 170, 40), (255, 80, 60), (240, 90, 200)]]
+
+
+def setup_leak(rng, D):
+    blobs = []
+    for i in range(7):
+        side = i % 2   # 左右の端から差し込む
+        blobs.append(dict(x=(-0.05 + 0.18 * rng.random()) if side == 0 else (1.05 - 0.18 * rng.random()),
+                          y=rng.uniform(0.0, 1.0), r=rng.uniform(0.15, 0.32), ax=rng.uniform(0.03, 0.1),
+                          ay=rng.uniform(0.05, 0.15), n=int(rng.choice([1, -1])), ph=rng.uniform(0, TAU),
+                          fl=int(rng.choice([1, 2, 3])), ph2=rng.uniform(0, TAU),
+                          amp=rng.uniform(1.6, 3.0), col=LEAK_COLS[i % len(LEAK_COLS)]))
+    return blobs
+
+
+def leak_light(t, P, D):
+    h, w = H // SC, W // SC
+    ys, xs = np.mgrid[0:h, 0:w].astype(np.float32)
+    xs, ys = xs / w, ys / h * (H / W)
+    L = np.zeros((h, w, 3), np.float32)
+    w1 = TAU * t / D
+    for b in P:
+        cx = b["x"] + b["ax"] * math.cos(b["n"] * w1 + b["ph"])
+        cy = (b["y"] + b["ay"] * math.sin(b["n"] * w1 + b["ph"])) * H / W
+        k = b["amp"] * (0.5 + 0.5 * math.sin(b["fl"] * w1 + b["ph2"])) ** 1.5
+        g = np.exp(-((xs - cx) ** 2 + (ys - cy) ** 2) / (2 * (b["r"] * 0.5) ** 2))
+        L += k * g[..., None] * b["col"]
+    # 斜めに走る光の筋
+    s = (xs * 0.94 + ys * 0.34)
+    c = 0.5 + 0.35 * math.sin(w1)
+    L += (0.9 * (0.5 + 0.5 * math.sin(2 * w1)) ** 2 * np.exp(-((s - c) / 0.05) ** 2))[..., None] * rgb((255, 190, 130))
+    out = np.empty((H, W, 3), np.float32)
+    for ch in range(3):
+        im = Image.fromarray(L[..., ch].astype(np.float32))
+        out[..., ch] = np.asarray(im.resize((W, H), Image.BICUBIC))
+    return np.maximum(out, 0)
+
+
+def setup_bokeh(rng, D):
+    cols = [rgb(c) for c in [(255, 250, 240), (255, 200, 120), (255, 150, 190), (255, 185, 90), (220, 225, 255)]]
+    ps = []
+    for i in range(42):
+        z = rng.random()
+        ps.append(dict(x=rng.uniform(0, W), y=rng.uniform(0, H), r=18 + 110 * z ** 1.5, z=z,
+                       k=int(rng.choice([1, 2])), ph=rng.random(), dx=rng.uniform(-60, 60),
+                       dy=rng.uniform(-140, -40), amp=rng.uniform(0.6, 1.3) * (1.2 - 0.5 * z),
+                       col=cols[i % len(cols)]))
+    return ps
+
+
+def bokeh_light(t, P, D, L):
+    for p in P:
+        f = (t / D * p["k"] + p["ph"]) % 1
+        env = math.sin(math.pi * f) ** 2
+        cx = p["x"] + p["dx"] * (f - 0.5) * 2
+        cy = p["y"] + p["dy"] * (f - 0.5) * 2
+        r = p["r"]
+        x0, x1 = max(int(cx - r - 3), 0), min(int(cx + r + 4), W)
+        y0, y1 = max(int(cy - r - 3), 0), min(int(cy + r + 4), H)
+        if x0 >= x1 or y0 >= y1:
+            continue
+        ys, xs = np.mgrid[y0:y1, x0:x1].astype(np.float32)
+        d = np.hypot(xs + 0.5 - cx, ys + 0.5 - cy) / r
+        soft = 0.04 + 0.12 * p["z"]    # 大きい玉ほどフチがぼける
+        disc = clip01((1 - d) / soft)
+        ring = np.exp(-((d - 0.93) / (0.06 + soft * 0.5)) ** 2) * 0.6
+        v = (disc * (0.55 + 0.15 * d) + ring * disc.clip(0.3)) * p["amp"] * env
+        L[y0:y1, x0:x1] += v[..., None] * p["col"]
+    return L
+
+
+def fx_lightleak(F, t, P, D):
+    light_to_frame(F, leak_light(t, P, D))
+
+
+def fx_bokeh(F, t, P, D):
+    light_to_frame(F, bokeh_light(t, P, D, np.zeros((H, W, 3), np.float32)))
+
+
+def fx_leak_bokeh(F, t, P, D):
+    L = leak_light(t, P["leak"], D) * 0.8
+    light_to_frame(F, bokeh_light(t, P["bokeh"], D, L))
+
+
+def setup_leak_bokeh(rng, D):
+    return dict(leak=setup_leak(rng, D), bokeh=setup_bokeh(rng, D)[:30])
+
+
 # ---------------------------------------------------------------- 一覧
 
 # name: (秒数, 描画関数, セットアップ関数, seed, loop か)
@@ -567,10 +665,13 @@ EFFECTS = {
     "drip_choco":  (6, fx_drip_choco, setup_drip, 9, False),
     "drip_berry":  (6, fx_drip_berry, setup_drip, 10, False),
     "aurora":      (10, fx_aurora, setup_aurora, 11, True),
+    "lightleak":   (8, fx_lightleak, setup_leak, 12, True),
+    "bokeh":       (8, fx_bokeh, setup_bokeh, 13, True),
+    "leak_bokeh":  (8, fx_leak_bokeh, setup_leak_bokeh, 14, True),
 }
 
 # 光りもの. スクリーン/加算合成用の黒背景版 (<name>_blackback.mp4) も書き出す
-GLOW = {"sparkle", "steam", "shine", "aurora"}
+GLOW = {"sparkle", "steam", "shine", "aurora", "lightleak", "bokeh", "leak_bokeh"}
 BLACK = np.zeros(3, np.float32)
 
 _cache = {}
