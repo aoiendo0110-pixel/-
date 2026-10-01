@@ -82,11 +82,13 @@ python3 animate_illust.py --image illust.png --out anim.mp4 --webm anim_alpha.we
 | shine | 5 | 斜めの光が2回スーッと通る (ツヤ出し用) |
 | pop | 5 | 登場時の「ポン!」(閃光・リング・集中線・ハートと星が飛び散る) |
 | drip_choco / drip_berry | 6 | 画面上からチョコ / いちごチョコが垂れてくる |
+| aurora | 10 (loop) | 白いオーロラのリボンがふわふわ流れる |
 
 ```
 python3 make_fx.py --out fx_out            # 全部
 python3 make_fx.py --out fx_out pop hearts # 一部だけ
 ```
 
+- sparkle / steam / shine / aurora はスクリーン・加算合成用の黒背景版 (`_blackback.mp4`) も出る
 - 湯気・光・粉砂糖のような半透明のものは、グリーンバックだと緑が透けるので透過版を推奨
 - shine はお菓子のレイヤーでクリッピング (またはスクリーン合成) して使う想定

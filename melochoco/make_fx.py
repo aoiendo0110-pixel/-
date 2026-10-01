@@ -521,6 +521,37 @@ def fx_drip_berry(F, t, P, D):
     drip_frame(F, t, P, rgb((240, 128, 165)))
 
 
+# ---------------------------------------------------------------- 11. 白いオーロラ (loop)
+
+def setup_aurora(rng, D):
+    return [dict(yb=yb, a1=rng.uniform(70, 120), l1=rng.uniform(280, 420), n1=int(rng.choice([1, -1])),
+                 a2=rng.uniform(20, 40), l2=rng.uniform(110, 170), n2=int(rng.choice([2, -2])),
+                 p=rng.uniform(0, TAU, 4), up=up, amp=amp)
+            for yb, up, amp in [(0.3, 120, 0.8), (0.56, 95, 0.6), (0.8, 75, 0.45)]]
+
+
+def fx_aurora(F, t, P, D):
+    h, w = H // SC, W // SC
+    ys, xs = np.mgrid[0:h, 0:w].astype(np.float32) * SC
+    w1 = TAU * t / D
+    # ふわっとさせるためのゆらぎ
+    xs = xs + 35 * np.sin(ys / 95 + 2 * w1) + 15 * np.sin(ys / 41 - 3 * w1)
+    x1 = xs[0]
+    inten = np.zeros((h, w), np.float32)
+    for b in P:
+        p = b["p"]
+        yc = (b["yb"] * H + b["a1"] * np.sin(x1 / b["l1"] + b["n1"] * w1 + p[0])
+              + b["a2"] * np.sin(x1 / b["l2"] + b["n2"] * w1 + p[1]))
+        d = yc[None, :] - ys
+        prof = np.where(d > 0, np.exp(-(np.maximum(d, 0) / b["up"]) ** 1.6), np.exp(-(d / 30) ** 2))
+        rays = 0.85 + 0.15 * np.sin(xs / 55 + w1 + 2.5 * np.sin(xs / 160 - w1 + p[2]))
+        along = 0.15 + 0.85 * (0.5 + 0.5 * np.sin(xs / W * math.pi * 2.2 - w1 + p[3])) ** 2
+        inten += b["amp"] * prof * rays * along
+    a = (1 - np.exp(-inten * 2.0)) * 0.9
+    big = np.asarray(Image.fromarray((a * 255).astype(np.uint8)).resize((W, H), Image.BICUBIC), np.float32) / 255
+    F.over(0, 0, rgb((255, 255, 255)), big)
+
+
 # ---------------------------------------------------------------- 一覧
 
 # name: (秒数, 描画関数, セットアップ関数, seed, loop か)
@@ -535,7 +566,12 @@ EFFECTS = {
     "pop":         (5, fx_pop, setup_pop, 8, False),
     "drip_choco":  (6, fx_drip_choco, setup_drip, 9, False),
     "drip_berry":  (6, fx_drip_berry, setup_drip, 10, False),
+    "aurora":      (10, fx_aurora, setup_aurora, 11, True),
 }
+
+# 光りもの. スクリーン/加算合成用の黒背景版 (<name>_blackback.mp4) も書き出す
+GLOW = {"sparkle", "steam", "shine", "aurora"}
+BLACK = np.zeros(3, np.float32)
 
 _cache = {}
 
@@ -567,7 +603,8 @@ def demo_bg(w=W, h=H):
 def _job(arg):
     name, i = arg
     F = render(name, i / FPS)
-    return F.straight_rgba().tobytes(), F.on(GREEN).tobytes(), F.on(DEMO).tobytes()
+    return (F.straight_rgba().tobytes(), F.on(GREEN).tobytes(), F.on(DEMO).tobytes(),
+            F.on(BLACK).tobytes() if name in GLOW else None)
 
 
 DEMO = demo_bg()
@@ -588,12 +625,13 @@ def export(name, out, pool):
     p_gb = ff([*raw, "-pix_fmt", "rgb24", "-i", "-", *h264], f"{out}/{name}_greenback.mp4")
     p_dm = ff([*raw, "-pix_fmt", "rgb24", "-i", "-", "-vf", "scale=960:540", *h264],
               f"{out}/demo_{name}.mp4")
-    for rgba, gb, dm in pool.imap(_job, [(name, i) for i in range(D * FPS)], chunksize=2):
-        p_mov.stdin.write(rgba)
-        p_webm.stdin.write(rgba)
-        p_gb.stdin.write(gb)
-        p_dm.stdin.write(dm)
-    for p in (p_mov, p_webm, p_gb, p_dm):
+    procs = [p_mov, p_webm, p_gb, p_dm]
+    if name in GLOW:
+        procs.append(ff([*raw, "-pix_fmt", "rgb24", "-i", "-", *h264], f"{out}/{name}_blackback.mp4"))
+    for frames in pool.imap(_job, [(name, i) for i in range(D * FPS)], chunksize=2):
+        for p, buf in zip(procs, (frames[0], *frames)):
+            p.stdin.write(buf)
+    for p in procs:
         p.stdin.close()
         p.wait()
 
