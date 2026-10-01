@@ -592,7 +592,7 @@ def leak_light(t, P, D):
     # 斜めに走る光の筋
     s = (xs * 0.94 + ys * 0.34)
     c = 0.5 + 0.35 * math.sin(w1)
-    L += (0.9 * (0.5 + 0.5 * math.sin(2 * w1)) ** 2 * np.exp(-((s - c) / 0.05) ** 2))[..., None] * rgb((255, 190, 130))
+    L += (0.9 * (0.5 + 0.5 * math.sin(2 * w1)) ** 2 * np.exp(-((s - c) / 0.05) ** 2))[..., None] * P[0].get("streak", rgb((255, 190, 130)))
     out = np.empty((H, W, 3), np.float32)
     for ch in range(3):
         im = Image.fromarray(L[..., ch].astype(np.float32))
@@ -650,6 +650,36 @@ def setup_leak_bokeh(rng, D):
     return dict(leak=setup_leak(rng, D), bokeh=setup_bokeh(rng, D)[:30])
 
 
+def whiten(ps, rng):
+    """色を白 (ほんのり暖色/寒色のゆらぎだけ) に置き換える."""
+    whites = [rgb(c) for c in [(255, 255, 255), (255, 250, 242), (246, 250, 255)]]
+    for i, p in enumerate(ps):
+        p["col"] = whites[i % 3]
+    return ps
+
+
+def setup_leak_white(rng, D):
+    ps = whiten(setup_leak(rng, D), rng)
+    for p in ps:
+        p["amp"] *= 0.55    # 白は色より明るく見えるので控えめに
+    ps[0]["streak"] = WHITE
+    return ps
+
+
+def setup_bokeh_white(rng, D):
+    return whiten(setup_bokeh(rng, D), rng)
+
+
+def setup_leak_bokeh_white(rng, D):
+    P = setup_leak_bokeh(rng, D)
+    whiten(P["leak"], rng)
+    for p in P["leak"]:
+        p["amp"] *= 0.55
+    P["leak"][0]["streak"] = WHITE
+    whiten(P["bokeh"], rng)
+    return P
+
+
 # ---------------------------------------------------------------- 一覧
 
 # name: (秒数, 描画関数, セットアップ関数, seed, loop か)
@@ -668,10 +698,14 @@ EFFECTS = {
     "lightleak":   (8, fx_lightleak, setup_leak, 12, True),
     "bokeh":       (8, fx_bokeh, setup_bokeh, 13, True),
     "leak_bokeh":  (8, fx_leak_bokeh, setup_leak_bokeh, 14, True),
+    "lightleak_white":  (8, fx_lightleak, setup_leak_white, 12, True),
+    "bokeh_white":      (8, fx_bokeh, setup_bokeh_white, 13, True),
+    "leak_bokeh_white": (8, fx_leak_bokeh, setup_leak_bokeh_white, 14, True),
 }
 
 # 光りもの. スクリーン/加算合成用の黒背景版 (<name>_blackback.mp4) も書き出す
-GLOW = {"sparkle", "steam", "shine", "aurora", "lightleak", "bokeh", "leak_bokeh"}
+GLOW = {"sparkle", "steam", "shine", "aurora", "lightleak", "bokeh", "leak_bokeh",
+        "lightleak_white", "bokeh_white", "leak_bokeh_white"}
 BLACK = np.zeros(3, np.float32)
 
 _cache = {}
