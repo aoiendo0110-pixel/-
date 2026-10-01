@@ -97,3 +97,22 @@ python3 make_fx.py --out fx_out pop hearts # 一部だけ
 - sparkle / steam / shine / aurora / lightleak / bokeh / leak_bokeh / glitter_leak (と白版) はスクリーン・加算合成用の黒背景版 (`_blackback.mp4`) も出る
 - 湯気・光・粉砂糖のような半透明のものは、グリーンバックだと緑が透けるので透過版を推奨
 - shine はお菓子のレイヤーでクリッピング (またはスクリーン合成) して使う想定
+
+## 3Dスイーツのグリーンバック素材 (`sweets_clips.py`)
+
+`render3d.py` の3Dお菓子 (チョコがけいちご・トリュフ・マカロン・カップケーキ・ドーナツ・プレゼント箱など) が動く素材。
+緑 (0,255,0) 背景の mp4 と、背景透過の webm を書き出す。
+
+```
+python3 sweets_clips.py --out clips/sweets [--only ichigo_bounce donut_roll]
+```
+
+| 名前 | 内容 | 長さ |
+|---|---|---|
+| ichigo_bounce | チョコがけいちごがぴょんぴょん跳ねる | 4秒 |
+| macaron_tower | マカロンが落ちてきて3段に積み上がり、ハートがのる | 4秒 |
+| cupcake_pop | カップケーキがぽんっと出てハートがはじける | 4秒 |
+| donut_roll | ドーナツが転がってきて止まってぴょん | 3.5秒 |
+| sweets_orbit | チョコハートのまわりをスイーツが回る (ループ) | 4秒 |
+| sweets_rain | スイーツが降ってくる 1920x1080 (ループ) | 6秒 |
+| gift_surprise | プレゼント箱が揺れて、お菓子が飛び出す | 4秒 |

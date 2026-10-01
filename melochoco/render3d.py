@@ -335,6 +335,52 @@ def c_candy(a, b):
     return f
 
 
+# ---- チョコ系の追加 --------------------------------------------------------------
+def c_choco_strawberry(p, n):
+    """先っぽをチョコにくぐらせたいちご (チョコの上に白いドリズル)."""
+    x, y, z = p[..., 0], p[..., 1], p[..., 2]
+    base = c_strawberry(p, n)
+    a = np.arctan2(y, x)
+    dip = z < -0.12 + 0.07 * np.sin(a * 6)
+    base[dip] = np.array([92, 46, 30]) / 255
+    dr = dip & (np.sin(z * 26 + np.sin(a * 3) * 2.5) > 0.7)
+    base[dr] = np.array([255, 240, 228]) / 255
+    return base
+
+
+def f_truffle(x, y, z):
+    """少しつぶれた丸いボンボンショコラ."""
+    return (x * x + y * y) / 0.78 + ((z + 0.05) / 0.72) ** 2 - 1
+
+
+def c_truffle(body, line):
+    def f(p, n):
+        x, y, z = p[..., 0], p[..., 1], p[..., 2]
+        base = np.broadcast_to(np.array(body, np.float32) / 255, p.shape).copy()
+        th = np.arctan2(y, x)
+        drz = np.zeros(z.shape, bool)
+        for zc, ph in ((0.05, 0.0), (0.3, 1.3), (0.5, 2.1)):  # 波打つドリズルを3本
+            drz |= np.abs(z - zc - 0.07 * np.sin(th * 7 + ph)) < 0.04
+        base[drz] = np.array(line) / 255
+        base[z > 0.64] = np.array(line) / 255  # てっぺんの飾り
+        return base
+    return f
+
+
+def c_donut_fine(p, n):
+    """c_donut のスプリンクルを細かくした版."""
+    x, y, z = p[..., 0], p[..., 1], p[..., 2]
+    base = c_donut(p, n)
+    th = np.arctan2(z, x)
+    icing = y < 0.04 + 0.07 * np.sin(th * 7)
+    base[icing] = np.array([255, 140, 185]) / 255
+    h = np.sin(np.floor(x * 30) * 12.9898 + np.floor(z * 30) * 78.233) * 43758.5
+    h = h - np.floor(h)
+    cols = np.array([[255, 255, 255], [120, 200, 255], [255, 230, 120], [110, 60, 40]]) / 255
+    sp = icing & (h > 0.9)
+    base[sp] = cols[(h[sp] * 100).astype(int) % 4]
+    return base
+
 OBJECTS = {
     "heart": (f_heart, c_const((255, 110, 165)), 0.25, 1.0),
     "heart_white": (f_heart, c_const((255, 236, 244)), 0.25, 1.0),
@@ -355,6 +401,10 @@ OBJECTS = {
     "cherry": (f_cherry, c_cherry, 0.1, 1.3),
     "candy": (f_candy, c_candy((255, 215, 90), (255, 255, 255)), 0.2, 1.2),
     "candy_p": (f_candy, c_candy((255, 120, 170), (255, 255, 255)), 0.2, 1.2),
+    "ichigo_choco": (f_strawberry, c_choco_strawberry, 0.2, 1.1),
+    "truffle": (f_truffle, c_truffle((88, 44, 28), (255, 150, 190)), 0.45, 1.3),
+    "truffle_w": (f_truffle, c_truffle((255, 240, 228), (150, 80, 50)), 0.45, 1.1),
+    "donut_front": (f_torus, c_donut_fine, 0.0, 0.7),
 }
 
 
