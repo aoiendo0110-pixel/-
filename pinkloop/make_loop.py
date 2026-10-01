@@ -1,7 +1,7 @@
 """ピンクのキラキラ×ハート素材がゆらゆら動くループ動画を作る。
 
     pip install numpy pillow imageio-ffmpeg
-    python3 make_loop.py --out pink_loop.mp4 --size 1080 --seconds 15
+    python3 make_loop.py --out pink_loop.mp4 --width 1920 --height 1080 --seconds 15
 
 最初と最後のフレームがつながるので、そのままループ再生できる。
 """
@@ -30,10 +30,11 @@ IRIS = hexc("#ffd6f0")
 
 
 # ---------- 背景: 液体みたいにうねるピンク ----------
-def background(S, th):
+def background(W, H, th):
     """th は 0..2π のループ位相。中の時間変化はすべて th の整数倍で回るのでループする。"""
-    s = S // 2  # 半分の解像度で計算して拡大 (なめらかな絵なので十分)
-    y, x = np.mgrid[0:s, 0:s].astype(np.float32) / s
+    # 半分の解像度で計算して拡大 (なめらかな絵なので十分)。座標は高さ基準
+    y, x = np.mgrid[0:H // 2, 0:W // 2].astype(np.float32) / (H // 2)
+    x = x - (W / H - 1) / 2  # 横長でも模様の中心を真ん中に
     # 斜めに流れる座標
     u = x * 0.8 + y * 0.6
     v = -x * 0.6 + y * 0.8
@@ -63,7 +64,7 @@ def background(S, th):
     glow += 0.7 * np.exp(-((x - 0.25 + 0.05 * np.cos(th)) ** 2 + (y - 0.78) ** 2) / 0.03)
     col = col + glow[..., None] * 0.35
 
-    img = Image.fromarray((np.clip(col, 0, 1) * 255).astype(np.uint8)).resize((S, S), Image.BICUBIC)
+    img = Image.fromarray((np.clip(col, 0, 1) * 255).astype(np.uint8)).resize((W, H), Image.BICUBIC)
     return np.asarray(img).astype(np.float32) / 255
 
 
@@ -105,11 +106,11 @@ def star_sprite(size):
 
 def screen_add(frame, sprite, cx, cy, amount, tint):
     """frame に sprite をスクリーン合成する (はみ出しはクリップ)。"""
-    S = frame.shape[0]
+    FH, FW = frame.shape[:2]
     h, w = sprite.shape
     x0, y0 = int(round(cx - w / 2)), int(round(cy - h / 2))
     xs, ys = max(0, x0), max(0, y0)
-    xe, ye = min(S, x0 + w), min(S, y0 + h)
+    xe, ye = min(FW, x0 + w), min(FH, y0 + h)
     if xs >= xe or ys >= ye:
         return
     a = sprite[ys - y0:ye - y0, xs - x0:xe - x0, None] * amount * tint
@@ -121,30 +122,32 @@ def screen_add(frame, sprite, cx, cy, amount, tint):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="pink_loop.mp4")
-    ap.add_argument("--size", type=int, default=1080)
+    ap.add_argument("--width", type=int, default=1920)
+    ap.add_argument("--height", type=int, default=1080)
     ap.add_argument("--seconds", type=float, default=15)
     ap.add_argument("--fps", type=int, default=30)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--preview", type=float, default=None, help="この秒の静止画だけ書き出す")
     args = ap.parse_args()
 
-    S, fps = args.size, args.fps
+    W, H, fps = args.width, args.height, args.fps
     n = int(args.seconds * fps)
     rng = np.random.default_rng(args.seed)
-    k = S / 1080
+    k = min(W, H) / 1080
+    area = W * H / (1080 * 1080)  # 画面の広さに合わせて数をふやす
 
     white = np.array([1, 1, 1], np.float32)
     pinkwhite = np.array([1, 0.86, 0.95], np.float32)
 
     # ハート: ゆっくり上へのぼりつつ、左右にゆらゆら
     hearts = []
-    for _ in range(60):
+    for _ in range(int(60 * area)):
         size = int(rng.choice([14, 18, 22, 26, 30, 36, 44, 54]) * k)
         spr = heart_sprite(size, fill_alpha=rng.uniform(0.15, 0.4))
         spr = np.asarray(Image.fromarray((spr * 255).astype(np.uint8)).rotate(
             rng.uniform(-30, 30), resample=Image.BICUBIC)).astype(np.float32) / 255
         hearts.append(dict(
-            spr=spr, x=rng.uniform(0, S), y=rng.uniform(0, S),
+            spr=spr, x=rng.uniform(0, W), y=rng.uniform(0, H),
             rise=int(rng.integers(1, 3)),          # ループ中に何周のぼるか
             sway=rng.uniform(10, 34) * k, sk=int(rng.integers(1, 4)), ph=rng.uniform(0, TAU),
             tw=int(rng.integers(2, 6)), amt=rng.uniform(0.55, 0.95),
@@ -152,30 +155,30 @@ def main():
         ))
     # キラキラ
     stars = []
-    for _ in range(220):
+    for _ in range(int(220 * area)):
         size = int(rng.choice([4, 5, 6, 8, 10, 14, 20]) * k)
         stars.append(dict(
-            spr=star_sprite(size), x=rng.uniform(0, S), y=rng.uniform(0, S),
+            spr=star_sprite(size), x=rng.uniform(0, W), y=rng.uniform(0, H),
             dx=rng.uniform(6, 20) * k, dk=int(rng.integers(1, 3)), ph=rng.uniform(0, TAU),
             tw=int(rng.integers(3, 9)), amt=rng.uniform(0.5, 1.0),
         ))
     # 大きいぼんやり光
     bokeh = [dict(spr=_soft_blob(int(110 * k)),
-                  x=rng.uniform(0, S), y=rng.uniform(0, S), r=rng.uniform(30, 90) * k,
-                  ph=rng.uniform(0, TAU), amt=rng.uniform(0.35, 0.6)) for _ in range(6)]
+                  x=rng.uniform(0, W), y=rng.uniform(0, H), r=rng.uniform(30, 90) * k,
+                  ph=rng.uniform(0, TAU), amt=rng.uniform(0.35, 0.6)) for _ in range(int(6 * area))]
 
     margin = 120 * k
 
     def render(i):
         p = (i % n) / n
         th = p * TAU
-        frame = background(S, th)
+        frame = background(W, H, th)
         for b in bokeh:
             screen_add(frame, b["spr"], b["x"] + b["r"] * np.cos(th + b["ph"]),
                        b["y"] + b["r"] * np.sin(th + b["ph"]),
                        b["amt"] * (0.75 + 0.25 * np.sin(2 * th + b["ph"])), white)
         for h in hearts:
-            span = S + margin * 2
+            span = H + margin * 2
             y = (h["y"] - p * span * h["rise"]) % span - margin
             x = h["x"] + h["sway"] * np.sin(h["sk"] * th + h["ph"])
             a = h["amt"] * (0.7 + 0.3 * np.sin(h["tw"] * th + h["ph"]))
@@ -191,7 +194,7 @@ def main():
         return
 
     cmd = [imageio_ffmpeg.get_ffmpeg_exe(), "-y", "-loglevel", "error",
-           "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{S}x{S}", "-r", str(fps), "-i", "-",
+           "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(fps), "-i", "-",
            "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "17", "-preset", "slow",
            "-movflags", "+faststart", args.out]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
@@ -206,11 +209,11 @@ def main():
 
 def bloom(frame):
     """明るいところをにじませて、キラッと光らせる。"""
-    S = frame.shape[0]
+    H, W = frame.shape[:2]
     hi = np.clip(frame - 0.78, 0, 1) * 4
-    small = Image.fromarray((np.clip(hi, 0, 1) * 255).astype(np.uint8)).resize((S // 4, S // 4), Image.BILINEAR)
-    b1 = np.asarray(small.filter(ImageFilter.GaussianBlur(4)).resize((S, S), Image.BICUBIC)).astype(np.float32) / 255
-    b2 = np.asarray(small.filter(ImageFilter.GaussianBlur(14)).resize((S, S), Image.BICUBIC)).astype(np.float32) / 255
+    small = Image.fromarray((np.clip(hi, 0, 1) * 255).astype(np.uint8)).resize((W // 4, H // 4), Image.BILINEAR)
+    b1 = np.asarray(small.filter(ImageFilter.GaussianBlur(4)).resize((W, H), Image.BICUBIC)).astype(np.float32) / 255
+    b2 = np.asarray(small.filter(ImageFilter.GaussianBlur(14)).resize((W, H), Image.BICUBIC)).astype(np.float32) / 255
     glow = np.clip(b1 * 0.45 + b2 * 0.5, 0, 1) * np.array([1, 0.9, 0.96], np.float32)
     out = 1 - (1 - frame) * (1 - glow)
     return (np.clip(out, 0, 1) * 255).astype(np.uint8)
