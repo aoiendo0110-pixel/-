@@ -1,6 +1,8 @@
-"""「絶対零度」のタイトルロゴ動画 (チョコ × リボン × フリル × ロリータ) をグリーンバックで書き出す.
+"""「絶対零度」「固めて」のタイトルロゴ動画 (チョコ × リボン × フリル × ロリータ) をグリーンバックで書き出す.
 
-  python3 zettai_reido_logo.py --font MochiyPopOne.ttf --out clips/text/zettai_reido_logo [--cache cache3d]
+  python3 zettai_reido_logo.py --font MochiyPopOne.ttf --logo zettai_reido --out clips/text/zettai_reido_logo
+  python3 zettai_reido_logo.py --font MochiyPopOne.ttf --logo katamete --out clips/text/katamete_logo
+言葉ごとの中身と配置は LOGOS で切り替える。
 
 構成 (1920x1080, 6秒):
   0.0-1.6  登場: 大文字が時間差でドンッ → むにっ + 集中線とハート → チョコが垂れる → 飾りが順にぽんぽん
@@ -34,6 +36,29 @@ CHOCO_D = (66, 33, 24)
 ICE = (150, 205, 255)
 
 SPRITES = {"bow_pink": (300, 48), "choco_heart": (520, 60), "heart": (160, 36)}
+
+# 言葉ごとの中身と配置. rows: (言葉, 中心, 傾き, 登場時刻, 文字の種類, 大きさ)
+LOGOS = {
+    "zettai_reido": dict(
+        rows=[("絶対", (760, 375), -5.0, 0.0, "ichigo", 1.0), ("零度", (1200, 680), 3.5, 0.24, "milk", 1.0)],
+        ruby=[("ぜったい", (800, 185), -5.0, 0.62, True), ("れいど", (1390, 500), 3.5, 0.80, False)],
+        tag=("−273.15", "°C"), tag_pos=(590, 770), banner="ABSOLUTE ZERO", banner_pos=(1210, 975),
+        bow=(500, 225, 22), heart=(1570, 300),
+        twinkles=[(420, 400, "w", 0.0), (1100, 200, "p", 0.35), (1600, 620, "w", 0.6), (1010, 560, "s", 0.15),
+                  (1620, 960, "p", 0.75), (780, 960, "s", 0.5), (1700, 420, "s", 0.9), (380, 640, "w", 0.25)],
+        floaters=[(560, 0.0, 26), (1500, 0.4, 18), (900, 0.7, 34), (1700, 0.2, 26), (380, 0.55, 18)],
+        flakes=[(1250, 300, 0.1), (390, 930, 0.6), (1700, 780, 0.35)]),
+    # 「固めて」: 大きい「固」を左上、「めて」を右下に。チョコを冷やして固めるイメージ
+    "katamete": dict(
+        rows=[("固", (700, 400), -6.0, 0.0, "milk", 1.3), ("めて", (1185, 700), 4.0, 0.2, "ichigo", 1.0)],
+        ruby=[("かた", (690, 150), -6.0, 0.55, False)],
+        tag=("ひやして", "30min"), tag_pos=(1440, 330), banner="FREEZE ME ♡", banner_pos=(1180, 975),
+        bow=(470, 215, 24), heart=(560, 800),
+        twinkles=[(1000, 230, "w", 0.0), (1220, 140, "p", 0.35), (1650, 600, "w", 0.6), (930, 600, "s", 0.15),
+                  (1640, 950, "p", 0.75), (820, 930, "s", 0.5), (1720, 160, "s", 0.9), (360, 560, "w", 0.25)],
+        floaters=[(420, 0.0, 26), (1580, 0.4, 18), (900, 0.7, 34), (1750, 0.2, 26), (700, 0.55, 18)],
+        flakes=[(1150, 330, 0.1), (360, 960, 0.6), (1720, 780, 0.35)]),
+}
 
 
 # ---------------------------------------------------------------- イージング
@@ -253,8 +278,8 @@ def ruby_tile(ch, font, choco):
     return im
 
 
-def lace_tag(font):
-    """スカラップのレース札 (ドイリー) に「−273.15 °C」."""
+def lace_tag(font, line1, line2):
+    """スカラップのレース札 (ドイリー) に2行の文字."""
     R = 150
     S = R * 2 + 60
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -278,20 +303,24 @@ def lace_tag(font):
         d.ellipse((x - 3, y - 3, x + 3, y + 3), fill=PINK)
     r2 = R - 38
     d.ellipse((c - r2, c - r2, c + r2, c + r2), fill=PINK_L)
-    f1, f2 = ImageFont.truetype(font, 54), ImageFont.truetype(font, 46)
-    d.text((c, c - 22), "−273.15", font=f1, anchor="mm", fill=CHOCO_B, stroke_width=5, stroke_fill=WHITE)
-    d.text((c, c + 40), "°C", font=f2, anchor="mm", fill=PINK_D, stroke_width=5, stroke_fill=WHITE)
-    for s in (-1, 1):  # 小さいハート
-        d.polygon(heart_poly(c + s * 78, c + 42, 13), fill=WHITE)
-        d.polygon(heart_poly(c + s * 78, c + 42, 9), fill=PINK)
+    f1 = ImageFont.truetype(font, 54)
+    if f1.getlength(line1) > r2 * 1.75:  # 札からはみ出さない大きさに
+        f1 = ImageFont.truetype(font, int(54 * r2 * 1.75 / f1.getlength(line1)))
+    f2 = ImageFont.truetype(font, 46)
+    d.text((c, c - 22), line1, font=f1, anchor="mm", fill=CHOCO_B, stroke_width=5, stroke_fill=WHITE)
+    d.text((c, c + 40), line2, font=f2, anchor="mm", fill=PINK_D, stroke_width=5, stroke_fill=WHITE)
+    hx = max(78, f2.getlength(line2) / 2 + 24)  # 小さいハートは2行目の外側に
+    for s in (-1, 1):
+        d.polygon(heart_poly(c + s * hx, c + 42, 13), fill=WHITE)
+        d.polygon(heart_poly(c + s * hx, c + 42, 9), fill=PINK)
     return im
 
 
 class Banner:
-    """レースのフリル付きリボン帯「ABSOLUTE ZERO」. 中心から左右に開く."""
+    """レースのフリル付きリボン帯. 中心から左右に開く."""
 
-    def __init__(self, font):
-        self.text = "ABSOLUTE ZERO"
+    def __init__(self, font, text):
+        self.text = text
         self.f = ImageFont.truetype(font, 50)
         self.w, self.h = 660, 96
         self.S = (self.w + 260, self.h + 90)
@@ -349,28 +378,27 @@ class Banner:
 
 # ---------------------------------------------------------------- シーン
 class Scene:
-    def __init__(self, font, cache):
+    def __init__(self, font, cache, logo):
+        cfg = self.cfg = LOGOS[logo]
         f = ImageFont.truetype(font, FS)
-        # 大文字の配置: 「絶対」を左上・「零度」を右下に段違いで (中心, 傾き, 登場時刻)
+        # 大文字: 行ごとに段違い・傾けて並べる
         self.letters = []
-        rows = [("絶対", (760, 375), -5.0, 0.0, "ichigo"), ("零度", (1200, 680), 3.5, 0.24, "milk")]
-        for word, (x0, y0), ang, t0, style in rows:
+        for word, (x0, y0), ang, t0, style, sc in cfg["rows"]:
             a = math.radians(ang)
             for j, ch in enumerate(word):
-                dx = (j - 0.5) * 290
+                dx = (j - (len(word) - 1) / 2) * 290 * sc
                 self.letters.append(dict(L=Letter(ch, f, style), x=x0 + dx * math.cos(a), y=y0 - dx * math.sin(a),
-                                         rot=ang, t0=t0 + j * 0.12))
+                                         rot=ang, t0=t0 + j * 0.12, sc=sc))
         self.ruby = []
-        for word, (x0, y0), ang, t0, choco in (("ぜったい", (800, 185), -5.0, 0.62, True),
-                                                 ("れいど", (1390, 500), 3.5, 0.80, False)):
+        for word, (x0, y0), ang, t0, choco in cfg["ruby"]:
             a = math.radians(ang)
             for j, ch in enumerate(word):
                 dx = (j - (len(word) - 1) / 2) * 84
                 self.ruby.append(dict(im=ruby_tile(ch, font, (j % 2 == 0) == choco), x=x0 + dx * math.cos(a),
                                       y=y0 - dx * math.sin(a), rot=ang + (-6, 5, -3, 6)[j % 4], t0=t0 + j * 0.05,
                                       i=len(self.ruby)))
-        self.tag = lace_tag(font)
-        self.banner = Banner(font)
+        self.tag = lace_tag(font, *cfg["tag"])
+        self.banner = Banner(font, cfg["banner"])
         self.hearts = {r: heart_sticker(r) for r in (18, 26, 34)}
         self.heart_w = heart_sticker(22, fill=WHITE, edge=PINK, line=PINK_D)
         self.sp_w, self.sp_p = sparkle(22), sparkle(28, PINK, WHITE)
@@ -381,11 +409,8 @@ class Scene:
         for name, (size, n) in SPRITES.items():
             paths = [os.path.join(cache, f"{name}_{size}_{i:02d}.png") for i in range(n)]
             self.spr[name] = [Image.open(p).convert("RGBA") for p in paths]
-        # 待機中のキラキラ・ハート (位置, 種類, 周期のずれ)
-        self.twinkles = [(420, 400, "w", 0.0), (1100, 200, "p", 0.35), (1600, 620, "w", 0.6), (1010, 560, "s", 0.15),
-                         (1620, 960, "p", 0.75), (780, 960, "s", 0.5), (1700, 420, "s", 0.9), (380, 640, "w", 0.25)]
-        self.floaters = [(560, 0.0, 26), (1500, 0.4, 18), (900, 0.7, 34), (1700, 0.2, 26), (380, 0.55, 18)]
-        self.flakes = [(1250, 300, 0.1), (390, 930, 0.6), (1700, 780, 0.35)]
+        # 待機中のキラキラ・ハート・雪 (位置, 種類, 周期のずれ)
+        self.twinkles, self.floaters, self.flakes = cfg["twinkles"], cfg["floaters"], cfg["flakes"]
 
     def sprite(self, name, rev):
         seq = self.spr[name]
@@ -406,7 +431,8 @@ class Scene:
         # 3Dのチョコハート (右上)
         k = ease_out_back((t - 1.05) / 0.45, 2.4) * out_scale(t, 2)
         if k > 0:
-            put(im, self.sprite("choco_heart", 0.22 * t), 1570, 300 + 10 * math.sin(P + 1) * idle, 0.5 * k,
+            hx, hy = self.cfg["heart"]
+            put(im, self.sprite("choco_heart", 0.22 * t), hx, hy + 10 * math.sin(P + 1) * idle, 0.5 * k,
                 8 * math.sin(P * 0.5))
         # 雪の結晶 (絶対零度らしさを少しだけ)
         for x, y, ph in self.flakes:
@@ -418,7 +444,8 @@ class Scene:
         k = ease_out_back((t - 0.9) / 0.5, 2.2) * out_scale(t, 3)
         if k > 0:
             spin = -200 * (1 - ease_out((t - 0.9) / 0.5))
-            put(im, self.tag, 590, 770 + 6 * math.sin(P + 2) * idle, k, -9 + spin + 3 * math.sin(P * 0.5) * idle)
+            tx, ty = self.cfg["tag_pos"]
+            put(im, self.tag, tx, ty + 6 * math.sin(P + 2) * idle, k, -9 + spin + 3 * math.sin(P * 0.5) * idle)
 
         # 大文字 (着地の集中線とハートも)
         for i, d in enumerate(self.letters):
@@ -445,16 +472,17 @@ class Scene:
                 d2 = ImageDraw.Draw(im)
                 for k2 in range(8):
                     a = 2 * math.pi * k2 / 8 + i
-                    r0, r1 = 175 + 120 * ease_out(q), 175 + 120 * ease_out(q) + 70 * (1 - q)
+                    r0 = (175 + 120 * ease_out(q)) * d["sc"]
+                    r1 = r0 + 70 * (1 - q)
                     d2.line([(x + r0 * math.cos(a), y + r0 * math.sin(a)), (x + r1 * math.cos(a), y + r1 * math.sin(a))],
                             fill=PINK if k2 % 2 else WHITE, width=max(2, round(12 * (1 - q))))
             g = d["L"].draw(drip, shine)  # クロマキーで汚れないよう半透明にはしない
-            put(im, g, x, y, s * o, rot, 1 + sq, 1 - sq)
+            put(im, g, x, y, s * o * d["sc"], rot, 1 + sq, 1 - sq)
             if 0 < land < 0.7:  # はじけるミニハート
                 q = land / 0.7
                 for k2 in range(3):
                     a = -math.pi / 2 + (k2 - 1) * 0.9 + i
-                    rr = 190 + 110 * ease_out(q)
+                    rr = (190 + 110 * ease_out(q)) * d["sc"]
                     put(im, self.hearts[18], x + rr * math.cos(a), y + rr * math.sin(a) - 30 * q,
                         (1 - q) * 1.2, 20 * (k2 - 1))
 
@@ -471,13 +499,15 @@ class Scene:
         ob = clamp01((t - 1.0) / 0.45)
         if ob > 0:
             b = self.banner.draw(ob, clamp01((t - 1.25) / 0.6), P * 1.5)
-            put(im, b, 1210, 975 + 5 * math.sin(P + 0.5) * idle, out_scale(t, 5), -2 + 1.2 * math.sin(P * 0.5) * idle)
+            bx, by = self.cfg["banner_pos"]
+            put(im, b, bx, by + 5 * math.sin(P + 0.5) * idle, out_scale(t, 5), -2 + 1.2 * math.sin(P * 0.5) * idle)
 
         # 3Dのリボン (「絶」の左上). ぽんっと出て、ゆらゆら
         k = ease_out_back((t - 0.75) / 0.4, 2.6) * out_scale(t, 3.5)
         if k > 0:
             wig = spring(t - 0.75 - 0.4, 14, 14, 4) + 5 * math.sin(P * 0.8) * idle
-            put(im, self.sprite("bow_pink", 0), 500, 225, 0.9 * k, 22 + wig)
+            wx, wy, wr = self.cfg["bow"]
+            put(im, self.sprite("bow_pink", 0), wx, wy, 0.9 * k, wr + wig)
 
         # キラキラ (ぱちっと)
         if t > 1.3:
@@ -492,9 +522,9 @@ class Scene:
 SCENE = None
 
 
-def _init(font, cache):
+def _init(font, cache, logo):
     global SCENE
-    SCENE = Scene(font, cache)
+    SCENE = Scene(font, cache, logo)
 
 
 def _frame(i):
@@ -504,6 +534,7 @@ def _frame(i):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--font", required=True, help="Mochiy Pop One など丸い太字")
+    ap.add_argument("--logo", default="zettai_reido", choices=list(LOGOS))
     ap.add_argument("--out", default="zettai_reido_logo")
     ap.add_argument("--cache", default="cache3d")
     ap.add_argument("--jobs", type=int, default=os.cpu_count())
@@ -512,14 +543,14 @@ def main():
     with Pool(a.jobs) as pool:
         R.build_sprites(pool, a.cache, SPRITES)
     if a.preview is not None:
-        _init(a.font, a.cache)
+        _init(a.font, a.cache, a.logo)
         for t in a.preview:
             bg = Image.new("RGBA", (W, H), (0, 255, 0, 255))
             bg.alpha_composite(SCENE.frame(t))
             bg.convert("RGB").save(f"{a.out}_{t:.2f}.png")
         return
     n = round(DUR * FPS)
-    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.cache)) as pool:
+    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.cache, a.logo)) as pool:
         frames = pool.map(_frame, range(n), chunksize=4)
     Image.frombytes("RGBA", (W, H), frames[int(n * 0.5)]).save(a.out + ".png")
     ff = imageio_ffmpeg.get_ffmpeg_exe()
