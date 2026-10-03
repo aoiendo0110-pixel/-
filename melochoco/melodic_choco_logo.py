@@ -1,20 +1,22 @@
-"""「メロディックチョコレート」の動く文字 (フェルト文字 × 五線譜のリボン × チョコ × レース) をグリーンバックで書き出す.
+"""「メロディックチョコレート」の動く文字 (文字が主役のロゴ) をグリーンバックで書き出す.
 
-  python3 melodic_choco_logo.py --font HachiMaruPop.ttf --fat 7 --out clips/text/melodic_choco_logo [--cache cache3d]
+  python3 melodic_choco_logo.py --font HachiMaruPop.ttf --fat 8 --out clips/text/melodic_choco_logo
 
-uketore_logo.py と同じ手書きの丸文字 + フェルトのステッチで、音楽モチーフを足した派手め版.
-  0.0-0.6  後ろの大きいレースのドイリーがくるっと開き、五線譜のリボンが左から描かれる
-  0.4-1.4  「メロディック」がリズムに合わせて1文字ずつ五線譜の上へぽんっ (着地ごとに音符が飛ぶ)
-  1.3-2.3  「チョコレート」が落ちてきてむにっ → 下からチョコがとろっと垂れる
-  2.3-5.4  全体がビートで脈打ち、文字は波のように順に跳ねる。音符・3Dのチョコ・ハートの紙吹雪が舞う
-  5.4-6.0  文字が音符のように上へ飛んで、ぽんっと消える
+背景の飾りは置かず、文字そのものを大きく・作り込んで見せる.
+  文字: 手書きの丸文字を太らせ、ステッチ・ツヤ・深い厚み・白フチ + ピンクの外フチ
+        「メロディック」= いちごピンク / 「チョコレート」= ミルクチョコの上半分にビターチョコがけ
+  飾り: 文字にくっつくものだけ (「メ」のリボン・「ク」の横の音符・文字の角のきらめき)
+  0.0-1.0  「メロディック」が1文字ずつ回りながらぽんっ
+  0.7-1.5  「チョコレート」が上からドンッ → むにっ
+  1.6      ロゴ全体がドンッと膨らみ、ツヤの光が横切る
+  1.8-5.3  ビートに合わせて文字が波のように跳ねる / ツヤがもう一度 / 角がキラッ
+  5.3-6.0  1文字ずつぽんっと弾けて消える
 クロマキー用に、緑系の色と半透明のぼかしは使わない。
 出力: <out>_greenback.mp4 (緑 0,255,0) / <out>.webm (背景透過) / <out>.png (確認用)
 """
 import argparse
 import math
 import os
-import random
 import subprocess
 from multiprocessing import Pool
 
@@ -22,29 +24,26 @@ import imageio_ffmpeg
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-import render3d as R
-from zettai_reido_logo import (CHOCO_D, PINK, PINK_D, PINK_L, WHITE, clamp01, ease_out, ease_out_back, heart_poly,
-                               heart_sticker, put, sparkle, spring)
+from zettai_reido_logo import CHOCO_D, PINK_D, WHITE, clamp01, ease_out, ease_out_back, put, sparkle, spring
 
 W, H, FPS, DUR = 1920, 1080, 30, 6.0
-EXIT_T = 5.4
-BEAT = 60 / 128  # ビートの間隔 (128BPM)
-SATIN, SATIN_D, SATIN_L = (236, 76, 138), (186, 38, 98), (255, 160, 198)
-LAV = ((222, 196, 255), (176, 140, 238))
-PINKS = ((255, 178, 212), (246, 120, 172))
-CREAM = ((255, 250, 244), (255, 214, 230))
-BERRY = ((246, 84, 132), (204, 34, 84))
-CHOCO = ((208, 144, 104), (140, 80, 50))
+EXIT_T = 5.3
+BEAT = 60 / 128
+FS = 300  # 文字の大きさの基準
 
-# 上の段 (文字, 中心, 大きさ, 傾き, 色, ステッチ色)
-TOP = [("メ", (395, 345), 1.0, -11, PINKS, WHITE), ("ロ", (595, 305), 0.92, 8, CREAM, PINK),
-       ("デ", (800, 350), 1.06, -6, BERRY, WHITE), ("ィ", (960, 405), 0.62, 12, LAV, WHITE),
-       ("ッ", (1080, 395), 0.62, -10, PINKS, WHITE), ("ク", (1245, 330), 1.0, 9, CREAM, PINK)]
-# 下の段 (チョコ色)
-BOTTOM = [("チ", (440, 690), 1.08, -8), ("ョ", (630, 750), 0.66, 12), ("コ", (815, 668), 1.06, 5),
-          ("レ", (1030, 705), 0.98, -10), ("ー", (1225, 712), 0.9, 4), ("ト", (1430, 680), 1.08, 9)]
-TOP_T0, BOTTOM_T0 = 0.42, 1.32
-STAFF = [(-40, 470), (300, 420), (650, 500), (1000, 420), (1350, 500), (1700, 420), (1980, 470)]
+STRAWBERRY = dict(top=(255, 190, 220), bot=(244, 96, 158), stitch=WHITE, ext=(150, 30, 80), ring=CHOCO_D)
+MILK = dict(top=(226, 170, 128), bot=(176, 112, 74), stitch=(255, 170, 205), ext=(70, 34, 22), ring=CHOCO_D,
+            glaze=((112, 58, 38), (78, 38, 24)))  # 上半分にかかるビターチョコ
+
+# (文字, 大きさ, 傾き, 上下のずれ). 横の位置は文字幅から自動で並べる
+LINE1 = [("メ", 1.0, -9, 10), ("ロ", 0.94, 6, -22), ("デ", 1.06, -5, 6), ("ィ", 0.6, 10, 62), ("ッ", 0.6, -8, 58),
+         ("ク", 1.0, 8, -14)]
+LINE2 = [("チ", 1.06, -7, 0), ("ョ", 0.64, 10, 66), ("コ", 1.04, 5, -16), ("レ", 0.98, -8, 8), ("ー", 0.92, 3, 10),
+         ("ト", 1.06, 8, -12)]
+LINE_Y = (345, 735)
+LINE_T0 = (0.0, 0.72)
+DRIPS = ""  # 文字の下に垂らす文字 (いまはチョコがけで表現するので無し)
+GAP = -18  # 白フチどうしを少し重ねて一体感を出す
 
 
 def hump(u):
@@ -55,327 +54,246 @@ def ease_in(x):
     return clamp01(x) ** 2
 
 
-def catmull(pts, n=600):
-    P = np.array(pts, float)
-    P = np.vstack([P[0] * 2 - P[1], P, P[-1] * 2 - P[-2]])
-    out, seg = [], len(P) - 3
-    for i in range(seg):
-        p0, p1, p2, p3 = P[i], P[i + 1], P[i + 2], P[i + 3]
-        for u in np.linspace(0, 1, n // seg, endpoint=False):
-            out.append(0.5 * ((2 * p1) + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u * u
-                              + (-p0 + 3 * p1 - 3 * p2 + p3) * u ** 3))
-    out.append(P[-2])
-    return np.array(out)
+# ---------------------------------------------------------------- 文字
+class Glyph:
+    """1文字のロゴ用スプライト. 外側 (厚み・ピンクの外フチ・白フチ・こげ茶フチ) と中身を分けて持ち、
+    間にチョコの垂れを挟む / 中身の上にツヤの帯を走らせる."""
 
-
-# ---------------------------------------------------------------- フェルト文字 (チョコの垂れ付き)
-class Felt:
-    """手書き丸文字を太らせたフェルト風の1文字. 外側と中身を分けて持ち、間にチョコの垂れを挟める."""
-
-    def __init__(self, ch, font, size, cols, stitch, fat, drips=False):
+    def __init__(self, ch, font, size, st, fat, drip):
         f = ImageFont.truetype(font, size)
-        S = self.S = int(size * 1.8)
+        S = self.S = int(size * 1.9)
 
-        def mask(st):
+        def mask(w):
             m = Image.new("L", (S, S), 0)
-            ImageDraw.Draw(m).text((S / 2, S / 2), ch, font=f, anchor="mm", fill=255, stroke_width=st + fat,
+            ImageDraw.Draw(m).text((S / 2, S / 2), ch, font=f, anchor="mm", fill=255, stroke_width=w + fat,
                                    stroke_fill=255)
             return m
-        m0, m1, m2 = mask(0), mask(9), mask(26)
+        m0, m_ring, m_white, m_out = mask(0), mask(10), mask(30), mask(38)
+        self.st = st
         outer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-        for k in range(12, 0, -1):
-            outer.paste(CHOCO_D + (255,), (round(5 * k / 12), round(13 * k / 12)), m2)
-        outer.paste(WHITE + (255,), (0, 0), m2)
-        outer.paste(CHOCO_D + (255,), (0, 0), m1)
+        n = 18
+        for k in range(n, 0, -1):  # 深い厚み
+            outer.paste(st["ext"] + (255,), (round(7 * k / n), round(20 * k / n)), m_out)
+        outer.paste(PINK_D + (255,), (0, 0), m_out)
+        outer.paste(WHITE + (255,), (0, 0), m_white)
+        outer.paste(st["ring"] + (255,), (0, 0), m_ring)
         self.outer = outer
         a = np.array(m0)
+        self.mask = m0
         bb = m0.getbbox()
-        top, bot = cols
-        self.bot = bot
         g = np.zeros((S, S, 4), np.uint8)
         yy = np.clip((np.arange(S) - bb[1]) / (bb[3] - bb[1]), 0, 1)[:, None]
         for c in range(3):
-            g[..., c] = (top[c] * (1 - yy) + bot[c] * yy).astype(np.uint8)
+            g[..., c] = (st["top"][c] * (1 - yy) + st["bot"][c] * yy).astype(np.uint8)
         g[..., 3] = a
         fill = Image.fromarray(g, "RGBA")
-        e1 = np.array(m0.filter(ImageFilter.MinFilter(13))) > 128
-        e2 = np.array(m0.filter(ImageFilter.MinFilter(19))) > 128
+        if "glaze" in st:  # 上半分のチョコがけ: 下の縁が波打ち、ところどころ垂れる
+            Yg, Xg = np.mgrid[0:S, 0:S]
+            hgt = bb[3] - bb[1]
+            edge = bb[1] + hgt * 0.42 + 9 * np.sin(Xg / 19) + hgt * 0.16 * np.maximum(0, np.sin(Xg / 31 + 1)) ** 10
+            gm = (Yg < edge) & (a > 128)
+            gy = np.clip((Yg - bb[1]) / (hgt * 0.6), 0, 1)[..., None]
+            gc = np.array(st["glaze"][0]) * (1 - gy) + np.array(st["glaze"][1]) * gy
+            arr = np.array(fill)
+            arr[gm, :3] = gc[gm].astype(np.uint8)
+            # 縁の少し上に照り
+            rim = gm & (Yg > edge - 9) & (Yg < edge - 5)
+            arr[rim, :3] = (150, 92, 64)
+            fill = Image.fromarray(arr, "RGBA")
+        # ステッチ
+        e1 = np.array(m0.filter(ImageFilter.MinFilter(15))) > 128
+        e2 = np.array(m0.filter(ImageFilter.MinFilter(21))) > 128
         Y, X = np.mgrid[0:S, 0:S]
-        st = ((e1 & ~e2) & (((X + Y) // 9) % 2 == 0)).astype(np.uint8) * 255
-        fill.paste(stitch + (255,), (0, 0), Image.fromarray(st))
+        stt = ((e1 & ~e2) & (((X + Y) // 10) % 2 == 0)).astype(np.uint8) * 255
+        fill.paste(st["stitch"] + (255,), (0, 0), Image.fromarray(stt))
+        # ぷるんとしたツヤ (上側)
         inner = np.array(m0.filter(ImageFilter.MinFilter(11))).astype(np.float32) / 255
-        inner = np.roll(inner, 5, 0)
-        fade = np.clip((0.45 - yy) / 0.3, 0, 1)
-        hl = Image.fromarray(np.minimum((inner * fade * 0.5 * 255).astype(np.uint8), a)).filter(ImageFilter.GaussianBlur(1.5))
-        fill.paste(WHITE + (255,), (0, 0), hl)
+        inner = np.roll(inner, 6, 0)
+        fade = np.clip((0.46 - yy) / 0.3, 0, 1)
+        hl = Image.fromarray(np.minimum((inner * fade * 0.6 * 255).astype(np.uint8), a))
+        fill.paste(WHITE + (255,), (0, 0), hl.filter(ImageFilter.GaussianBlur(1.5)))
         self.fill = fill
+        # 文字幅 (並べる用) ときらめきの位置 (右上の角)
+        ob = m_white.getbbox()
+        self.width = ob[2] - ob[0]
+        ys, xs = np.nonzero(a > 128)
+        j = np.argmax(xs - ys)
+        self.glint = (xs[j] - S / 2, ys[j] - S / 2)
         self.drips = []
-        if drips:  # いちばん下の画の、幅のある所に1本
+        if drip:  # いちばん下の画の、幅のある所に1本
             low = np.where(a > 128, np.arange(S)[:, None], -1).max(0)
-            lim = low.max() - 18
-            xs = np.nonzero(low >= lim)[0]
-            if len(xs):
-                segs = np.split(xs, np.nonzero(np.diff(xs) > 1)[0] + 1)
-                sg = max(segs, key=len)
+            xs2 = np.nonzero(low >= low.max() - 18)[0]
+            if len(xs2):
+                sg = max(np.split(xs2, np.nonzero(np.diff(xs2) > 1)[0] + 1), key=len)
                 if len(sg) >= 18:
                     cx = float(sg.mean())
-                    self.drips.append((cx, int(low[int(cx)]) - 12, min(26, len(sg) * 0.55), 22 + size * 0.03))
+                    self.drips.append((cx, int(low[int(cx)]) - 12, min(30, len(sg) * 0.6), 38))
 
-    def draw(self, drip_k):
+    def draw(self, drip_k, shine):
         im = self.outer.copy()
-        if drip_k > 0.01 and self.drips:
+        if drip_k > 0.01:
             d = ImageDraw.Draw(im)
             for cx, y0, w, L in self.drips:
                 ln = L * drip_k
-                for pad, col in ((26, WHITE), (9, CHOCO_D), (0, self.bot)):
-                    r = w * 0.9 + pad
-                    d.rounded_rectangle((cx - w / 2 - pad, y0 - pad, cx + w / 2 + pad, y0 + ln + pad), radius=w / 2 + pad,
-                                        fill=col)
+                for pad, col in ((38, PINK_D), (30, WHITE), (10, CHOCO_D), (0, self.st["bot"])):
+                    r = w * 0.85 + pad
+                    d.rounded_rectangle((cx - w / 2 - pad, y0 - pad, cx + w / 2 + pad, y0 + ln + pad),
+                                        radius=w / 2 + pad, fill=col)
                     d.ellipse((cx - r, y0 + ln - r, cx + r, y0 + ln + r), fill=col)
-                d.ellipse((cx - w * 0.4, y0 + ln - w * 0.35, cx - w * 0.1, y0 + ln), fill=(214, 150, 120))
+                d.ellipse((cx - w * 0.5, y0 + ln - w * 0.4, cx - w * 0.15, y0 + ln - w * 0.05), fill=(230, 176, 146))
         im.alpha_composite(self.fill)
+        if shine is not None:  # 斜めのツヤの帯
+            band = Image.new("L", im.size, 0)
+            bx = -0.3 * self.S + 1.6 * self.S * shine
+            ImageDraw.Draw(band).polygon([(bx, 0), (bx + 70, 0), (bx - 150, self.S), (bx - 220, self.S)], fill=255)
+            band = Image.fromarray(np.minimum(np.array(band), np.array(self.mask)) // 4 * 3)
+            im.paste(WHITE + (255,), (0, 0), band)
         return im
 
 
-# ---------------------------------------------------------------- 飾り
-def note_sticker(kind, fill, size=1.0):
-    """♪ (kind=1) / ♫ (kind=2) を図形で描いたステッカー."""
-    S = int(200 * size)
-    im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+def bow():
+    S = (260, 190)
+    im = Image.new("RGBA", S, (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    k = size
-
-    def shape(pad, col):
-        heads = [(70 * k, 150 * k)] if kind == 1 else [(55 * k, 155 * k), (140 * k, 135 * k)]
-        for hx, hy in heads:
-            d.ellipse((hx - 30 * k - pad, hy - 22 * k - pad, hx + 30 * k + pad, hy + 22 * k + pad), fill=col)
-            d.rectangle((hx + 18 * k - pad, hy - 110 * k - pad, hx + 30 * k + pad, hy), fill=col)
-        if kind == 1:
-            hx, hy = heads[0]
-            d.polygon([(hx + 18 * k - pad, hy - 112 * k - pad), (hx + 75 * k + pad, hy - 70 * k),
-                       (hx + 62 * k + pad, hy - 50 * k + pad), (hx + 30 * k, hy - 72 * k)], fill=col)
-        else:
-            (x1, y1), (x2, y2) = heads
-            d.polygon([(x1 + 18 * k - pad, y1 - 112 * k - pad), (x2 + 30 * k + pad, y2 - 112 * k - pad),
-                       (x2 + 30 * k + pad, y2 - 82 * k + pad), (x1 + 18 * k - pad, y1 - 82 * k + pad)], fill=col)
-    shape(12, WHITE)
-    shape(5, CHOCO_D)
-    shape(0, fill)
-    d.ellipse((S * 0.24, S * 0.68, S * 0.34, S * 0.74), fill=WHITE)
+    cx, cy = S[0] / 2, 80
+    sat, satd, satl = (236, 76, 138), (186, 38, 98), (255, 160, 198)
+    for pad, col in ((14, PINK_D), (9, WHITE), (0, None)):
+        for s in (-1, 1):
+            d.polygon([(cx, cy), (cx + s * (100 + pad), cy - 56 - pad), (cx + s * (110 + pad), cy + 48 + pad)],
+                      fill=col or sat)
+            d.polygon([(cx - s * 4, cy + 6), (cx + s * (44 + pad), cy + 100 + pad), (cx + s * 26, cy + 88),
+                       (cx + s * 14, cy + 106 + pad)], fill=col or satd)
+    for s in (-1, 1):
+        d.polygon([(cx, cy), (cx + s * 62, cy - 22), (cx + s * 66, cy + 20)], fill=satd)
+        d.line([(cx + s * 36, cy - 26), (cx + s * 88, cy - 46)], fill=satl, width=7)
+    d.ellipse((cx - 30, cy - 28, cx + 30, cy + 28), fill=WHITE)
+    d.ellipse((cx - 22, cy - 21, cx + 22, cy + 21), fill=sat)
     return im
 
 
-def doily(R=470, n=40):
-    """後ろで回る大きいレースのドイリー (外は波、中は放射の模様と穴)."""
-    S = R * 2 + 80
+def note():
+    S = 210
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    c = S / 2
-    for pad, col in ((10, PINK_L), (4, WHITE)):
-        for i in range(n):
-            a = 2 * math.pi * i / n
-            x, y = c + R * math.cos(a), c + R * math.sin(a)
-            d.ellipse((x - 40 - pad, y - 40 - pad, x + 40 + pad, y + 40 + pad), fill=col)
-        d.ellipse((c - R - pad, c - R - pad, c + R + pad, c + R + pad), fill=col)
-    d.ellipse((c - R, c - R, c + R, c + R), fill=(255, 238, 245))
-    for i in range(n):  # 縁の穴
-        a = 2 * math.pi * (i + 0.5) / n
-        x, y = c + (R + 12) * math.cos(a), c + (R + 12) * math.sin(a)
-        d.ellipse((x - 11, y - 11, x + 11, y + 11), fill=PINK_L)
-    for i in range(24):  # 放射の帯
-        a0, a1 = 2 * math.pi * i / 24, 2 * math.pi * (i + 0.5) / 24
-        d.polygon([(c, c), (c + (R - 40) * math.cos(a0), c + (R - 40) * math.sin(a0)),
-                   (c + (R - 40) * math.cos(a1), c + (R - 40) * math.sin(a1))], fill=(255, 222, 236))
-    for rr in (R - 40, R * 0.62):  # 点線の輪
-        for i in range(int(rr / 7)):
-            a = 2 * math.pi * i / int(rr / 7)
-            x, y = c + rr * math.cos(a), c + rr * math.sin(a)
-            d.ellipse((x - 4, y - 4, x + 4, y + 4), fill=PINK)
-    for i in range(12):  # 内側のハートの輪
-        a = 2 * math.pi * i / 12
-        x, y = c + R * 0.78 * math.cos(a), c + R * 0.78 * math.sin(a)
-        d.polygon(heart_poly(x, y, 16), fill=WHITE)
-        d.polygon(heart_poly(x, y, 11), fill=PINK)
+    hx, hy = 72, 158
+
+    def shape(pad, col):
+        d.ellipse((hx - 34 - pad, hy - 25 - pad, hx + 34 + pad, hy + 25 + pad), fill=col)
+        d.rectangle((hx + 20 - pad, hy - 120 - pad, hx + 34 + pad, hy), fill=col)
+        d.polygon([(hx + 20 - pad, hy - 122 - pad), (hx + 86 + pad, hy - 76), (hx + 72 + pad, hy - 54 + pad),
+                   (hx + 34, hy - 80)], fill=col)
+    shape(16, PINK_D)
+    shape(10, WHITE)
+    shape(4, CHOCO_D)
+    shape(0, (255, 150, 196))
+    d.ellipse((hx - 22, hy - 16, hx - 6, hy - 4), fill=WHITE)
     return im
 
 
 # ---------------------------------------------------------------- シーン
 class Scene:
-    def __init__(self, font, cache, fat):
-        self.top = [Felt(ch, font, round(210 * sc), cols, st, fat) for ch, _, sc, _, cols, st in TOP]
-        self.bottom = [Felt(ch, font, round(220 * sc), CHOCO, PINK, fat, drips=ch in "チコト")  # 垂れは3文字だけ
-                       for ch, _, sc, _ in BOTTOM]
-        self.doily = doily()
-        self.staff = catmull(STAFF)
-        self.notes = [note_sticker(1, PINK), note_sticker(2, (255, 214, 120)), note_sticker(1, (196, 168, 255)),
-                      note_sticker(2, PINK_L), note_sticker(1, (246, 84, 132))]
-        self.hearts = {r: heart_sticker(r) for r in (16, 22, 30)}
-        self.sp_w, self.sp_p = sparkle(26), sparkle(32, PINK, WHITE)
-        self.spr = {}
-        for name, (size, n) in {"choco_heart": (520, 60), "bar": (300, 48), "truffle": (300, 48),
-                                "macaron": (480, 60)}.items():
-            self.spr[name] = [Image.open(os.path.join(cache, f"{name}_{size}_{i:02d}.png")).convert("RGBA")
-                              for i in range(n)]
-        rnd = random.Random(21)
-        # 漂う音符と3Dのお菓子 (画面の外側寄り)
-        spots = [(110, 210), (1810, 200), (130, 900), (1790, 900), (1640, 560), (260, 560), (960, 110), (960, 975),
-                 (1500, 950), (420, 960)]
-        kinds = ["note0", "bar", "note1", "truffle", "choco_heart", "note2", "note3", "macaron", "note4", "truffle"]
-        self.floaters = [dict(x=x, y=y, k=k, ph=rnd.random(), s=rnd.uniform(0.85, 1.1)) for (x, y), k in zip(spots, kinds)]
-        cols = [PINK, WHITE, (255, 214, 120), (246, 84, 132), PINK_L, (196, 168, 255)]
-        self.confetti = []
-        for i in range(60):
-            c = Image.new("RGBA", (44, 44), (0, 0, 0, 0))
-            dc = ImageDraw.Draw(c)
-            if i % 3 == 0:
-                dc.polygon(heart_poly(22, 22, 14), fill=cols[i % 6])
-            elif i % 3 == 1:
-                dc.ellipse((12, 12, 32, 32), fill=cols[i % 6])
-            else:
-                dc.rectangle((6, 15, 38, 29), fill=cols[i % 6])
-            self.confetti.append(dict(im=c, x=rnd.uniform(0, W), y0=rnd.uniform(-1100, 0), v=rnd.uniform(160, 260),
-                                      ph=rnd.random() * 6, r=rnd.uniform(0, 360), sw=rnd.uniform(20, 60)))
-        self.twinkles = [(560, 170, "w", 0.0), (1380, 190, "p", 0.4), (1560, 760, "w", 0.7), (300, 800, "p", 0.2),
-                         (1100, 560, "w", 0.85), (700, 540, "p", 0.55), (1730, 360, "w", 0.3), (190, 380, "p", 0.65)]
-
-    def sprite(self, name, rev):
-        seq = self.spr[name]
-        return seq[int(math.floor(rev * len(seq))) % len(seq)]
-
-    def draw_staff(self, im, reveal, t, idle):
-        n = len(self.staff)
-        k = max(2, int(n * reveal))
-        q = self.staff[:k].copy()
-        s = np.arange(k) / n
-        q[:, 1] += idle * 16 * np.sin(2 * math.pi * t / 1.8 - s * 9)
-        d = ImageDraw.Draw(im)
-        nrm = np.gradient(q, axis=0)
-        nrm = np.stack([-nrm[:, 1], nrm[:, 0]], 1)
-        nrm /= np.linalg.norm(nrm, axis=1, keepdims=True) + 1e-6
-        for r, col in ((70, WHITE), (62, CHOCO_D), (56, SATIN)):
-            for x, y in q:
-                d.ellipse((x - r, y - r, x + r, y + r), fill=col)
-        for j in range(5):  # 五線
-            off = (j - 2) * 20
-            for (x, y), (nx, ny) in zip(q, nrm):
-                d.ellipse((x + nx * off - 3, y + ny * off - 3, x + nx * off + 3, y + ny * off + 3), fill=WHITE)
-        for i in range(0, len(q), 120):  # 小節線
-            x, y = q[i]
-            nx, ny = nrm[i]
-            d.line([(x - nx * 40, y - ny * 40), (x + nx * 40, y + ny * 40)], fill=WHITE, width=6)
-        return q
+    def __init__(self, font, fat):
+        self.letters = []  # (段, 段の中の番号, 通し番号, 配置)
+        order = 0
+        for li, (spec, style) in enumerate(((LINE1, STRAWBERRY), (LINE2, MILK))):
+            glyphs = [Glyph(ch, font, round(FS * sc), style, fat, li == 1 and ch in DRIPS) for ch, sc, _, _ in spec]
+            total = sum(g.width for g in glyphs) + GAP * (len(glyphs) - 1)
+            x = W / 2 - total / 2
+            for i, (g, (ch, sc, rot, dy)) in enumerate(zip(glyphs, spec)):
+                self.letters.append((li, i, order, dict(g=g, x=x + g.width / 2, y=LINE_Y[li] + dy, rot=rot)))
+                x += g.width + GAP
+                order += 1
+        self.n = order
+        self.bow = bow()
+        self.note = note()
+        self.glint = sparkle(30, WHITE, (255, 128, 182))
 
     def frame(self, t):
         im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        idle = clamp01((t - 2.3) / 0.4)
-        ex = clamp01((t - EXIT_T) / (DUR - EXIT_T))
-        b = (t % BEAT) / BEAT
-        pulse = idle * math.exp(-b * 6) * (1 - ex)  # ビートごとのドンッ
-        P = 2 * math.pi * t / (BEAT * 4)
-
-        # 後ろのドイリー
-        k = ease_out_back(t / 0.6, 1.6) * (1 - ease_in((ex - 0.4) / 0.6))
-        if k > 0:
-            put(im, self.doily, 935, 520, k * (1 + 0.035 * pulse), t * 10 + 120 * (1 - ease_out(t / 0.6)))
-        # 紙吹雪 (奥)
-        if t > 2.0:
-            for c in self.confetti[::2]:
-                self._confetti(im, c, t)
-        # 漂う音符・3Dのお菓子
-        for j, f in enumerate(self.floaters):
-            kk = ease_out_back((t - 1.9 - j * 0.07) / 0.35, 2.4) * (1 - ease_in(ex / 0.5))
-            if kk <= 0:
+        idle = clamp01((t - 1.8) / 0.4)
+        ex = (t - EXIT_T) / (DUR - EXIT_T)
+        bump = spring(t - 1.6, 0.06, 16, 6) if t > 1.6 else 0  # ロゴ全体のドンッ
+        beat_ph = t / BEAT
+        sway = 2 * math.pi * t / (BEAT * 8)
+        me = None  # 「メ」の位置 (リボン用)
+        # 下の段から描く (上の段の厚みが下の段にかぶる)
+        for li, i, order, it in sorted(self.letters, key=lambda z: -z[0]):
+            g = it["g"]
+            if li == 0:  # 回りながらぽんっ
+                t0 = LINE_T0[0] + i * 0.13
+                u = (t - t0) / 0.38
+                if u < 0:
+                    continue
+                k = ease_out_back(u, 2.8)
+                y = it["y"] - 90 * hump(u)
+                rot = it["rot"] + 360 * (1 - ease_out(u)) * (1 if i % 2 else -1)
+                land = t - t0 - 0.38
+            else:  # 上からドンッ
+                t0 = LINE_T0[1] + i * 0.11
+                u = (t - t0) / 0.28
+                if u < 0:
+                    continue
+                k = 1.0
+                uu = clamp01(u)
+                y = it["y"] - 700 * (1 - uu * uu)
+                rot = it["rot"] + (1 - uu) * (20 if i % 2 else -20)
+                land = t - t0 - 0.28
+            sq = spring(land, 0.2, 22, 8)
+            # 待機: ビートに合わせて波のように跳ねる
+            q = (beat_ph / 4 - order / self.n * 0.9) % 1
+            y -= idle * 26 * hump(q / 0.18)
+            rot += idle * 2.5 * math.sin(sway + order)
+            sc = k * (1 + bump)
+            # 退場: 1文字ずつ、ちょっと膨らんでから弾けて消える
+            if ex > 0:
+                e = clamp01((ex - order / self.n * 0.55) / 0.35)
+                sc *= (1 + 0.25 * hump(e / 0.5)) * (1 - ease_in((e - 0.4) / 0.6))
+                y -= 60 * hump(e / 0.8)
+            if sc <= 0.01:
                 continue
-            y = f["y"] + 18 * math.sin(2 * math.pi * (t / 2.4 + f["ph"]))
-            rot = 12 * math.sin(2 * math.pi * (t / 1.9 + f["ph"]))
-            s = kk * f["s"] * (1 + 0.08 * pulse)
-            if f["k"].startswith("note"):
-                put(im, self.notes[int(f["k"][4])], f["x"], y, s * 0.8, rot)
-            elif f["k"] == "choco_heart":
-                put(im, self.sprite("choco_heart", 0.2 * t + f["ph"]), f["x"], y, s * 0.42, rot)
-            elif f["k"] == "macaron":
-                put(im, self.sprite("macaron", 0.15 * t + f["ph"]), f["x"], y, s * 0.42, rot)
-            else:
-                put(im, self.sprite(f["k"], 0.25 * t + f["ph"]), f["x"], y, s * 0.62, rot)
-
-        # 五線譜のリボン
-        reveal = ease_out(t / 0.75) * (1 - ease_in((ex - 0.2) / 0.6))
-        if reveal > 0.002:
-            q = self.draw_staff(im, reveal, t, idle)
-            if t < 0.8:
-                put(im, self.sp_w, q[-1][0], q[-1][1], 1.4, t * 400)
-
-        # 下の段: チョコレート (落ちてきてむにっ → 垂れる)
-        for i, ((ch, (x, y), sc, rot), L) in enumerate(zip(BOTTOM, self.bottom)):
-            t0 = BOTTOM_T0 + i * 0.13
-            u = (t - t0) / 0.3
-            if u < 0:
-                continue
-            uu = clamp01(u)
-            land = t - t0 - 0.3
-            yy = y - 620 * (1 - uu * uu)
-            sq = spring(land, 0.22, 22, 8)
-            r = rot + (1 - uu) * (25 if i % 2 else -25)
-            wave = idle * 26 * hump(((t / (BEAT * 4)) - i * 0.08) % 1 / 0.22)  # 波のように順に跳ねる
-            r += idle * 3 * math.sin(P + i)
-            fly = ease_in(clamp01((ex - 0.25 - i * 0.05) / 0.5))
-            yy -= wave + 900 * fly
-            s = (1 + 0.05 * pulse) * (1 - fly * 0.4)
-            g = L.draw(ease_out_back((t - t0 - 0.35) / 0.9, 1.3))
-            put(im, g, x, yy, s, r, 1 + sq, 1 - sq)
-
-        # 上の段: メロディック (リズムに合わせて五線譜の上へぽんっ)
-        for i, ((ch, (x, y), sc, rot, _, _), L) in enumerate(zip(TOP, self.top)):
-            t0 = TOP_T0 + i * BEAT / 3
-            u = (t - t0) / 0.32
-            if u < 0:
-                continue
-            land = t - t0 - 0.32
-            k = ease_out_back(u, 2.8)
-            jump = 120 * hump(u)
-            sq = spring(land, 0.2, 24, 9)
-            r = rot + (1 - ease_out(u)) * (-40 if i % 2 else 40)
-            wave = idle * 24 * hump(((t / (BEAT * 4)) - 0.5 - i * 0.08) % 1 / 0.22)
-            r += idle * 4 * math.sin(P * 1.5 + i * 1.3)
-            fly = ease_in(clamp01((ex - i * 0.05) / 0.5))
-            yy = y - jump - wave - 900 * fly
-            s = k * (1 + 0.05 * pulse) * (1 - fly * 0.4)
-            put(im, L.draw(0), x, yy, s, r, 1 + sq, 1 - sq)
-            if 0 < land < 0.6:  # 着地で音符がぴょんっ
-                q = land / 0.6
-                put(im, self.notes[i % 5], x + 120 + 60 * q, y - 120 - 140 * ease_out(q), 0.6 * (1 - q ** 2),
-                    20 - 30 * q)
-
-        # 3Dのチョコハート (右上で大きく)
-        kk = ease_out_back((t - 2.05) / 0.45, 2.6) * (1 - ease_in(ex / 0.5))
-        if kk > 0:
-            put(im, self.sprite("choco_heart", 0.18 * t), 1580, 300 + 12 * math.sin(P), 0.62 * kk * (1 + 0.1 * pulse),
-                -14 + 6 * math.sin(P * 0.5))
-
-        # 紙吹雪 (手前) とキラキラ
-        if t > 2.0:
-            for c in self.confetti[1::2]:
-                self._confetti(im, c, t)
-            for x, y, kind, ph in self.twinkles:
-                q = ((t - 2.0) / 1.0 + ph) % 1
-                put(im, self.sp_w if kind == "w" else self.sp_p, x, y, hump(q / 0.45) ** 2 * 1.3 * (1 - ex), 45 * q)
+            shine = None
+            for st0 in (1.6, 3.5):  # 左から右へ順に
+                s_ = (t - st0 - (it["x"] / W) * 0.45) / 0.4
+                if 0 < s_ < 1:
+                    shine = s_
+            drip = ease_out_back((t - t0 - 0.32) / 0.8, 1.3) if li == 1 else 0
+            put(im, g.draw(drip, shine), it["x"], y, sc, rot, 1 + sq, 1 - sq)
+            if li == 0 and i == 0:
+                me = (it["x"], y, sc, rot)
+            # 角のきらめき
+            if t > 1.9:
+                ph = (t / 1.3 + order * 0.37) % 1
+                s2 = hump(ph / 0.3) ** 2 * sc
+                if s2 > 0.05:
+                    gx, gy = g.glint
+                    a = math.radians(-rot)
+                    px = it["x"] + (gx * math.cos(a) - gy * math.sin(a)) * sc
+                    py = y + (gx * math.sin(a) + gy * math.cos(a)) * sc
+                    put(im, self.glint, px, py, s2 * 1.2, 45 * ph)
+        # 「メ」の上のリボン
+        if me is not None:
+            x, y, sc, rot = me
+            kk = min(sc, ease_out_back((t - 0.35) / 0.35, 2.8))
+            if kk > 0.01:
+                put(im, self.bow, x - 95, y - 150, kk, 18 + spring(t - 0.35, 14, 14, 4) + idle * 4 * math.sin(sway * 2))
+        # 「ク」の右上の音符
+        last = [z[3] for z in self.letters if z[0] == 0][-1]
+        kk = ease_out_back((t - 0.95) / 0.35, 2.8)
+        if ex > 0:
+            kk *= 1 - ease_in(clamp01((ex - 0.1) / 0.3))
+        if kk > 0.01:
+            q = (beat_ph / 2) % 1
+            put(im, self.note, last["x"] + 175, last["y"] - 125 - idle * 18 * hump(q / 0.3), kk * (1 + bump),
+                12 + idle * 8 * math.sin(sway * 2))
         return im
-
-    @staticmethod
-    def _confetti(im, c, t):
-        y = c["y0"] + c["v"] * (t - 2.0)
-        if y < -40 or y > H + 40:
-            return
-        x = c["x"] + c["sw"] * math.sin(t * 2.2 + c["ph"])
-        put(im, c["im"], x, y, 1, c["r"] + 160 * t, 1, max(0.15, abs(math.cos(t * 5 + c["ph"]))))
 
 
 SCENE = None
 
 
-def _init(font, cache, fat):
+def _init(font, fat):
     global SCENE
-    SCENE = Scene(font, cache, fat)
+    SCENE = Scene(font, fat)
 
 
 def _frame(i):
@@ -385,26 +303,22 @@ def _frame(i):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--font", required=True, help="Hachi Maru Pop など手書きの丸文字")
-    ap.add_argument("--fat", type=int, default=7, help="細いフォントを太らせる量 (px)")
+    ap.add_argument("--fat", type=int, default=8, help="細いフォントを太らせる量 (px)")
     ap.add_argument("--out", default="melodic_choco_logo")
-    ap.add_argument("--cache", default="cache3d")
     ap.add_argument("--jobs", type=int, default=os.cpu_count())
     ap.add_argument("--preview", type=float, nargs="*")
     a = ap.parse_args()
-    with Pool(a.jobs) as pool:
-        R.build_sprites(pool, a.cache, {"choco_heart": (520, 60), "bar": (300, 48), "truffle": (300, 48),
-                                        "macaron": (480, 60)})
     if a.preview is not None:
-        _init(a.font, a.cache, a.fat)
+        _init(a.font, a.fat)
         for t in a.preview:
             bg = Image.new("RGBA", (W, H), (0, 255, 0, 255))
             bg.alpha_composite(SCENE.frame(t))
             bg.convert("RGB").save(f"{a.out}_{t:.2f}.png")
         return
     n = round(DUR * FPS)
-    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.cache, a.fat)) as pool:
+    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.fat)) as pool:
         frames = pool.map(_frame, range(n), chunksize=4)
-    Image.frombytes("RGBA", (W, H), frames[int(n * 0.6)]).save(a.out + ".png")
+    Image.frombytes("RGBA", (W, H), frames[int(n * 0.55)]).save(a.out + ".png")
     ff = imageio_ffmpeg.get_ffmpeg_exe()
     raw = ["-f", "rawvideo", "-pix_fmt", "rgba", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-"]
     for args in ([*raw, "-f", "lavfi", "-i", f"color=0x00FF00:s={W}x{H}:r={FPS}",
