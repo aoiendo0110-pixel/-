@@ -1,6 +1,6 @@
 """「受け取れ♥」の動く文字 (フェルトのワッペン文字 × サテンのリボン × レースのハート) をグリーンバックで書き出す.
 
-  python3 uketore_logo.py --font MochiyPopOne.ttf --font-sub HachiMaruPop.ttf --out clips/text/uketore_logo
+  python3 uketore_logo.py --font HachiMaruPop.ttf --fat 7 --font-sub HachiMaruPop.ttf --out clips/text/uketore_logo
 
   0.0-0.7  ピンクのサテンリボンが左から描かれていく
   0.3-1.1  リボンの先を追いかけて、文字が1つずつぽんっと跳ね出す (大きさ・角度・高さは1文字ずつ違う)
@@ -50,14 +50,16 @@ def ease_in(x):
 
 
 # ---------------------------------------------------------------- 部品
-def felt_letter(ch, font, size, top, bot, stitch):
-    """フェルトのワッペン風の1文字: 厚み + 白フチ + チョコのフチ + グラデの中身 + 内側の点線ステッチ."""
+def felt_letter(ch, font, size, top, bot, stitch, fat=0):
+    """フェルトのワッペン風の1文字: 厚み + 白フチ + チョコのフチ + グラデの中身 + 内側の点線ステッチ.
+    fat: 細い手書きフォントを太らせる量 (px)."""
     f = ImageFont.truetype(font, size)
     S = int(size * 1.7)
 
     def mask(st):
         m = Image.new("L", (S, S), 0)
-        ImageDraw.Draw(m).text((S / 2, S / 2), ch, font=f, anchor="mm", fill=255, stroke_width=st, stroke_fill=255)
+        ImageDraw.Draw(m).text((S / 2, S / 2), ch, font=f, anchor="mm", fill=255, stroke_width=st + fat,
+                               stroke_fill=255)
         return m
     m0, m1, m2 = mask(0), mask(9), mask(26)
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
@@ -172,8 +174,8 @@ def catmull(pts, n=500):
 
 # ---------------------------------------------------------------- シーン
 class Scene:
-    def __init__(self, font, font_sub):
-        self.letters = [felt_letter(ch, font, round(220 * sc), top, bot, st)
+    def __init__(self, font, font_sub, fat=0):
+        self.letters = [felt_letter(ch, font, round(220 * sc), top, bot, st, fat)
                         for ch, _, sc, _, _, top, bot, st in LETTERS]
         self.heart = lace_heart(HEART_R)
         self.bow = bow()
@@ -317,9 +319,9 @@ class Scene:
 SCENE = None
 
 
-def _init(font, font_sub):
+def _init(font, font_sub, fat):
     global SCENE
-    SCENE = Scene(font, font_sub)
+    SCENE = Scene(font, font_sub, fat)
 
 
 def _frame(i):
@@ -328,21 +330,22 @@ def _frame(i):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--font", required=True, help="Mochiy Pop One など丸い太字")
+    ap.add_argument("--font", required=True, help="文字用. Hachi Maru Pop を --fat 7 で太らせるのがおすすめ")
+    ap.add_argument("--fat", type=int, default=7, help="細いフォントを太らせる量 (px). 太字フォントなら 0")
     ap.add_argument("--font-sub", required=True, help="Hachi Maru Pop など手書き風")
     ap.add_argument("--out", default="uketore_logo")
     ap.add_argument("--jobs", type=int, default=os.cpu_count())
     ap.add_argument("--preview", type=float, nargs="*")
     a = ap.parse_args()
     if a.preview is not None:
-        _init(a.font, a.font_sub)
+        _init(a.font, a.font_sub, a.fat)
         for t in a.preview:
             bg = Image.new("RGBA", (W, H), (0, 255, 0, 255))
             bg.alpha_composite(SCENE.frame(t))
             bg.convert("RGB").save(f"{a.out}_{t:.2f}.png")
         return
     n = round(DUR * FPS)
-    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.font_sub)) as pool:
+    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.font_sub, a.fat)) as pool:
         frames = pool.map(_frame, range(n), chunksize=4)
     Image.frombytes("RGBA", (W, H), frames[int(n * 0.6)]).save(a.out + ".png")
     ff = imageio_ffmpeg.get_ffmpeg_exe()
