@@ -2,7 +2,7 @@
 
   python3 kote_chui.py --font HachiMaruPop.ttf --out clips/text/kote_chui.mp4 [--length 207]
 
-4秒でつながるループを1回だけ描き、ffmpeg で --length 秒 (既定 3:27) までつなげる。
+動きの1周を --length 秒 (既定 3.27秒) にして、ちょうど1周ぶんを書き出す (繰り返し再生してもつながる)。
   背景: ピンクの斜めストライプが流れ、上下に「CAUTION ♡」の注意テープが流れる
   主役: 「コテ注意」を画面いっぱいに (1文字ずつ角度・高さ違い、ビートで波のように跳ねる)
   下:   「ワンク4秒」のリボン札
@@ -19,7 +19,8 @@ from PIL import Image, ImageDraw, ImageFont
 from melodic_choco_logo import Glyph, bow
 from zettai_reido_logo import CHOCO_D, PINK_D, WHITE, put, sparkle
 
-W, H, FPS, LOOP = 1920, 1080, 30, 4.0
+W, H, FPS = 1920, 1080, 30
+LOOP = 4.0  # 動きの1周の長さ (--length で動画の長さに合わせる)
 RED = dict(top=(255, 120, 170), bot=(226, 40, 104), stitch=WHITE, ext=(120, 16, 56), ring=CHOCO_D)
 PINK = dict(top=(255, 200, 226), bot=(250, 130, 182), stitch=WHITE, ext=(150, 30, 80), ring=CHOCO_D)
 # (文字, 大きさ, 傾き, 上下のずれ, 色)
@@ -140,27 +141,24 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--font", required=True, help="Hachi Maru Pop など手書きの丸文字")
     ap.add_argument("--out", default="kote_chui.mp4")
-    ap.add_argument("--length", type=float, default=207, help="動画の長さ (秒). 既定 3:27")
+    ap.add_argument("--length", type=float, default=3.27, help="動画の長さ (秒). 動きの1周もこの長さにする")
     ap.add_argument("--preview", type=float, nargs="*")
     a = ap.parse_args()
+    global LOOP
+    LOOP = a.length
     sc = Scene(a.font)
     if a.preview is not None:
         for t in a.preview:
             sc.frame(t).save(f"{os.path.splitext(a.out)[0]}_{t:.2f}.png")
         return
     ff = imageio_ffmpeg.get_ffmpeg_exe()
-    loop = os.path.splitext(a.out)[0] + "_loop.mp4"
     p = subprocess.Popen([ff, "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r",
-                          str(FPS), "-i", "-", "-c:v", "libx264", "-crf", "16", "-pix_fmt", "yuv420p", loop],
-                         stdin=subprocess.PIPE)
-    for i in range(round(LOOP * FPS)):
+                          str(FPS), "-i", "-", "-t", str(a.length), "-c:v", "libx264", "-crf", "16", "-pix_fmt",
+                          "yuv420p", "-movflags", "+faststart", a.out], stdin=subprocess.PIPE)
+    for i in range(math.ceil(a.length * FPS)):
         p.stdin.write(sc.frame(i / FPS).tobytes())
     p.stdin.close()
     p.wait()
-    subprocess.run([ff, "-y", "-v", "error", "-stream_loop", "-1", "-i", loop, "-t", str(a.length), "-c", "copy",
-                    "-movflags", "+faststart", a.out], check=True)
-    os.remove(loop)
-
 
 if __name__ == "__main__":
     main()
