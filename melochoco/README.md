@@ -116,3 +116,16 @@ python3 sweets_clips.py --out clips/sweets [--only ichigo_bounce donut_roll]
 | sweets_orbit | チョコハートのまわりをスイーツが回る (ループ) | 4秒 |
 | sweets_rain | スイーツが降ってくる 1920x1080 (ループ) | 6秒 |
 | gift_surprise | プレゼント箱が揺れて、お菓子が飛び出す | 4秒 |
+
+## いちごのショートケーキ (`shortcake3d.py`)
+
+カットしたショートケーキ1切れ (スポンジ2段・生クリーム・断面の半割りいちご・クリームの絞り・丸ごといちご) を
+Blender でコードから組み立てて、8秒で1回転する透過動画にする (1920x1080 / 30fps / ループ)。
+
+```
+pip install bpy
+python3 shortcake3d.py --out cake_out                  # 240フレーム → .mov / .webm / _greenback.mp4
+python3 shortcake3d.py --out cake_out --preview 1 60   # 指定フレームの静止画だけ
+```
+
+- CPU の Cycles で1フレーム約15秒。途中で止めても、もう一度実行すれば続きから描く
