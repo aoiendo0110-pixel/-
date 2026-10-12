@@ -143,3 +143,15 @@ python3 sd_chara3d.py --out chara_out --turntable   # 8秒で1回転する透過
 
 - 色はイラストの色 (`lin("#rrggbb")`) で指定しているので、そこを変えれば色替えできる
 - `.glb` には形と色 (顔はテクスチャ) が入る。網タイツ・ストライプなどの柄は `.blend` のみ
+
+## ゆるキャラ「ちょこにゃん」 (`choconyan.py`)
+
+パティシエ少女がモチーフの、チョコ大好きな白ねこのミニキャラ (頭からチョコをかぶって、口からチョコがとろ〜り)。
+SVG で描いて、Chromium (headless) で透過 PNG にする。カラーは 赤・ピンク・茶・黄・白。
+
+```
+python3 choconyan.py --out nyan_out --font-pop MochiyPopOne-Regular.ttf --font-hand HachiMaruPop-Regular.ttf
+```
+
+- `choconyan_main / mogu / love` の .svg と .png (2000x2000 透過)、`choconyan_sheet.png` (キャラクターシート)
+- 色は `C`、表情は `eyes()` (sleepy / happy / heart)、持ち物は `held_heart()` / `choco_bar()` で変えられる
