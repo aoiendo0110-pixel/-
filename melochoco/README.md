@@ -129,3 +129,17 @@ python3 shortcake3d.py --out cake_out --preview 1 60   # 指定フレームの�
 ```
 
 - CPU の Cycles で1フレーム約15秒。途中で止めても、もう一度実行すれば続きから描く
+
+## SD (ちびキャラ) 3Dモデル (`sd_chara3d.py`)
+
+ショコラ×ロリータのパティシエ少女のデザイン画をもとに、2.5頭身くらいの3Dモデルをコードで組み立てる。
+目・口・ほっぺは PIL で描いたテクスチャを顔に貼り、輪郭線は Freestyle で描く。
+
+```
+pip install bpy pillow
+python3 sd_chara3d.py --out chara_out               # 5方向の静止画 + sd_chara.blend + sd_chara.glb
+python3 sd_chara3d.py --out chara_out --turntable   # 8秒で1回転する透過動画 (.mov / .webm / _greenback.mp4) も
+```
+
+- 色はイラストの色 (`lin("#rrggbb")`) で指定しているので、そこを変えれば色替えできる
+- `.glb` には形と色 (顔はテクスチャ) が入る。網タイツ・ストライプなどの柄は `.blend` のみ
