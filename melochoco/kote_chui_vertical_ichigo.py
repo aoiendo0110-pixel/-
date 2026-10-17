@@ -2,6 +2,9 @@
 
   python3 props_ichigo3d.py --out props_ichigo        # 3Dモデル (Blender) を先に作る
   python3 kote_chui_vertical_ichigo.py --font HachiMaruPop.ttf --props props_ichigo --out clips/text/kote_chui_vertical_ichigo
+  チョコ・バレンタイン版:
+  python3 props_ichigo3d.py --theme choco --out props_choco
+  python3 kote_chui_vertical_ichigo.py --font HachiMaruPop.ttf --theme choco --props props_choco --out clips/text/kote_chui_vertical_choco3d
 
 kote_chui_vertical.py (チョコ版) と同じ配置・同じ動きで、モチーフだけ差し替えた別バージョン.
   メイン: 「コテ」= いちごの赤 /「注意」= スポンジに生クリームがけ
@@ -22,7 +25,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 from kote_chui_vertical import FS, SUB_Y, H, W, FPS, bowl, hump, sub_plate, whisk
-from melodic_choco_logo import Glyph, bow
+from melodic_choco_logo import MILK, STRAWBERRY, Glyph, bow
 from zettai_reido_logo import CHOCO_D, PINK_D, WHITE, heart_poly, heart_sticker, put, sparkle
 
 RED, RED_D, RED_L = (236, 52, 86), (170, 20, 50), (255, 130, 150)
@@ -31,8 +34,13 @@ SPONGE, SPONGE_D = (250, 214, 140), (222, 168, 92)
 STRAW = dict(top=(255, 116, 140), bot=(222, 30, 64), stitch=WHITE, ext=(120, 10, 34), ring=CHOCO_D)
 CAKE = dict(top=(252, 222, 150), bot=(232, 182, 104), stitch=(255, 150, 180), ext=(140, 90, 40), ring=CHOCO_D,
             glaze=(CREAM, (252, 238, 236)), glaze_rim=(255, 196, 212))
-MAIN = [("コ", (330, 680), 1.0, -10, STRAW), ("テ", (740, 645), 0.95, 9, STRAW),
-        ("注", (315, 1065), 1.02, -6, CAKE), ("意", (765, 1090), 1.02, 7, CAKE)]
+POS = [("コ", (330, 680), 1.0, -10), ("テ", (740, 645), 0.95, 9), ("注", (315, 1065), 1.02, -6),
+       ("意", (765, 1090), 1.02, 7)]
+# テーマごとの文字の色 (上段, 下段) とサブ文字のプレートの色
+THEMES = {
+    "ichigo": dict(styles=(STRAW, CAKE), plate=dict(fill=RED, crumb=CREAM_S, line=RED_D)),
+    "choco": dict(styles=(STRAWBERRY, MILK), plate=dict()),
+}
 
 
 # ---------------------------------------------------------------- 部品 (どれもステッカー風: 白フチ + こげ茶の線)
@@ -180,11 +188,12 @@ def steam(im, x, y, u):
 
 # ---------------------------------------------------------------- シーン
 class Scene:
-    def __init__(self, font, L, props=None):
+    def __init__(self, font, L, props=None, theme="ichigo"):
         self.L = L
-        self.letters = [dict(g=Glyph(ch, font, round(FS * sc), st, 10, False), x=x, y=y, rot=rot)
-                        for ch, (x, y), sc, rot, st in MAIN]
-        self.sub = sub_plate(font, fill=RED, crumb=CREAM_S, line=RED_D)
+        th = THEMES[theme]
+        self.letters = [dict(g=Glyph(ch, font, round(FS * sc), th["styles"][i // 2], 10, False), x=x, y=y, rot=rot)
+                        for i, (ch, (x, y), sc, rot) in enumerate(POS)]
+        self.sub = sub_plate(font, **th["plate"])
         self.whisk = whisk(CREAM, WHITE)
         self.bowl = bowl((255, 250, 248), WHITE)
         self.bow = bow()
@@ -205,7 +214,8 @@ class Scene:
             self.cup = load("latte", self.cup, 0.95)
             self.bow = load("bow", self.bow, 0.95)
             self.berry = load("strawberry", self.berry, 0.95)
-            self.half = load("strawberry", self.half, 1.25)
+            side = "heart" if os.path.exists(os.path.join(props, "heart.png")) else "strawberry"
+            self.half = load(side, self.half, 1.25 if side == "strawberry" else 0.95)
 
     def frame(self, t):
         u = t / self.L  # 0-1 で1周
@@ -259,9 +269,9 @@ class Scene:
 SCENE = None
 
 
-def _init(font, L, props):
+def _init(font, L, props, theme):
     global SCENE
-    SCENE = Scene(font, L, props)
+    SCENE = Scene(font, L, props, theme)
 
 
 def _frame(i):
@@ -274,18 +284,19 @@ def main():
     ap.add_argument("--out", default="kote_chui_vertical_ichigo")
     ap.add_argument("--length", type=float, default=3.27, help="動画の長さ (秒). 動きの1周もこの長さ")
     ap.add_argument("--props", help="props_ichigo3d.py で作った3Dモデルの透過PNGのフォルダ (無ければ2Dの絵)")
+    ap.add_argument("--theme", choices=list(THEMES), default="ichigo")
     ap.add_argument("--jobs", type=int, default=os.cpu_count())
     ap.add_argument("--preview", type=float, nargs="*")
     a = ap.parse_args()
     if a.preview is not None:
-        _init(a.font, a.length, a.props)
+        _init(a.font, a.length, a.props, a.theme)
         for t in a.preview:
             bg = Image.new("RGBA", (W, H), (0, 255, 0, 255))
             bg.alpha_composite(SCENE.frame(t))
             bg.convert("RGB").save(f"{a.out}_{t:.2f}.png")
         return
     n = math.ceil(a.length * FPS)
-    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.length, a.props)) as pool:
+    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.length, a.props, a.theme)) as pool:
         frames = pool.map(_frame, range(n), chunksize=4)
     Image.frombytes("RGBA", (W, H), frames[n // 3]).save(a.out + ".png")
     ff = imageio_ffmpeg.get_ffmpeg_exe()

@@ -2,6 +2,7 @@
 
   pip install bpy
   python3 props_ichigo3d.py --out props_ichigo [--only strawberry cake] [--samples 64]
+  python3 props_ichigo3d.py --theme choco --out props_choco   # チョコ・バレンタイン版の色で
 
 kote_chui_vertical_ichigo.py の飾りに使う. いちごはヘタ (緑) を付けず、上にホイップをのせる (グリーンバック対策).
   strawberry  いちご (種のつぶつぶ + ホイップ)
@@ -34,6 +35,17 @@ PINK = (1.0, 0.62, 0.78)
 HOT = (0.95, 0.36, 0.58)
 STEEL = (0.92, 0.9, 0.93)
 COFFEE = (0.62, 0.4, 0.26)
+LAYER = CREAM  # ケーキの間のクリーム
+DOT = (0.95, 0.93, 0.92)  # カップやボウルの水玉
+ART = CREAM  # ラテアート
+DIP = None  # チョコ版: いちごの上半分とケーキの上にかけるチョコ
+MILK_C = (0.42, 0.22, 0.13)
+
+# --theme choco で差し替える色 (チョコ・バレンタイン版)
+THEMES = {
+    "choco": dict(CREAM=(0.34, 0.18, 0.1), SPONGE=(0.32, 0.17, 0.1), SPONGE_D=(0.22, 0.11, 0.06),
+                  LAYER=(1.0, 0.7, 0.8), COFFEE=(0.33, 0.18, 0.1), ART=(1.0, 0.68, 0.8), DIP=(0.2, 0.1, 0.05)),
+}
 
 BERRY = dict(rough=0.18, coat=0.8, sss=0.15)
 WHIP = dict(rough=0.42, sss=0.2)
@@ -72,6 +84,13 @@ def strawberry(loc=(0, 0, 0), s=1.0, with_cream=True, rnd=None):
         v.co.z *= 1.18 if z < 0 else 0.86
     P.smooth(o)
     o.data.materials.append(P.M(RED, **BERRY))
+    dip_z = loc[2] + 0.02 * s
+    if DIP:  # 上半分をチョコにくぐらせる (縁は少し波打たせる)
+        o.data.materials.append(P.M(DIP, rough=0.15, coat=0.9))
+        for f in o.data.polygons:
+            c = o.matrix_world @ f.center
+            if c.z > dip_z + 0.025 * s * math.sin(math.atan2(c.y - loc[1], c.x - loc[0]) * 6):
+                f.material_index = 1
     parts = [o]
     # 種: 表面に小さな粒 (少しくぼませずに、つぶつぶ感を出す)
     me = o.data
@@ -79,7 +98,7 @@ def strawberry(loc=(0, 0, 0), s=1.0, with_cream=True, rnd=None):
     ns = [v.normal for v in me.vertices]
     for j in range(0, len(vs), 11):
         p, nrm = vs[j], ns[j]
-        if p.z - loc[2] > 0.18 * s:
+        if p.z - loc[2] > (0.0 if DIP else 0.18 * s):
             continue
         bpy.ops.mesh.primitive_uv_sphere_add(radius=0.009 * s, location=p - nrm * 0.003 * s, segments=8,
                                              ring_count=6)
@@ -121,9 +140,11 @@ def wedge(z0, z1, col, r=1.0, ang=38, inset=0.0, **kw):
 def build_cake():
     # 層: スポンジ / クリーム / スポンジ / クリーム (上)
     wedge(0.0, 0.16, SPONGE, rough=0.8)
-    wedge(0.16, 0.24, CREAM, inset=-0.005, **WHIP)
+    wedge(0.16, 0.24, LAYER, inset=-0.005, **WHIP)
     wedge(0.24, 0.40, SPONGE, rough=0.8)
-    wedge(0.40, 0.48, CREAM, inset=-0.01, **WHIP)
+    wedge(0.40, 0.48, LAYER if DIP else CREAM, inset=-0.01, **WHIP)
+    if DIP:  # 上にチョコのグレーズ
+        wedge(0.48, 0.53, DIP, inset=-0.015, rough=0.12, coat=1.0)
     # 側面 (手前の2面) に見えるいちごの断面
     a0 = math.radians(90 - 19)
     for side in (-1, 1):
@@ -138,10 +159,14 @@ def build_cake():
             h.rotation_euler = (math.pi / 2, 0, math.atan2(nrm.y, nrm.x) - math.pi / 2)
             h.scale = (1, 1, 1)
     # 上: ホイップといちご
-    cream_swirl((0, 0.25, 0.48), 0.42)
-    strawberry((0, 0.25, 0.68), 0.55, with_cream=False)
+    top = 0.53 if DIP else 0.48
+    cream_swirl((0, 0.25, top), 0.42)
+    if DIP:  # 立てたハートチョコ
+        h = P.puffy_heart("ch", 0.13, 0.03, MILK_C, loc=(0, 0.3, top + 0.3), puff=0.03, rough=0.2, coat=0.7)
+    else:
+        strawberry((0, 0.25, 0.68), 0.55, with_cream=False)
     for x in (-0.2, 0.2):
-        cream_swirl((x, 0.55, 0.48), 0.28)
+        cream_swirl((x, 0.55, top), 0.28)
     P.TILT = math.radians(26)
 
 
@@ -160,7 +185,7 @@ def build_latte():
            (0.34, 0.43), (0.3, 0.22), (0.0, 0.2)]
     P.lathe("cup", cup, PINK, n=96, **GLAZE)
     P.lathe("coffee", [(0.0, 0.43), (0.335, 0.43), (0.335, 0.44), (0.0, 0.44)], COFFEE, n=96, rough=0.35)
-    h = P.puffy_heart("art", 0.11, 0.004, CREAM, loc=(0, 0.0, 0.445), rot=(0, 0, 0), puff=0.004, rough=0.5)
+    h = P.puffy_heart("art", 0.11, 0.004, ART, loc=(0, 0.0, 0.445), rot=(0, 0, 0), puff=0.004, rough=0.5)
     h.rotation_euler = (0, 0, math.pi)
     P.lathe("saucer", [(0.0, 0.0), (0.5, 0.0), (0.56, 0.05), (0.54, 0.06), (0.32, 0.035), (0.0, 0.035)], PINK,
             n=96, **GLAZE)
@@ -173,7 +198,7 @@ def build_latte():
         a = 2 * math.pi * k / 8 + 0.2
         if math.cos(a) > 0.92:
             continue
-        P.ball((0.345 * math.cos(a), 0.345 * math.sin(a), 0.3), 0.035, CREAM, scale=(1, 1, 1), rough=0.3)
+        P.ball((0.345 * math.cos(a), 0.345 * math.sin(a), 0.3), 0.035, DOT, scale=(1, 1, 1), rough=0.3)
     P.TILT = math.radians(30)
 
 
@@ -205,7 +230,7 @@ def build_bowl():
     cream_swirl((0.05, 0.0, 0.4), 0.5)
     for k in range(10):
         a = 2 * math.pi * k / 10
-        P.ball((0.47 * math.cos(a), 0.47 * math.sin(a), 0.2), 0.03, CREAM, rough=0.3)
+        P.ball((0.47 * math.cos(a), 0.47 * math.sin(a), 0.2), 0.03, DOT, rough=0.3)
     P.TILT = math.radians(30)
 
 
@@ -226,13 +251,23 @@ def build_bag():
     P.TILT = math.radians(10)
 
 
+def build_heart():
+    """ピンクのドリズルをかけたハートチョコ (表向き)."""
+    from choco3d_clips import drizzle_on_heart
+    size, depth, puff = 0.5, 0.07, 0.1
+    h = P.puffy_heart("ch", size, depth, MILK_C, loc=(0, 0, 0), puff=puff, rough=0.2, coat=0.7)
+    for o in [h] + drizzle_on_heart(size, -(depth + puff * 0.92)):
+        o.rotation_euler.rotate_axis("Z", math.radians(-12))
+    P.TILT = math.radians(4)
+
+
 def build_bow():
     P.fancy_bow((0, 0, 0), 1.0, HOT, rot=(math.radians(-12), 0, 0), knot=(1.0, 0.82, 0.86))
     P.TILT = math.radians(6)
 
 
 ITEMS = {"strawberry": build_strawberry, "cream": build_cream, "cake": build_cake, "latte": build_latte,
-         "whisk": build_whisk, "bowl": build_bowl, "bag": build_bag, "bow": build_bow}
+         "whisk": build_whisk, "bowl": build_bowl, "bag": build_bag, "bow": build_bow, "heart": build_heart}
 
 
 def main():
@@ -241,7 +276,9 @@ def main():
     ap.add_argument("--out", default="props_ichigo")
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--samples", type=int, default=64)
+    ap.add_argument("--theme", choices=["ichigo", *THEMES], default="ichigo")
     a = ap.parse_args(argv)
+    globals().update(THEMES.get(a.theme, {}))
     os.makedirs(a.out, exist_ok=True)
     for name, fn in ITEMS.items():
         if a.only and name not in a.only:
