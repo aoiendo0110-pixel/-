@@ -40,7 +40,7 @@ def hump(u):
 
 
 # ---------------------------------------------------------------- 部品
-def sub_plate(font):
+def sub_plate(font, fill=(255, 150, 196), crumb=(222, 160, 178), line=CHOCO_B):
     """「御相手様映り込みなし」: ピンクのプレート + 絞り出しクリームの縁 + チョコのステッチ."""
     f = ImageFont.truetype(font, 82)
     txt = "御相手様映り込みなし"
@@ -53,7 +53,7 @@ def sub_plate(font):
     d.rounded_rectangle((x0 + 6, y0 + 18, x0 + w + 6, y0 + h + 18), 60, fill=CHOCO_D)  # 厚み
     d.rounded_rectangle((x0 - 12, y0 - 12, x0 + w + 12, y0 + h + 12), 70, fill=PINK_D)
     d.rounded_rectangle((x0 - 6, y0 - 6, x0 + w + 6, y0 + h + 6), 66, fill=WHITE)
-    d.rounded_rectangle((x0 + 10, y0 + 10, x0 + w - 10, y0 + h - 10), 54, fill=(255, 150, 196))
+    d.rounded_rectangle((x0 + 10, y0 + 10, x0 + w - 10, y0 + h - 10), 54, fill=fill)
     # 絞り出しクリームの縁 (しずく形をぐるっと)
     per = 2 * (w + h)
     n = int(per / 34)
@@ -69,12 +69,12 @@ def sub_plate(font):
             x, y = x0, y0 + h - (s - 2 * w - h)
         x = min(max(x, x0 + 30), x0 + w - 30)
         y = min(max(y, y0 + 4), y0 + h - 4)
-        d.ellipse((x - 20, y - 20, x + 20, y + 20), fill=(222, 160, 178))
+        d.ellipse((x - 20, y - 20, x + 20, y + 20), fill=crumb)
         d.ellipse((x - 17, y - 19, x + 17, y + 15), fill=WHITE)
         d.ellipse((x - 9, y - 13, x - 1, y - 6), fill=(255, 236, 244))
     d.text((x0 + w / 2 + 4, y0 + h / 2 + 10), txt, font=f, anchor="mm", fill=CHOCO_D, stroke_width=11,
            stroke_fill=CHOCO_D)
-    d.text((x0 + w / 2, y0 + h / 2 + 4), txt, font=f, anchor="mm", fill=WHITE, stroke_width=8, stroke_fill=CHOCO_B)
+    d.text((x0 + w / 2, y0 + h / 2 + 4), txt, font=f, anchor="mm", fill=WHITE, stroke_width=8, stroke_fill=line)
     for s in (-1, 1):
         cx = x0 + w / 2 + s * (w / 2 - 6)
         d.polygon(heart_poly(cx, y0 + h / 2, 30), fill=WHITE)
@@ -82,7 +82,7 @@ def sub_plate(font):
     return im
 
 
-def whisk():
+def whisk(coat=CHOCO_B, coat_hi=(176, 112, 82)):
     """チョコのついた泡立て器 (持ち手が上・ワイヤーが下). ステッカー風の白フチ."""
     S = (300, 640)
     im = Image.new("RGBA", S, (0, 0, 0, 0))
@@ -102,15 +102,15 @@ def whisk():
             d.line(wire_pts(k), fill=col, width=wd, joint="curve")
         d.ellipse((cx - 30 - wd / 2, tip - 22 - wd / 2, cx + 30 + wd / 2, tip + 8 + wd / 2), fill=col)
     # 先についたチョコ (下側だけ) と垂れ
-    for wd, col in ((32, WHITE), (20, CHOCO_B)):
+    for wd, col in ((32, WHITE), (20, coat)):
         for k in ks:
             d.line(wire_pts(k, 0.62), fill=col, width=wd, joint="curve")
         d.ellipse((cx - 44 - wd / 3, tip - 30 - wd / 3, cx + 44 + wd / 3, tip + 14 + wd / 3), fill=col)
     for x, L in ((-30, 22), (18, 36)):
-        for pad, col in ((8, WHITE), (0, CHOCO_B)):
+        for pad, col in ((8, WHITE), (0, coat)):
             d.rounded_rectangle((cx + x - 9 - pad, tip, cx + x + 9 + pad, tip + L + pad), 9 + pad, fill=col)
             d.ellipse((cx + x - 12 - pad, tip + L - 12 - pad, cx + x + 12 + pad, tip + L + 12 + pad), fill=col)
-    d.ellipse((cx - 70, tip - 70, cx - 52, tip - 52), fill=(176, 112, 82))
+    d.ellipse((cx - 70, tip - 70, cx - 52, tip - 52), fill=coat_hi)
     # 持ち手 (ピンク)
     for pad, col in ((12, WHITE), (6, PINK_D), (0, (255, 150, 196))):
         d.rounded_rectangle((cx - 24 - pad, 20 - pad, cx + 24 + pad, neck + 12 + pad), 24 + pad, fill=col)
@@ -119,7 +119,7 @@ def whisk():
     return im
 
 
-def bowl():
+def bowl(content=CHOCO_B, content_hi=(170, 108, 78)):
     """チョコの入ったピンクのボウル."""
     S = (360, 250)
     im = Image.new("RGBA", S, (0, 0, 0, 0))
@@ -128,8 +128,8 @@ def bowl():
     for pad, col in ((14, WHITE), (6, PINK_D), (0, (255, 160, 200))):
         d.chord((cx - 160 - pad, -20 - pad, cx + 160 + pad, 220 + pad), 0, 180, fill=col)
         d.ellipse((cx - 166 - pad, 70 - pad, cx + 166 + pad, 130 + pad), fill=col)
-    d.ellipse((cx - 150, 78, cx + 150, 122), fill=CHOCO_B)
-    d.ellipse((cx - 120, 84, cx - 40, 98), fill=(170, 108, 78))
+    d.ellipse((cx - 150, 78, cx + 150, 122), fill=content)
+    d.ellipse((cx - 120, 84, cx - 40, 98), fill=content_hi)
     for x in range(int(cx - 120), int(cx + 130), 40):  # ドット柄
         d.ellipse((x - 8, 160, x + 8, 176), fill=WHITE)
     return im
