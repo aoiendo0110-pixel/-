@@ -214,8 +214,8 @@ class Scene:
         s2pi = lambda k, ph=0.0: math.sin(2 * math.pi * u * k + ph)
 
         # 右上: ホイップを泡立て中のボウル / 左上: 絞り袋からホイップ
-        put(im, self.whisk, 865, 250 + 6 * s2pi(4, 1), 0.72, -8 + 14 * s2pi(4))
         put(im, self.bowl, 880, 485, 0.82, 6 + 2 * s2pi(2))
+        put(im, self.whisk, 865, 250 + 6 * s2pi(4, 1), 0.72, -8 + 14 * s2pi(4))  # 泡立て器はボウルの手前
         squeeze = 0.9 + 0.1 * hump(((u * 2) % 1) / 0.5)
         put(im, self.bag, 470, 190 + 6 * s2pi(2), 0.8 * squeeze, 4 * s2pi(2, 1))
         put(im, self.dollop, 575, 385, 0.7 * (0.85 + 0.15 * squeeze), 0)
