@@ -116,3 +116,42 @@ python3 sweets_clips.py --out clips/sweets [--only ichigo_bounce donut_roll]
 | sweets_orbit | チョコハートのまわりをスイーツが回る (ループ) | 4秒 |
 | sweets_rain | スイーツが降ってくる 1920x1080 (ループ) | 6秒 |
 | gift_surprise | プレゼント箱が揺れて、お菓子が飛び出す | 4秒 |
+
+## いちごのショートケーキ (`shortcake3d.py`)
+
+カットしたショートケーキ1切れ (スポンジ2段・生クリーム・断面の半割りいちご・クリームの絞り・丸ごといちご) を
+Blender でコードから組み立てて、8秒で1回転する透過動画にする (1920x1080 / 30fps / ループ)。
+
+```
+pip install bpy
+python3 shortcake3d.py --out cake_out                  # 240フレーム → .mov / .webm / _greenback.mp4
+python3 shortcake3d.py --out cake_out --preview 1 60   # 指定フレームの静止画だけ
+```
+
+- CPU の Cycles で1フレーム約15秒。途中で止めても、もう一度実行すれば続きから描く
+
+## SD (ちびキャラ) 3Dモデル (`sd_chara3d.py`)
+
+ショコラ×ロリータのパティシエ少女のデザイン画をもとに、2.5頭身くらいの3Dモデルをコードで組み立てる。
+目・口・ほっぺは PIL で描いたテクスチャを顔に貼り、輪郭線は Freestyle で描く。
+
+```
+pip install bpy pillow
+python3 sd_chara3d.py --out chara_out               # 5方向の静止画 + sd_chara.blend + sd_chara.glb
+python3 sd_chara3d.py --out chara_out --turntable   # 8秒で1回転する透過動画 (.mov / .webm / _greenback.mp4) も
+```
+
+- 色はイラストの色 (`lin("#rrggbb")`) で指定しているので、そこを変えれば色替えできる
+- `.glb` には形と色 (顔はテクスチャ) が入る。網タイツ・ストライプなどの柄は `.blend` のみ
+
+## ゆるキャラ「ちょこにゃん」 (`choconyan.py`)
+
+パティシエ少女がモチーフの、チョコ大好きな白ねこのミニキャラ (頭からチョコをかぶって、口からチョコがとろ〜り)。
+SVG で描いて、Chromium (headless) で透過 PNG にする。カラーは 赤・ピンク・茶・黄・白。
+
+```
+python3 choconyan.py --out nyan_out --font-pop MochiyPopOne-Regular.ttf --font-hand HachiMaruPop-Regular.ttf
+```
+
+- `choconyan_main / mogu / love` の .svg と .png (2000x2000 透過)、`choconyan_sheet.png` (キャラクターシート)
+- 色は `C`、表情は `eyes()` (sleepy / happy / heart)、持ち物は `held_heart()` / `choco_bar()` で変えられる
