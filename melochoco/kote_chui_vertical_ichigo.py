@@ -1,6 +1,7 @@
 """縦 (9:16) の「コテ注意 / 御相手様映り込みなし」ロゴ動画: ショートケーキ・いちご・ケーキ作り・ホイップ・カフェ版.
 
-  python3 kote_chui_vertical_ichigo.py --font HachiMaruPop.ttf --out clips/text/kote_chui_vertical_ichigo [--length 3.27]
+  python3 props_ichigo3d.py --out props_ichigo        # 3Dモデル (Blender) を先に作る
+  python3 kote_chui_vertical_ichigo.py --font HachiMaruPop.ttf --props props_ichigo --out clips/text/kote_chui_vertical_ichigo
 
 kote_chui_vertical.py (チョコ版) と同じ配置・同じ動きで、モチーフだけ差し替えた別バージョン.
   メイン: 「コテ」= いちごの赤 /「注意」= スポンジに生クリームがけ
@@ -179,7 +180,7 @@ def steam(im, x, y, u):
 
 # ---------------------------------------------------------------- シーン
 class Scene:
-    def __init__(self, font, L):
+    def __init__(self, font, L, props=None):
         self.L = L
         self.letters = [dict(g=Glyph(ch, font, round(FS * sc), st, 10, False), x=x, y=y, rot=rot)
                         for ch, (x, y), sc, rot, st in MAIN]
@@ -191,6 +192,20 @@ class Scene:
         self.berry, self.half, self.dollop = strawberry(), strawberry_half(), cream_dollop(56)
         self.glint = sparkle(36, WHITE, (255, 128, 182))
         self.hearts = {r: heart_sticker(r) for r in (18, 26, 34)}
+        if props:  # 3Dモデル (props_ichigo3d.py) があれば差し替える. 高さを2D版の絵に合わせて縮める
+            def load(name, ref, k=0.9):
+                im = Image.open(os.path.join(props, name + ".png")).convert("RGBA")
+                s = ref.height * k / im.height
+                return im.resize((max(1, round(im.width * s)), max(1, round(im.height * s))), Image.LANCZOS)
+            self.whisk = load("whisk", self.whisk, 0.92)
+            self.bowl = load("bowl", self.bowl, 1.05)
+            self.bag = load("bag", self.bag, 1.0)
+            self.dollop = load("cream", self.dollop, 0.8)
+            self.cake = load("cake", self.cake, 0.95)
+            self.cup = load("latte", self.cup, 0.95)
+            self.bow = load("bow", self.bow, 0.95)
+            self.berry = load("strawberry", self.berry, 0.95)
+            self.half = load("strawberry", self.half, 1.25)
 
     def frame(self, t):
         u = t / self.L  # 0-1 で1周
@@ -202,8 +217,8 @@ class Scene:
         put(im, self.whisk, 865, 250 + 6 * s2pi(4, 1), 0.72, -8 + 14 * s2pi(4))
         put(im, self.bowl, 880, 485, 0.82, 6 + 2 * s2pi(2))
         squeeze = 0.9 + 0.1 * hump(((u * 2) % 1) / 0.5)
-        put(im, self.bag, 190, 250 + 6 * s2pi(2), 0.75 * squeeze, 4 * s2pi(2, 1))
-        put(im, self.dollop, 110, 395, 0.8 * (0.85 + 0.15 * squeeze), 0)
+        put(im, self.bag, 470, 190 + 6 * s2pi(2), 0.8 * squeeze, 4 * s2pi(2, 1))
+        put(im, self.dollop, 575, 385, 0.7 * (0.85 + 0.15 * squeeze), 0)
         for x, ph, r in ((120, 0.0, 26), (980, 0.5, 18), (90, 0.35, 18), (1000, 0.8, 34)):
             q = (u * 2 + ph) % 1
             put(im, self.hearts[r], x + 18 * math.sin(q * 6), 1300 - 700 * q, hump(q) * 1.1, 15 * math.sin(q * 5))
@@ -230,12 +245,12 @@ class Scene:
         put(im, self.half, 100, 1290 + 12 * s2pi(2, 1), 0.5, -12 + 6 * s2pi(2, 1))
 
         # 下: ショートケーキ・ラテ・いちご (順にぴょこぴょこ)
-        for j, (spr, x, s) in enumerate(((self.berry, 230, 1.0), (self.cake, 540, 0.82), (self.cup, 850, 0.72))):
+        for j, (spr, x, s) in enumerate(((self.berry, 230, 0.95), (self.cake, 540, 0.74), (self.cup, 850, 0.72))):
             q = (u * 4 - j * 0.2) % 1
             hop = 26 * hump(q / 0.3)
-            put(im, spr, x, 1730 - hop, s, 6 * s2pi(2, j))
+            put(im, spr, x, 1765 - hop, s, 6 * s2pi(2, j))
             if spr is self.cup:
-                steam(im, x - 10, 1730 - hop - 95, u)
+                steam(im, x - 10, 1765 - hop - 95, u)
         # サブ文字のプレート
         put(im, self.sub, W / 2, SUB_Y + 8 * s2pi(2), 1, -2 + 1.5 * s2pi(1))
         return im
@@ -244,9 +259,9 @@ class Scene:
 SCENE = None
 
 
-def _init(font, L):
+def _init(font, L, props):
     global SCENE
-    SCENE = Scene(font, L)
+    SCENE = Scene(font, L, props)
 
 
 def _frame(i):
@@ -258,18 +273,19 @@ def main():
     ap.add_argument("--font", required=True, help="Hachi Maru Pop など手書きの丸文字")
     ap.add_argument("--out", default="kote_chui_vertical_ichigo")
     ap.add_argument("--length", type=float, default=3.27, help="動画の長さ (秒). 動きの1周もこの長さ")
+    ap.add_argument("--props", help="props_ichigo3d.py で作った3Dモデルの透過PNGのフォルダ (無ければ2Dの絵)")
     ap.add_argument("--jobs", type=int, default=os.cpu_count())
     ap.add_argument("--preview", type=float, nargs="*")
     a = ap.parse_args()
     if a.preview is not None:
-        _init(a.font, a.length)
+        _init(a.font, a.length, a.props)
         for t in a.preview:
             bg = Image.new("RGBA", (W, H), (0, 255, 0, 255))
             bg.alpha_composite(SCENE.frame(t))
             bg.convert("RGB").save(f"{a.out}_{t:.2f}.png")
         return
     n = math.ceil(a.length * FPS)
-    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.length)) as pool:
+    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.length, a.props)) as pool:
         frames = pool.map(_frame, range(n), chunksize=4)
     Image.frombytes("RGBA", (W, H), frames[n // 3]).save(a.out + ".png")
     ff = imageio_ffmpeg.get_ffmpeg_exe()
