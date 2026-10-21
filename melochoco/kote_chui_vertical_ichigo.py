@@ -34,8 +34,16 @@ SPONGE, SPONGE_D = (250, 214, 140), (222, 168, 92)
 STRAW = dict(top=(255, 116, 140), bot=(222, 30, 64), stitch=WHITE, ext=(120, 10, 34), ring=CHOCO_D)
 CAKE = dict(top=(252, 222, 150), bot=(232, 182, 104), stitch=(255, 150, 180), ext=(140, 90, 40), ring=CHOCO_D,
             glaze=(CREAM, (252, 238, 236)), glaze_rim=(255, 196, 212))
-POS = [("コ", (330, 680), 1.0, -10), ("テ", (740, 645), 0.95, 9), ("注", (315, 1065), 1.02, -6),
-       ("意", (765, 1090), 1.02, 7)]
+# 文字の配置: (文字, 中心, 大きさ, 傾き, 段[, 太らせる量]) / サブ文字 / 横の飾りの位置
+# 画数の多い字は太らせると線がつぶれるので、太らせる量を小さくする
+LAYOUTS = {
+    "kote": dict(pos=[("コ", (330, 680), 1.0, -10, 0), ("テ", (740, 645), 0.95, 9, 0),
+                      ("注", (315, 1065), 1.02, -6, 1), ("意", (765, 1090), 1.02, 7, 1)],
+                 sub="御相手様映り込みなし", side=((980, 905, 0.62, 14), (100, 1290, 0.5, -12))),
+    "shou": dict(pos=[("星", (300, 790), 1.05, -8, 0), ("導", (770, 765), 1.18, 7, 0, 3),
+                      ("シ", (215, 1250), 0.92, -10, 1), ("ョ", (525, 1310), 0.6, 10, 1), ("ウ", (815, 1235), 0.95, 7, 1)],
+                 sub=None, side=((930, 1530, 0.62, 14), (150, 1530, 0.62, -12))),
+}
 # テーマごとの文字の色 (上段, 下段) とサブ文字のプレートの色
 THEMES = {
     "ichigo": dict(styles=(STRAW, CAKE), plate=dict(fill=RED, crumb=CREAM_S, line=RED_D)),
@@ -188,12 +196,13 @@ def steam(im, x, y, u):
 
 # ---------------------------------------------------------------- シーン
 class Scene:
-    def __init__(self, font, L, props=None, theme="ichigo"):
+    def __init__(self, font, L, props=None, theme="ichigo", layout="kote"):
         self.L = L
         th = THEMES[theme]
-        self.letters = [dict(g=Glyph(ch, font, round(FS * sc), th["styles"][i // 2], 10, False), x=x, y=y, rot=rot)
-                        for i, (ch, (x, y), sc, rot) in enumerate(POS)]
-        self.sub = sub_plate(font, **th["plate"])
+        lay = self.lay = LAYOUTS[layout]
+        self.letters = [dict(g=Glyph(ch, font, round(FS * sc), th["styles"][row], (*fat, 10)[0], False), x=x, y=y,
+                             rot=rot) for ch, (x, y), sc, rot, row, *fat in lay["pos"]]
+        self.sub = sub_plate(font, txt=lay["sub"], **th["plate"]) if lay["sub"] else None
         self.whisk = whisk(CREAM, WHITE)
         self.bowl = bowl((255, 250, 248), WHITE)
         self.bow = bow()
@@ -251,8 +260,8 @@ class Scene:
         c = self.letters[0]
         put(im, self.bow, c["x"] - 120, c["y"] - 235 - 30 * hump(((u * 4) % 1) / 0.3), 1.15, 18 + 6 * s2pi(2))
         # 横: いちごの断面
-        put(im, self.half, 980, 905 + 14 * s2pi(2, 2), 0.62, 14 + 6 * s2pi(2))
-        put(im, self.half, 100, 1290 + 12 * s2pi(2, 1), 0.5, -12 + 6 * s2pi(2, 1))
+        for j, (x, y, s, r) in enumerate(self.lay["side"]):
+            put(im, self.half, x, y + 14 * s2pi(2, 2 - j), s, r + 6 * s2pi(2, j))
 
         # 下: ショートケーキ・ラテ・いちご (順にぴょこぴょこ)
         for j, (spr, x, s) in enumerate(((self.berry, 230, 0.95), (self.cake, 540, 0.74), (self.cup, 850, 0.72))):
@@ -262,16 +271,17 @@ class Scene:
             if spr is self.cup:
                 steam(im, x - 10, 1765 - hop - 95, u)
         # サブ文字のプレート
-        put(im, self.sub, W / 2, SUB_Y + 8 * s2pi(2), 1, -2 + 1.5 * s2pi(1))
+        if self.sub is not None:
+            put(im, self.sub, W / 2, SUB_Y + 8 * s2pi(2), 1, -2 + 1.5 * s2pi(1))
         return im
 
 
 SCENE = None
 
 
-def _init(font, L, props, theme):
+def _init(font, L, props, theme, layout):
     global SCENE
-    SCENE = Scene(font, L, props, theme)
+    SCENE = Scene(font, L, props, theme, layout)
 
 
 def _frame(i):
@@ -285,18 +295,19 @@ def main():
     ap.add_argument("--length", type=float, default=3.27, help="動画の長さ (秒). 動きの1周もこの長さ")
     ap.add_argument("--props", help="props_ichigo3d.py で作った3Dモデルの透過PNGのフォルダ (無ければ2Dの絵)")
     ap.add_argument("--theme", choices=list(THEMES), default="ichigo")
+    ap.add_argument("--layout", choices=list(LAYOUTS), default="kote", help="kote: コテ注意 / shou: 星導ショウ")
     ap.add_argument("--jobs", type=int, default=os.cpu_count())
     ap.add_argument("--preview", type=float, nargs="*")
     a = ap.parse_args()
     if a.preview is not None:
-        _init(a.font, a.length, a.props, a.theme)
+        _init(a.font, a.length, a.props, a.theme, a.layout)
         for t in a.preview:
             bg = Image.new("RGBA", (W, H), (0, 255, 0, 255))
             bg.alpha_composite(SCENE.frame(t))
             bg.convert("RGB").save(f"{a.out}_{t:.2f}.png")
         return
     n = math.ceil(a.length * FPS)
-    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.length, a.props, a.theme)) as pool:
+    with Pool(a.jobs, initializer=_init, initargs=(a.font, a.length, a.props, a.theme, a.layout)) as pool:
         frames = pool.map(_frame, range(n), chunksize=4)
     Image.frombytes("RGBA", (W, H), frames[n // 3]).save(a.out + ".png")
     ff = imageio_ffmpeg.get_ffmpeg_exe()

@@ -40,10 +40,9 @@ def hump(u):
 
 
 # ---------------------------------------------------------------- 部品
-def sub_plate(font, fill=(255, 150, 196), crumb=(222, 160, 178), line=CHOCO_B):
+def sub_plate(font, fill=(255, 150, 196), crumb=(222, 160, 178), line=CHOCO_B, txt="御相手様映り込みなし"):
     """「御相手様映り込みなし」: ピンクのプレート + 絞り出しクリームの縁 + チョコのステッチ."""
     f = ImageFont.truetype(font, 82)
-    txt = "御相手様映り込みなし"
     tw = f.getlength(txt)
     w, h = int(tw) + 150, 190
     S = (w + 80, h + 90)
