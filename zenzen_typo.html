@@ -15,7 +15,7 @@
  <path id="flowerP" d="M0 -16 C6 -16 7 -8 4 -5 C8 -8 16 -6 15 0 C16 6 8 8 4 5 C7 8 6 16 0 16 C-6 16 -7 8 -4 5 C-8 8 -16 6 -15 0 C-16 -6 -8 -8 -4 -5 C-7 -8 -6 -16 0 -16Z"/>
 </defs>
 <rect id="bg" width="1600" height="900" fill="#8a55e6"/>
-<g id="stage" transform="translate(-55 -15)"></g>
+<g id="stage" transform="translate(-95 -10)"></g>
 </svg>
 <script>
 const NS='http://www.w3.org/2000/svg';
@@ -99,7 +99,7 @@ function miniWin(){const g=el('g',{});
  const ic=[-60,0,60];ic.forEach((x,i)=>{ if(i==2) el('use',{href:'#heartP',fill:'none',stroke:'#f47aab','stroke-width':4,transform:`translate(${x+20} 44) scale(.42)`},g);
    else el('circle',{cx:x+20,cy:42,r:8,fill:'none',stroke:'#f47aab','stroke-width':3},g);});
  return g;}
-addItem(miniWin(),{x:1175,y:255,r:3,s:1,t0:1.35,bob:4});
+
 
 // 細い線の飾り（描かれていく）
 const lines=[];
