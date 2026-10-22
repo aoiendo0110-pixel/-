@@ -1,0 +1,181 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>まる窓フレーム 16:9</title>
+<style>html,body{margin:0;background:transparent}svg{display:block}</style></head><body>
+<!-- 真ん中の丸は紫（#8a55e6）。#transparent で透過。#t=秒（8秒ループ） -->
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <path id="heartP" d="M0 12 C-26 -8 -13 -30 0 -14 C13 -30 26 -8 0 12Z"/>
+ <path id="sparkP" d="M0 -20 Q2.5 -2.5 20 0 Q2.5 2.5 0 20 Q-2.5 2.5 -20 0 Q-2.5 -2.5 0 -20Z"/>
+ <path id="starP" d="M0 -26 L7.5 -8 L26 -8 L11 4 L17 24 L0 12 L-17 24 L-11 4 L-26 -8 L-7.5 -8Z"/>
+ <g id="clover">
+  <use href="#heartP" transform="rotate(45) translate(0 -8) scale(.62)"/>
+  <use href="#heartP" transform="rotate(135) translate(0 -8) scale(.62)"/>
+  <use href="#heartP" transform="rotate(225) translate(0 -8) scale(.62)"/>
+  <use href="#heartP" transform="rotate(315) translate(0 -8) scale(.62)"/>
+ </g>
+ <pattern id="gingham" width="64" height="64" patternUnits="userSpaceOnUse">
+  <rect width="64" height="64" fill="#fff5f9"/>
+  <rect width="32" height="64" fill="#ffb3cf" opacity=".5"/>
+  <rect width="64" height="32" fill="#ffb3cf" opacity=".5"/>
+  <path d="M0 16 H64 M16 0 V64" stroke="#fff" stroke-width="1.5" opacity=".4"/>
+ </pattern>
+ <filter id="blur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="20"/></filter>
+ <filter id="soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="7"/></filter>
+ <mask id="hole" maskUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080">
+  <rect width="1920" height="1080" fill="#fff"/>
+  <circle id="holeC" fill="#000"/>
+ </mask>
+</defs>
+<rect id="purple" width="1920" height="1080" fill="#8a55e6"/>
+<g id="root" mask="url(#hole)"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const W=1920,H=1080, CX=960, CY=530, R=290;
+const LOOP=8, TAU=Math.PI*2;
+const root=document.getElementById('root');
+const holeC=document.getElementById('holeC');holeC.setAttribute('cx',CX);holeC.setAttribute('cy',CY);holeC.setAttribute('r',R);
+const ring=(r1,r2)=>`M${CX+r2} ${CY} A${r2} ${r2} 0 1 0 ${CX-r2} ${CY} A${r2} ${r2} 0 1 0 ${CX+r2} ${CY}Z M${CX+r1} ${CY} A${r1} ${r1} 0 1 1 ${CX-r1} ${CY} A${r1} ${r1} 0 1 1 ${CX+r1} ${CY}Z`;
+
+// ---- パーツ ----
+function heartC(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':11,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':2.5,transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-8*sc,cy:-13*sc,rx:4*sc,ry:2.4*sc,fill:'#fff',transform:`rotate(-35 ${-8*sc} ${-13*sc})`},g);return g;}
+function cloverC(sc){const g=el('g',{});
+ el('use',{href:'#clover',fill:'#fff',stroke:'#fff','stroke-width':10,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('path',{d:`M0 0 Q${4*sc} ${14*sc} ${10*sc} ${22*sc}`,stroke:'#86c234','stroke-width':3*sc,fill:'none','stroke-linecap':'round'},g);
+ el('use',{href:'#clover',fill:'#b5e055',stroke:'#86c234','stroke-width':1.6,transform:`scale(${sc})`},g);
+ el('circle',{r:3*sc,fill:'#fff3a0'},g);return g;}
+function starC(sc){const g=el('g',{});
+ el('use',{href:'#starP',fill:'#fff',stroke:'#fff','stroke-width':11,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#starP',fill:'#ffec80',stroke:'#efb21f','stroke-width':2.5,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('circle',{cx:-4*sc,cy:-5*sc,r:2.6*sc,fill:'#fff'},g);return g;}
+function bowC(sc,fill='#ff8fba',line='#f06d9f'){const g=el('g',{});
+ const part=(f,l,sw)=>{const a={fill:f,stroke:l,'stroke-width':sw,'stroke-linejoin':'round'};
+  el('path',{...a,d:'M-10 10 L-60 120 L-38 108 L-30 138 L8 18Z'},g);
+  el('path',{...a,d:'M10 10 L60 120 L38 108 L30 138 L-8 18Z'},g);
+  el('path',{...a,d:'M0 0 C-30 -50 -118 -66 -118 -10 C-118 44 -40 40 0 0Z'},g);
+  el('path',{...a,d:'M0 0 C30 -50 118 -66 118 -10 C118 44 40 40 0 0Z'},g);
+  el('ellipse',{...a,cx:0,cy:0,rx:24,ry:21},g);};
+ part('#fff','#fff',22);part(fill,line,4);
+ el('path',{d:'M-20 -6 C-46 -30 -90 -38 -98 -14',fill:'none',stroke:'#ffc4da','stroke-width':6,'stroke-linecap':'round'},g);
+ el('path',{d:'M20 -6 C46 -30 90 -38 98 -14',fill:'none',stroke:'#ffc4da','stroke-width':6,'stroke-linecap':'round'},g);
+ el('use',{href:'#heartP',fill:'#fff',transform:'translate(0 2) scale(.55)'},g);
+ [[-70,-12],[70,-12],[-50,16],[50,16]].forEach(([x,y])=>el('circle',{cx:x,cy:y,r:5,fill:'#fff',opacity:.85},g));
+ g.setAttribute('data-sc',sc);return g;}
+
+// ---- 背景：ギンガム ----
+const ging=el('rect',{x:-128,y:-128,width:W+256,height:H+256,fill:'url(#gingham)'},root);
+// 四隅をちょっとふんわり
+el('rect',{width:W,height:H,fill:'none',stroke:'#ffd6e6','stroke-width':120,filter:'url(#blur)',opacity:.8},root);
+
+// ---- ふわふわ昇るハート ----
+const floaters=[];
+const fcols=[['#ffc4da','#ffa3c6'],['#fff1a6','#f5d55a'],['#e6f7b6','#b5e055']];
+for(let i=0;i<16;i++){const [f,l]=fcols[i%3];const g=el('g',{},root);
+ el('use',{href:'#heartP',fill:f,stroke:'#fff','stroke-width':4,transform:`scale(${0.7+((i*7)%5)*0.12})`},g);
+ floaters.push({g,x:60+i*118+((i*37)%50),y0:(i*173)%1180,ph:i*0.9});}
+
+// ---- 下：草原の丘＋柵＋クローバー ----
+const meadow=el('g',{},root);
+el('path',{d:'M0 900 Q240 840 480 880 Q720 920 960 870 Q1200 820 1440 875 Q1680 925 1920 860 V1080 H0Z',fill:'#e3f6b0'},meadow);
+// 柵
+const fence=el('g',{fill:'#fff'},meadow);
+for(let x=20;x<W;x+=78){if(Math.abs(x-CX)<R+60)continue;
+ const base=960; el('path',{d:`M${x-12} ${base} V${base-82} L${x} ${base-96} L${x+12} ${base-82} V${base}Z`},fence);}
+el('rect',{x:0,y:895,width:CX-R-60,height:10,rx:5},fence);el('rect',{x:0,y:925,width:CX-R-60,height:10,rx:5},fence);
+el('rect',{x:CX+R+60,y:895,width:W,height:10,rx:5},fence);el('rect',{x:CX+R+60,y:925,width:W,height:10,rx:5},fence);
+el('path',{d:'M0 960 Q160 930 320 955 Q480 980 640 950 Q800 920 960 955 Q1120 990 1280 952 Q1440 918 1600 950 Q1760 980 1920 945 V1080 H0Z',fill:'#cdeb85'},meadow);
+el('path',{d:'M0 1010 Q200 985 400 1005 Q600 1025 800 1000 Q1000 975 1200 1002 Q1400 1030 1600 1000 Q1760 980 1920 995 V1080 H0Z',fill:'#b9e06a'},meadow);
+// 草原のちびクローバーと花
+const sway=[];
+[[90,995,1.3],[250,1040,1.0],[420,990,1.1],[600,1045,1.2],[1330,1040,1.1],[1500,992,1.2],[1680,1045,1.0],[1850,1000,1.2],[760,1060,0.9],[1180,1062,0.9]]
+ .forEach(([x,y,s],i)=>{const c=cloverC(s);meadow.appendChild(c);sway.push({g:c,x,y,ph:i*0.8});});
+[[170,1050,'#ffd0e1'],[520,1020,'#fff1a6'],[1420,1018,'#ffd0e1'],[1780,1048,'#fff1a6'],[330,985,'#fff'],[1600,985,'#fff']]
+ .forEach(([x,y,c])=>{for(let k=0;k<5;k++){const a=k/5*TAU;el('circle',{cx:x+7*Math.cos(a),cy:y+7*Math.sin(a),r:6,fill:c,stroke:'#fff','stroke-width':1.5},meadow);}el('circle',{cx:x,cy:y,r:4,fill:'#ffe56b'},meadow);});
+
+// ---- 上：三角旗ガーランド ----
+const flags=[];
+const flagCol=[['#ff9cc4','#f47aab'],['#fff1a6','#efb21f'],['#d6f38a','#86c234']];
+function swag(x0,x1,sag,n,off){
+ const pt=s=>{const x=x0+(x1-x0)*s;const y=24+sag*4*s*(1-s);return [x,y];};
+ const d=[...Array(41).keys()].map(i=>{const [x,y]=pt(i/40);return (i?'L':'M')+x+' '+y;}).join(' ');
+ el('path',{d,fill:'none',stroke:'#fff','stroke-width':7},root);
+ el('path',{d,fill:'none',stroke:'#f47aab','stroke-width':3,'stroke-dasharray':'10 6'},root);
+ for(let i=0;i<n;i++){const s=(i+0.5)/n;const [x,y]=pt(s);const [f,l]=flagCol[(i+off)%3];
+  const g=el('g',{},root);
+  el('path',{d:'M-32 0 L32 0 L0 62Z',fill:'#fff',stroke:'#fff','stroke-width':10,'stroke-linejoin':'round'},g);
+  el('path',{d:'M-32 0 L32 0 L0 62Z',fill:f,stroke:l,'stroke-width':2.5,'stroke-linejoin':'round'},g);
+  if(i%3==0) el('use',{href:'#heartP',fill:'#fff',transform:'translate(0 20) scale(.45)'},g);
+  else if(i%3==1) el('circle',{cx:0,cy:18,r:6,fill:'#fff'},g);
+  else el('use',{href:'#clover',fill:'#fff',transform:'translate(0 19) scale(.5)'},g);
+  const ang=Math.atan2(sag*4*(1-2*s),(x1-x0))*180/Math.PI;
+  flags.push({g,x,y,ang,ph:i*0.6+off});}}
+swag(-20,700,150,7,0);
+swag(1220,1940,150,7,1);
+
+// ---- 真ん中の丸窓 ----
+const win=el('g',{},root);
+const halo=el('path',{d:ring(R+40,R+150),fill:'#fff',filter:'url(#blur)'},win);
+el('path',{d:ring(R+6,R+86),fill:'#e2588f',opacity:.25,filter:'url(#soft)',transform:'translate(0 10)'},win);
+const lace=el('g',{},win);
+const NB=48, LR=R+66;
+for(let i=0;i<NB;i++){const a=i/NB*TAU;el('circle',{cx:CX+LR*Math.cos(a),cy:CY+LR*Math.sin(a),r:17,fill:'#fff'},lace);}
+el('path',{d:ring(R-2,R+68),fill:'#fff'},lace);
+for(let i=0;i<NB;i++){const a=i/NB*TAU;el('circle',{cx:CX+(LR+3)*Math.cos(a),cy:CY+(LR+3)*Math.sin(a),r:4,fill:'#ffd0e1'},lace);}
+for(let i=0;i<NB;i++){const a=(i+.5)/NB*TAU;el('circle',{cx:CX+(R+60)*Math.cos(a),cy:CY+(R+60)*Math.sin(a),r:2.6,fill:'#ffd0e1'},lace);}
+const band=el('g',{},win);
+el('path',{d:ring(R+12,R+50),fill:'#ff9cc4','fill-rule':'evenodd'},band);
+for(let i=0;i<40;i++){const a1=i/40*TAU,a2=(i+.5)/40*TAU;
+ el('circle',{cx:CX+(R+21)*Math.cos(a1),cy:CY+(R+21)*Math.sin(a1),r:5,fill:'#fff',opacity:.85},band);
+ el('circle',{cx:CX+(R+41)*Math.cos(a2),cy:CY+(R+41)*Math.sin(a2),r:5,fill:'#fff',opacity:.85},band);}
+el('circle',{cx:CX,cy:CY,r:R+12,fill:'none',stroke:'#f47aab','stroke-width':3.5},win);
+el('circle',{cx:CX,cy:CY,r:R+50,fill:'none',stroke:'#f47aab','stroke-width':3.5},win);
+const stitch=el('circle',{cx:CX,cy:CY,r:R+31,fill:'none',stroke:'#fff','stroke-width':3.5,'stroke-dasharray':'12 9','stroke-linecap':'round'},win);
+el('circle',{cx:CX,cy:CY,r:R+4,fill:'none',stroke:'#fff','stroke-width':10},win);
+const inner=el('circle',{cx:CX,cy:CY,r:R+2,fill:'none',stroke:'#ffe56b','stroke-width':3,'stroke-dasharray':'2 10','stroke-linecap':'round'},win);
+// 窓のまわりをまわるチャーム
+const orbit=[];const mk=[()=>heartC('#ff8fba','#f06d9f',0.85),()=>cloverC(1.05),()=>starC(0.7)];
+for(let i=0;i<6;i++){const g=mk[i%3]();win.appendChild(g);orbit.push({g,a0:i/6*TAU+0.3,ph:i});}
+// 窓の上のリボン
+const topBow=bowC(1);win.appendChild(topBow);
+
+// ---- 角のリボンと飾り ----
+const cornerL=bowC(0.85,'#fff1a6','#efb21f'), cornerR=bowC(0.85,'#d6f38a','#86c234');
+root.appendChild(cornerL);root.appendChild(cornerR);
+const sideBits=[[heartC('#ff8fba','#f06d9f',1.6),300,560],[starC(1.2),1640,520],[cloverC(1.9),1560,720],[heartC('#fff1a6','#efb21f',1.2),380,740],[starC(0.8),250,380],[heartC('#d6f38a','#86c234',1.0),1700,360]]
+ .map(([g,x,y],i)=>{root.appendChild(g);return {g,x,y,ph:i*1.3};});
+const sparks=[[560,250,'#ffec80',1.3],[1380,240,'#fff',1.1],[1450,820,'#d6f38a',1.2],[470,830,'#fff',1.0],[160,600,'#fff',0.9],[1790,620,'#ffec80',1.0],[640,640,'#fff',0.8],[1290,420,'#fff',0.8]]
+ .map(([x,y,f,s],i)=>{const g=el('g',{},root);
+   el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':7,'stroke-linejoin':'round'},g);
+   el('use',{href:'#sparkP',fill:f},g);return {g,x,y,s,ph:i*1.1};});
+
+// ===== アニメーション（8秒でぴったりループ） =====
+window.render=function(t){
+ const u=(t%LOOP)/LOOP, S=k=>Math.sin(TAU*u*k);
+ ging.setAttribute('transform',`translate(${64*u} ${64*u})`);
+ floaters.forEach(o=>{const y=((o.y0-1180*u)%1180+1180)%1180-60;
+   o.g.setAttribute('transform',`translate(${o.x+18*Math.sin(TAU*u*2+o.ph)} ${y}) rotate(${10*Math.sin(TAU*u*2+o.ph)})`);
+   o.g.setAttribute('opacity',.75);});
+ flags.forEach(o=>o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${o.ang+7*Math.sin(TAU*u*2+o.ph)})`));
+ sway.forEach(o=>o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${10*Math.sin(TAU*u*2+o.ph)})`));
+ halo.setAttribute('opacity',0.8+0.2*S(2));
+ lace.setAttribute('transform',`rotate(${u*15} ${CX} ${CY})`);
+ band.setAttribute('transform',`rotate(${-u*45} ${CX} ${CY})`);
+ stitch.setAttribute('stroke-dashoffset',-u*21*20);
+ inner.setAttribute('stroke-dashoffset',u*12*15);
+ orbit.forEach(o=>{const a=o.a0+u*TAU/3;
+   o.g.setAttribute('transform',`translate(${CX+(R+31)*Math.cos(a)} ${CY+(R+31)*Math.sin(a)}) rotate(${12*Math.sin(TAU*u*4+o.ph)})`);});
+ topBow.setAttribute('transform',`translate(${CX} ${CY-R-70+4*S(2)}) rotate(${6*S(2)}) scale(${1+0.03*S(4)})`);
+ cornerL.setAttribute('transform',`translate(150 120) rotate(${-14+6*Math.sin(TAU*u*2+1)}) scale(.85)`);
+ cornerR.setAttribute('transform',`translate(1770 120) rotate(${14+6*Math.sin(TAU*u*2+2)}) scale(.85)`);
+ sideBits.forEach(o=>o.g.setAttribute('transform',`translate(${o.x} ${o.y+10*Math.sin(TAU*u*2+o.ph)}) rotate(${10*Math.sin(TAU*u+o.ph)})`));
+ sparks.forEach(o=>o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${u*90}) scale(${o.s*(0.5+0.5*Math.abs(Math.sin(TAU*u*2+o.ph)))})`));
+};
+if(location.hash.includes('transparent'))document.getElementById('purple').style.display='none';
+const m=location.hash.match(/t=([\d.]+)/);
+render(m?parseFloat(m[1]):1);
+if(!m&&!location.search.includes('still')){const t0=performance.now();const loop=()=>{render((performance.now()-t0)/1000);requestAnimationFrame(loop);};loop();}
+</script></body></html>
