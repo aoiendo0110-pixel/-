@@ -1,0 +1,163 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>全然知らないうちに タイポ</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800;900&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#8a55e6}svg{display:block}</style></head><body>
+<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 -->
+<svg id="art" width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <linearGradient id="w-pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#fff"/><stop offset="1" stop-color="#ffe0ec"/></linearGradient>
+ <linearGradient id="w-yellow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#fff"/><stop offset="1" stop-color="#fff6c4"/></linearGradient>
+ <linearGradient id="w-lime" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#fff"/><stop offset="1" stop-color="#ecfbc4"/></linearGradient>
+ <pattern id="stripe" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)">
+  <rect width="8" height="16" fill="#ffd6e6" opacity=".7"/>
+ </pattern>
+ <path id="heartP" d="M0 12 C-26 -8 -13 -30 0 -14 C13 -30 26 -8 0 12Z"/>
+ <path id="sparkP" d="M0 -20 Q2.5 -2.5 20 0 Q2.5 2.5 0 20 Q-2.5 2.5 -20 0 Q-2.5 -2.5 0 -20Z"/>
+</defs>
+<rect id="bg" width="1600" height="900" fill="#8a55e6"/>
+<g id="stage" transform="translate(-80 -15)"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const stage=document.getElementById('stage');
+const ROUND="'M PLUS Rounded 1c'", POP="'Mochiy Pop One'";
+const COL={
+ pink:  {line:'#f47aab', depth:'#e0558f', fill:'url(#w-pink)',  tint:'#ffd6e6'},
+ yellow:{line:'#f2b81f', depth:'#d99a0c', fill:'url(#w-yellow)',tint:'#fff1a6'},
+ lime:  {line:'#8cc63a', depth:'#6ea726', fill:'url(#w-lime)',  tint:'#e2f6b0'},
+};
+const items=[];
+function add(g,o){g.setAttribute('transform','scale(0)');stage.appendChild(g);items.push({g,ph:items.length*0.9,bob:5,...o});return g;}
+
+// 白抜き文字（色の太フチ＋白フチ＋濃い色の厚み）
+function hollow(ch,size,c,font=ROUND){
+ const g=el('g',{});
+ const base={'font-family':font,'font-weight':900,'font-size':size,'text-anchor':'middle','dominant-baseline':'central','stroke-linejoin':'round'};
+ const T=a=>{const t=el('text',{...base,...a},g);t.textContent=ch;return t;};
+ const ow=size*0.16, d=Math.round(size*0.05);
+ T({x:-2,y:d+2,fill:'#fff',stroke:'#fff','stroke-width':ow+14,opacity:.95});
+ for(let k=d;k>=1;k--) T({x:0,y:k,fill:c.depth,stroke:c.depth,'stroke-width':ow});
+ T({fill:c.line,stroke:c.line,'stroke-width':ow});
+ T({fill:c.fill,stroke:'#fff','stroke-width':size*0.03});
+ T({fill:'url(#stripe)'});
+ return g;}
+// まるバッジ
+function badge(ch,c,r){const g=el('g',{});
+ el('circle',{r:r+12,fill:'#fff'},g);
+ el('circle',{r:r+4,cy:6,fill:c.depth,opacity:.5},g);
+ el('circle',{r,fill:c.tint,stroke:c.line,'stroke-width':7},g);
+ el('circle',{r:r-14,fill:'none',stroke:'#fff','stroke-width':4,'stroke-dasharray':'9 8','stroke-linecap':'round'},g);
+ const base={'font-family':POP,'font-size':r*1.25,'text-anchor':'middle','dominant-baseline':'central','stroke-linejoin':'round',y:4};
+ const t1=el('text',{...base,fill:'#fff',stroke:'#fff','stroke-width':16},g);t1.textContent=ch;
+ const t2=el('text',{...base,fill:c.line},g);t2.textContent=ch;
+ el('ellipse',{cx:-r*0.45,cy:-r*0.55,rx:r*0.18,ry:r*0.09,fill:'#fff',transform:`rotate(-35 ${-r*0.45} ${-r*0.55})`},g);
+ return g;}
+function heart(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':11,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':2.5,transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-8*sc,cy:-13*sc,rx:4*sc,ry:2.4*sc,fill:'#fff',transform:`rotate(-35 ${-8*sc} ${-13*sc})`},g);return g;}
+function spark(fill,sc){const g=el('g',{});
+ el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':8,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#sparkP',fill,transform:`scale(${sc})`},g);return g;}
+function question(c,size){const g=el('g',{});
+ const base={'font-family':POP,'font-size':size,'text-anchor':'middle','dominant-baseline':'central','stroke-linejoin':'round'};
+ const a=el('text',{...base,fill:'#fff',stroke:'#fff','stroke-width':14},g);a.textContent='?';
+ const b=el('text',{...base,fill:c.line},g);b.textContent='?';return g;}
+// 目覚まし時計
+let hourHand,minHand;
+function clock(){const g=el('g',{});
+ const legs=(f,s,w)=>{el('path',{d:'M-42 52 L-58 82 M42 52 L58 82',stroke:s,'stroke-width':w,'stroke-linecap':'round',fill:'none'},g);};
+ legs(0,'#fff',22);legs(0,'#f47aab',10);
+ [[-48,-58],[48,-58]].forEach(([x,y],i)=>{el('circle',{cx:x,cy:y,r:30,fill:'#fff'},g);el('circle',{cx:x,cy:y,r:22,fill:'#ffec80',stroke:'#f2b81f','stroke-width':5},g);});
+ el('circle',{r:88,fill:'#fff'},g);
+ el('circle',{r:76,fill:'#ff9cc4',stroke:'#f47aab','stroke-width':6},g);
+ el('circle',{r:58,fill:'#fffdf2',stroke:'#fff','stroke-width':4},g);
+ for(let i=0;i<12;i++){const a=i/12*Math.PI*2;el('circle',{cx:46*Math.sin(a),cy:-46*Math.cos(a),r:i%3?3:5,fill:i%3?'#ffc4da':'#8cc63a'},g);}
+ minHand=el('line',{x1:0,y1:0,x2:0,y2:-40,stroke:'#f47aab','stroke-width':6,'stroke-linecap':'round'},g);
+ hourHand=el('line',{x1:0,y1:0,x2:0,y2:-26,stroke:'#e0558f','stroke-width':8,'stroke-linecap':'round'},g);
+ el('circle',{r:7,fill:'#ffec80',stroke:'#f2b81f','stroke-width':3},g);
+ el('ellipse',{cx:-46,cy:-44,rx:12,ry:6,fill:'#fff',transform:'rotate(-40 -46 -44)'},g);
+ return g;}
+// もこもこ吹き出し
+function bubble(w,h){const g=el('g',{});
+ const blobs=[];const n=14;
+ for(let i=0;i<n;i++){const a=i/n*Math.PI*2;blobs.push([w/2*Math.cos(a)*0.92,h/2*Math.sin(a)*0.85,i%2?44:54]);}
+ const draw=(fill,extra,dy=0)=>{blobs.forEach(([x,y,r])=>el('circle',{cx:x,cy:y+dy,r:r+extra,fill},g));el('ellipse',{rx:w/2*0.92+extra,ry:h/2*0.85+extra,cy:dy,fill},g);};
+ draw('#6ea726',6,8);draw('#fff',10);draw('#b5e055',4);draw('#f6ffde',-2);
+ el('path',{d:`M${-w*0.28} ${h*0.42} L${-w*0.42} ${h*0.72} L${-w*0.12} ${h*0.46}Z`,fill:'#f6ffde',stroke:'#b5e055','stroke-width':6,'stroke-linejoin':'round'},g);
+ return g;}
+
+// ===== 配置 =====
+// 点線の道（描かれていく）
+const lines=[];
+function addLine(d,color,t0,dur,w=6,dash='2 16'){
+ const id='m'+lines.length, defs=document.querySelector('defs');
+ const mk=el('mask',{id,maskUnits:'userSpaceOnUse',x:0,y:0,width:1600,height:900},defs);
+ const mp=el('path',{d,fill:'none',stroke:'#fff','stroke-width':w+20,'stroke-linecap':'round'},mk);
+ const p=el('path',{d,fill:'none',stroke:color,'stroke-width':w,'stroke-linecap':'round','stroke-dasharray':dash,mask:`url(#${id})`},stage);
+ const L=mp.getTotalLength();mp.setAttribute('stroke-dasharray',L);lines.push({mp,L,t0,dur});}
+addLine('M330 620 C380 760 520 760 560 660','#fff',0.55,0.45,8);
+addLine('M1290 300 C1330 250 1360 250 1380 230','#fff',1.6,0.3,7);
+
+// 全然：まるバッジ（転がって登場）
+add(badge('全',COL.pink,92),{x:300,y:300,r:-10,t0:0.0,kind:'roll'});
+add(badge('然',COL.yellow,92),{x:390,y:500,r:8,t0:0.22,kind:'roll'});
+
+// 知らない：右上がりの階段
+add(hollow('知',230,COL.pink),{x:650,y:590,r:-4,t0:0.95,kind:'rise'});
+add(hollow('ら',200,COL.lime),{x:850,y:520,r:6,t0:1.07,kind:'rise'});
+add(hollow('な',205,COL.pink),{x:1045,y:450,r:-5,t0:1.19,kind:'rise'});
+add(hollow('い',200,COL.yellow),{x:1235,y:385,r:7,t0:1.31,kind:'rise'});
+
+// 時計と？マーク
+add(clock(),{x:1400,y:190,r:10,t0:1.65,kind:'pop',bob:7});
+add(question(COL.lime,90),{x:1530,y:110,r:16,t0:1.85,kind:'pop'});
+add(question(COL.pink,64),{x:1255,y:120,r:-14,t0:1.95,kind:'pop'});
+
+// うちに：吹き出しの中
+add(bubble(480,170),{x:1150,y:720,r:-2,t0:2.0,kind:'pop',bob:4});
+const typeChars=[['う',COL.pink,1030],['ち',COL.yellow,1135],['に',COL.pink,1240]].map(([c,col,x],i)=>add(hollow(c,108,col),{x,y:712,r:i%2?5:-5,t0:2.3+i*0.16,kind:'type',bob:3}));
+const dots=[0,1,2].map(i=>{const g=el('g',{});el('circle',{r:11,fill:'#fff'},g);el('circle',{r:8,fill:'#f47aab'},g);return add(g,{x:1320+i*30,y:742,r:0,t0:2.85+i*0.1,kind:'dot',bob:0,i});});
+
+// ハートとキラキラ
+add(heart('#ff9cc4','#f47aab',1.6),{x:520,y:250,r:-14,t0:0.5,kind:'pop'});
+add(heart('#d6f38a','#8cc63a',1.0),{x:200,y:480,r:12,t0:0.6,kind:'pop'});
+add(heart('#fff1a6','#f2b81f',1.1),{x:1450,y:600,r:14,t0:2.6,kind:'pop'});
+[[560,420,'#fff',1.0],[760,330,'#ffec80',1.2],[980,660,'#fff',0.8],[1180,560,'#d6f38a',1.0],[240,690,'#ffec80',1.1],[1500,420,'#fff',0.9],[880,780,'#d6f38a',0.8],[420,150,'#fff',0.8]]
+ .forEach(([x,y,f,s],i)=>add(spark(f,s),{x,y,r:0,t0:1.4+i*0.08,kind:'pop',twinkle:1}));
+
+// ===== アニメーション =====
+const clamp=x=>Math.max(0,Math.min(1,x));
+const back=(x,c=2.4)=>1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);
+const eOut=x=>1-Math.pow(1-x,3);
+const TAU=Math.PI*2;
+window.render=function(t){
+ items.forEach(o=>{
+  const dur=o.kind==='roll'?0.55:o.kind==='type'?0.22:0.4;
+  const p=clamp((t-o.t0)/dur);
+  if(p<=0){o.g.setAttribute('transform','scale(0)');return;}
+  let x=o.x,y=o.y,r=o.r,s=1;
+  if(o.kind==='roll'){x=o.x-420*(1-eOut(p));r=o.r-360*(1-eOut(p));s=0.6+0.4*back(p,1.6);}
+  else if(o.kind==='rise'){y=o.y+140*(1-eOut(p));s=back(p,2.6);const sq=Math.sin(Math.PI*clamp((t-o.t0-dur*0.6)/0.3));s*=1;r=o.r+(1-p)*12;
+    o.sx=1+0.12*sq;o.sy=1-0.12*sq;}
+  else if(o.kind==='type'){s=back(p,3);}
+  else s=back(p);
+  const idle=clamp((t-o.t0-dur)/0.4);
+  y+=Math.sin(TAU*t*0.6+o.ph)*o.bob*idle;
+  r+=Math.sin(TAU*t*0.45+o.ph)*2*idle;
+  if(o.twinkle) s*=0.6+0.5*Math.abs(Math.sin(TAU*t*0.7+o.ph));
+  if(o.kind==='dot'){const blink=t>3.2?0.75+0.35*Math.max(0,Math.sin(TAU*(t*1.2)-o.i*1.1)):1;s*=blink;y-=6*Math.max(0,Math.sin(TAU*(t*1.2)-o.i*1.1))*clamp(t-3.2);}
+  const sx=(o.kind==='rise'?(o.sx||1):1), sy=(o.kind==='rise'?(o.sy||1):1);
+  o.g.setAttribute('transform',`translate(${x} ${y}) rotate(${r}) scale(${s*sx} ${s*sy})`);
+ });
+ // 時計の針がくるくる（時間が過ぎていく）
+ const ct=Math.max(0,t-1.65);
+ minHand.setAttribute('transform',`rotate(${ct*540})`);
+ hourHand.setAttribute('transform',`rotate(${ct*45+60})`);
+ lines.forEach(l=>{const p=eOut(clamp((t-l.t0)/l.dur));l.mp.setAttribute('stroke-dashoffset',l.L*(1-p)+(p<=0?1:0));});
+
+};
+if(location.hash.includes('transparent')){document.getElementById('bg').style.display='none';document.body.style.background='transparent';}
+document.fonts.ready.then(()=>{const m=location.hash.match(/t=([\d.]+)/);render(m?parseFloat(m[1]):5);});
+</script></body></html>
