@@ -32,7 +32,7 @@
 <script>
 const NS='http://www.w3.org/2000/svg';
 const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
-const W=1920,H=1080, CX=960, CY=530, R=290;
+const W=1920,H=1080, CX=960, CY=540, R=415;
 const LOOP=8, TAU=Math.PI*2;
 const root=document.getElementById('root');
 const holeC=document.getElementById('holeC');holeC.setAttribute('cx',CX);holeC.setAttribute('cy',CY);holeC.setAttribute('r',R);
@@ -113,8 +113,8 @@ function swag(x0,x1,sag,n,off){
   else el('use',{href:'#clover',fill:'#fff',transform:'translate(0 19) scale(.5)'},g);
   const ang=Math.atan2(sag*4*(1-2*s),(x1-x0))*180/Math.PI;
   flags.push({g,x,y,ang,ph:i*0.6+off});}}
-swag(-20,700,150,7,0);
-swag(1220,1940,150,7,1);
+swag(-20,520,130,5,0);
+swag(1400,1940,130,5,1);
 
 // ---- 真ん中の丸窓 ----
 const win=el('g',{},root);
@@ -147,7 +147,7 @@ const cornerL=bowC(0.85,'#fff1a6','#efb21f'), cornerR=bowC(0.85,'#d6f38a','#86c2
 root.appendChild(cornerL);root.appendChild(cornerR);
 const sideBits=[[heartC('#ff8fba','#f06d9f',1.6),300,560],[starC(1.2),1640,520],[cloverC(1.9),1560,720],[heartC('#fff1a6','#efb21f',1.2),380,740],[starC(0.8),250,380],[heartC('#d6f38a','#86c234',1.0),1700,360]]
  .map(([g,x,y],i)=>{root.appendChild(g);return {g,x,y,ph:i*1.3};});
-const sparks=[[560,250,'#ffec80',1.3],[1380,240,'#fff',1.1],[1450,820,'#d6f38a',1.2],[470,830,'#fff',1.0],[160,600,'#fff',0.9],[1790,620,'#ffec80',1.0],[640,640,'#fff',0.8],[1290,420,'#fff',0.8]]
+const sparks=[[430,260,'#ffec80',1.3],[1490,250,'#fff',1.1],[1520,820,'#d6f38a',1.2],[400,830,'#fff',1.0],[160,600,'#fff',0.9],[1790,620,'#ffec80',1.0],[110,800,'#fff',0.8],[1830,420,'#fff',0.8]]
  .map(([x,y,f,s],i)=>{const g=el('g',{},root);
    el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':7,'stroke-linejoin':'round'},g);
    el('use',{href:'#sparkP',fill:f},g);return {g,x,y,s,ph:i*1.1};});
@@ -168,7 +168,7 @@ window.render=function(t){
  inner.setAttribute('stroke-dashoffset',u*12*15);
  orbit.forEach(o=>{const a=o.a0+u*TAU/3;
    o.g.setAttribute('transform',`translate(${CX+(R+31)*Math.cos(a)} ${CY+(R+31)*Math.sin(a)}) rotate(${12*Math.sin(TAU*u*4+o.ph)})`);});
- topBow.setAttribute('transform',`translate(${CX} ${CY-R-70+4*S(2)}) rotate(${6*S(2)}) scale(${1+0.03*S(4)})`);
+ topBow.setAttribute('transform',`translate(${CX} ${CY-R-48+4*S(2)}) rotate(${6*S(2)}) scale(${1+0.03*S(4)})`);
  cornerL.setAttribute('transform',`translate(150 120) rotate(${-14+6*Math.sin(TAU*u*2+1)}) scale(.85)`);
  cornerR.setAttribute('transform',`translate(1770 120) rotate(${14+6*Math.sin(TAU*u*2+2)}) scale(.85)`);
  sideBits.forEach(o=>o.g.setAttribute('transform',`translate(${o.x} ${o.y+10*Math.sin(TAU*u*2+o.ph)}) rotate(${10*Math.sin(TAU*u+o.ph)})`));
