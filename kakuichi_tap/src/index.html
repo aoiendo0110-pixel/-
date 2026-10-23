@@ -1,0 +1,447 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:MPR;src:url(../fonts/MPR-Black.ttf)}
+body{margin:0;background:#00ff00}
+</style></head>
+<body><canvas id="c" width="1500" height="500"></canvas>
+<script>
+const W = 1500, H = 500, FPS = 30;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const SS = 2; // sprite supersampling
+
+// palette (no greens, so keying stays clean)
+const P = {
+  pink: '#ff8fbf', pinkL: '#ffd1e5', pinkD: '#e0558f', pinkDeep: '#b8326b',
+  red: '#e8344e', redL: '#ff7a8a', redD: '#a3122d',
+  choc: '#7a4027', chocL: '#a8653f', chocD: '#4a2214', choc2: '#5e2e1a',
+  cream: '#fff6ef', white: '#ffffff'
+};
+
+// ---------- helpers ----------
+const ease = {
+  outBack: (x, s = 2.2) => 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2),
+  outElastic: x => x <= 0 ? 0 : x >= 1 ? 1 : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * (2 * Math.PI / 3)) + 1,
+};
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+
+function heartPath(g, cx, cy, s) {
+  // s = width
+  const w = s / 2, h = s * 0.92;
+  g.beginPath();
+  g.moveTo(cx, cy + h * 0.5);
+  g.bezierCurveTo(cx - w * 0.15, cy + h * 0.38, cx - w * 1.0, cy + h * 0.05, cx - w * 1.0, cy - h * 0.2);
+  g.bezierCurveTo(cx - w * 1.0, cy - h * 0.5, cx - w * 0.45, cy - h * 0.62, cx, cy - h * 0.28);
+  g.bezierCurveTo(cx + w * 0.45, cy - h * 0.62, cx + w * 1.0, cy - h * 0.5, cx + w * 1.0, cy - h * 0.2);
+  g.bezierCurveTo(cx + w * 1.0, cy + h * 0.05, cx + w * 0.15, cy + h * 0.38, cx, cy + h * 0.5);
+  g.closePath();
+}
+
+// Layered "sticker" sprite: extrusion shadow + white outline + patterned fill + gloss
+// shapeFn(g) draws the base shape as a path/fill command set; called with fill/stroke modes
+function sticker(size, shapeFn, opt) {
+  const pad = 40 * SS;
+  const cw = Math.ceil(size.w * SS + pad * 2), ch = Math.ceil(size.h * SS + pad * 2);
+  const out = mk(cw, ch), g = out.getContext('2d');
+  const ox = pad, oy = pad;
+  const outline = (opt.outline ?? 14) * SS, depth = (opt.depth ?? 8) * SS;
+  const draw = (gg, dx, dy, mode, style, lw) => {
+    gg.save(); gg.translate(ox + dx, oy + dy); gg.scale(SS, SS);
+    gg.lineJoin = 'round'; gg.lineCap = 'round';
+    shapeFn(gg, mode, style, lw / SS);
+    gg.restore();
+  };
+  // outer dark rim + extrusion
+  for (let i = depth; i >= 0; i -= 1) {
+    draw(g, i * 0.55, i, 'stroke', opt.shadow, outline + 5 * SS);
+  }
+  // white outline
+  draw(g, 0, 0, 'stroke', opt.rim ?? P.white, outline);
+  // patterned fill on its own layer
+  const f = mk(cw, ch), fg = f.getContext('2d');
+  draw(fg, 0, 0, 'fill', '#000', 0);
+  fg.globalCompositeOperation = 'source-atop';
+  fg.save(); fg.translate(ox, oy); fg.scale(SS, SS);
+  opt.paint(fg, size.w, size.h);
+  fg.restore();
+  // inner edge line just inside the fill for definition
+  if (opt.inner) {
+    fg.globalCompositeOperation = 'source-atop';
+    draw(fg, 0, 0, 'stroke', opt.inner, 4 * SS);
+  }
+  g.drawImage(f, 0, 0);
+  return { c: out, ox: pad / SS, oy: pad / SS, w: size.w, h: size.h };
+}
+
+function textShape(ch, px, bx, by) {
+  return (g, mode, style, lw) => {
+    g.font = `900 ${px}px MPR`;
+    g.textBaseline = 'alphabetic';
+    if (mode === 'stroke') { g.strokeStyle = style; g.lineWidth = lw; g.strokeText(ch, bx, by); }
+    else { g.fillStyle = style; g.fillText(ch, bx, by); }
+  };
+}
+
+// ---------- fill painters ----------
+function grad(g, h, a, b) { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; }
+function gloss(g, w, h) {
+  // small sticker-style shine at top-left
+  g.fillStyle = 'rgba(255,255,255,0.8)';
+  g.beginPath(); g.ellipse(w * 0.26, h * 0.16, Math.min(w * 0.14, 34), Math.min(h * 0.045, 9), -0.35, 0, 7); g.fill();
+  g.beginPath(); g.arc(w * 0.44, h * 0.11, Math.min(w, h) * 0.03 + 2, 0, 7); g.fill();
+}
+const paints = {
+  pinkDots(g, w, h) {
+    g.fillStyle = grad(g, h, '#ffb3d4', '#ff6fa8'); g.fillRect(-50, -50, w + 100, h + 100);
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    for (let y = 0; y < h + 20; y += 26) for (let x = (y / 26 % 2) * 13; x < w + 20; x += 26) {
+      g.beginPath(); g.arc(x, y, 5.2, 0, 7); g.fill();
+    }
+    gloss(g, w, h);
+  },
+  chocBar(g, w, h) {
+    g.fillStyle = grad(g, h, '#a8653f', '#5e2e1a'); g.fillRect(-50, -50, w + 100, h + 100);
+    // chocolate segment grooves
+    g.strokeStyle = '#3d1a0e'; g.lineWidth = 5;
+    for (let x = 0; x < w; x += 46) { g.beginPath(); g.moveTo(x, -50); g.lineTo(x, h + 50); g.stroke(); }
+    g.strokeStyle = 'rgba(255,220,190,0.35)'; g.lineWidth = 3;
+    for (let x = 4; x < w; x += 46) { g.beginPath(); g.moveTo(x, -50); g.lineTo(x, h + 50); g.stroke(); }
+    // pink icing drizzle
+    g.strokeStyle = '#ffa6cb'; g.lineWidth = 6; g.lineCap = 'round';
+    g.beginPath();
+    for (let x = -10; x <= w + 10; x += 6) { const y = h * 0.5 + Math.sin(x / 14) * h * 0.06; x < -9 ? g.moveTo(x, y) : g.lineTo(x, y); }
+    g.stroke();
+  },
+  redStripe(g, w, h) {
+    g.fillStyle = grad(g, h, '#ff6b7f', '#d01f3c'); g.fillRect(-50, -50, w + 100, h + 100);
+    g.save(); g.rotate(-0.5);
+    g.fillStyle = 'rgba(255,200,210,0.55)';
+    for (let x = -h * 2; x < w * 2; x += 30) g.fillRect(x, -h * 2, 11, h * 5);
+    g.restore();
+    gloss(g, w, h);
+  },
+  pinkHeart(g, w, h) {
+    g.fillStyle = grad(g, h, '#ffc4dd', '#ff7fb2'); g.fillRect(-50, -50, w + 100, h + 100);
+    g.fillStyle = 'rgba(255,255,255,0.9)';
+    for (let y = 8; y < h + 20; y += 30) for (let x = 8 + (y / 30 % 2) * 15; x < w + 20; x += 30) {
+      heartPath(g, x, y, 10); g.fill();
+    }
+    gloss(g, w, h);
+  },
+  chocSolid(g, w, h) {
+    g.fillStyle = grad(g, h, '#b06c45', '#5a2a17'); g.fillRect(-50, -50, w + 100, h + 100);
+    g.fillStyle = 'rgba(255,190,215,0.9)';
+    for (let i = 0; i < 9; i++) { g.beginPath(); g.arc((i * 37) % w, (i * 53) % h, 3.5, 0, 7); g.fill(); }
+    gloss(g, w, h);
+  },
+  heartRed(g, w, h) {
+    const gr = g.createRadialGradient(w * 0.35, h * 0.3, 5, w * 0.5, h * 0.5, w * 0.7);
+    gr.addColorStop(0, '#ff8c9c'); gr.addColorStop(0.55, '#ee2d4b'); gr.addColorStop(1, '#a3122d');
+    g.fillStyle = gr; g.fillRect(-50, -50, w + 100, h + 100);
+    g.fillStyle = 'rgba(255,255,255,0.85)';
+    g.beginPath(); g.ellipse(w * 0.3, h * 0.27, w * 0.11, h * 0.07, -0.6, 0, 7); g.fill();
+    g.beginPath(); g.arc(w * 0.45, h * 0.2, w * 0.035, 0, 7); g.fill();
+  },
+};
+
+// ---------- build glyph sprites ----------
+function glyph(ch, px, paint, shadow, opt = {}) {
+  ctx.font = `900 ${px}px MPR`;
+  const m = ctx.measureText(ch);
+  const w = Math.ceil(m.actualBoundingBoxLeft + m.actualBoundingBoxRight);
+  const h = Math.ceil(m.actualBoundingBoxAscent + m.actualBoundingBoxDescent);
+  const s = sticker({ w, h }, textShape(ch, px, m.actualBoundingBoxLeft, m.actualBoundingBoxAscent), {
+    paint, shadow, outline: opt.outline ?? 16, depth: opt.depth ?? 9, inner: opt.inner,
+  });
+  return s;
+}
+
+function heartSprite(sz, paint, shadow, opt = {}) {
+  return sticker({ w: sz, h: sz * 0.92 }, (g, mode, style, lw) => {
+    heartPath(g, sz / 2, sz * 0.46, sz);
+    if (mode === 'stroke') { g.strokeStyle = style; g.lineWidth = lw; g.stroke(); }
+    else { g.fillStyle = style; g.fill(); }
+  }, { paint, shadow, outline: opt.outline ?? 12, depth: opt.depth ?? 7 });
+}
+
+// ribbon bow sprite (drawn as vector each frame for flutter)
+function drawBow(g, s, flap) {
+  g.save(); g.scale(s, s);
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  const loops = (mode) => {
+    // left loop
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.bezierCurveTo(-30, -48 - flap * 6, -92, -40 - flap * 8, -82, 4);
+    g.bezierCurveTo(-76, 36 + flap * 4, -30, 24, 0, 0);
+    // right loop
+    g.moveTo(0, 0);
+    g.bezierCurveTo(30, -48 + flap * 6, 92, -40 + flap * 8, 82, 4);
+    g.bezierCurveTo(76, 36 - flap * 4, 30, 24, 0, 0);
+    g.closePath();
+  };
+  const tails = () => {
+    g.beginPath();
+    g.moveTo(-6, 6); g.lineTo(-40 - flap * 4, 78); g.lineTo(-24, 70); g.lineTo(-16 - flap * 2, 88); g.lineTo(8, 10); g.closePath();
+    g.moveTo(6, 6); g.lineTo(40 + flap * 4, 78); g.lineTo(24, 70); g.lineTo(16 + flap * 2, 88); g.lineTo(-8, 10); g.closePath();
+  };
+  // shadow/rim
+  for (const [lw, col, dy] of [[22, P.pinkDeep, 6], [22, P.pinkDeep, 3], [16, P.white, 0]]) {
+    g.save(); g.translate(dy * 0.5, dy);
+    g.strokeStyle = col; g.lineWidth = lw; tails(); g.stroke(); loops(); g.stroke();
+    g.fillStyle = col; tails(); g.fill(); loops(); g.fill();
+    g.restore();
+  }
+  // fills
+  g.fillStyle = '#e8344e'; tails(); g.fill();
+  g.strokeStyle = '#ff9db0'; g.lineWidth = 3; tails(); g.stroke();
+  const gr = g.createLinearGradient(0, -50, 0, 30); gr.addColorStop(0, '#ff9cc4'); gr.addColorStop(1, '#f0508e');
+  g.fillStyle = gr; loops(); g.fill();
+  // inner fold lines
+  g.strokeStyle = P.pinkDeep; g.lineWidth = 3.5;
+  g.beginPath(); g.moveTo(-12, -2); g.quadraticCurveTo(-48, -20, -66, -4); g.stroke();
+  g.beginPath(); g.moveTo(12, -2); g.quadraticCurveTo(48, -20, 66, -4); g.stroke();
+  // lace edge dots along loops
+  g.fillStyle = P.white;
+  for (const sx of [-1, 1]) for (let i = 0; i < 6; i++) {
+    const a = i / 5; g.beginPath(); g.arc(sx * (34 + a * 40), -24 - Math.sin(a * Math.PI) * 10 + a * 18, 3.2, 0, 7); g.fill();
+  }
+  // knot
+  g.fillStyle = '#e8344e';
+  g.beginPath(); g.ellipse(0, 2, 16, 18, 0, 0, 7); g.fill();
+  g.strokeStyle = P.white; g.lineWidth = 4; g.stroke();
+  g.fillStyle = 'rgba(255,255,255,0.7)'; g.beginPath(); g.ellipse(-4, -4, 5, 6, -0.5, 0, 7); g.fill();
+  g.restore();
+}
+
+// frilled lace ribbon under the title
+function drawFrill(g, t, x0, x1, y) {
+  const N = 64;
+  const yAt = x => y + Math.sin((x - x0) / 140 + t * Math.PI) * 6 + Math.sin((x - x0) / (x1 - x0) * Math.PI) * 14;
+  const band = 30;
+  // lace scallops (white with pink rim) hanging below the band
+  const sc = 40;
+  g.save();
+  g.lineJoin = 'round';
+  const scallops = (ex) => {
+    g.beginPath();
+    for (let x = x0; x < x1; x += sc) {
+      const yy = yAt(x + sc / 2) + band / 2;
+      g.moveTo(x + sc + ex, yy);
+      g.arc(x + sc / 2, yy, sc / 2 + 6 + ex, 0, Math.PI);
+    }
+  };
+  g.fillStyle = P.pinkDeep; scallops(4); g.fill();
+  g.fillStyle = P.white; scallops(0); g.fill();
+  // eyelet holes (actual holes -> transparent after key)
+  g.globalCompositeOperation = 'destination-out';
+  for (let x = x0; x < x1; x += sc) {
+    const yy = yAt(x + sc / 2) + band / 2 + 14;
+    g.beginPath(); g.arc(x + sc / 2, yy, 5, 0, 7); g.fill();
+  }
+  g.globalCompositeOperation = 'source-over';
+  // ribbon band
+  const bandPath = (ex) => {
+    g.beginPath();
+    for (let i = 0; i <= N; i++) { const x = x0 + (x1 - x0) * i / N; const yy = yAt(x) - band / 2 - ex; i ? g.lineTo(x, yy) : g.moveTo(x, yy); }
+    for (let i = N; i >= 0; i--) { const x = x0 + (x1 - x0) * i / N; g.lineTo(x, yAt(x) + band / 2 + ex); }
+    g.closePath();
+  };
+  g.fillStyle = P.pinkDeep; bandPath(5); g.fill();
+  g.fillStyle = '#ff8fbf'; bandPath(0); g.fill();
+  // stitch line + tiny hearts on band
+  g.strokeStyle = P.white; g.lineWidth = 2.5; g.setLineDash([8, 7]);
+  for (const off of [-8, 8]) {
+    g.beginPath();
+    for (let i = 0; i <= N; i++) { const x = x0 + (x1 - x0) * i / N; const yy = yAt(x) + off; i ? g.lineTo(x, yy) : g.moveTo(x, yy); }
+    g.stroke();
+  }
+  g.setLineDash([]);
+  g.restore();
+}
+
+// sparkle (4-point star)
+function starPath(g, r) {
+  g.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4 - Math.PI / 2, rr = i % 2 ? r * 0.32 : r;
+    i ? g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : g.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  g.closePath();
+}
+function drawSparkle(g, r, col) {
+  g.lineJoin = 'round';
+  starPath(g, r);
+  g.strokeStyle = P.pinkDeep; g.lineWidth = 9; g.stroke();
+  g.strokeStyle = P.white; g.lineWidth = 5; g.stroke();
+  g.fillStyle = col; g.fill();
+}
+
+// round chocolate bonbon with pink frosting swirl
+function drawBonbon(g, r) {
+  g.beginPath(); g.arc(0, 0, r + 7, 0, 7); g.fillStyle = P.chocD; g.fill();
+  g.beginPath(); g.arc(0, 0, r + 4, 0, 7); g.fillStyle = P.white; g.fill();
+  const gr = g.createRadialGradient(-r * 0.3, -r * 0.3, 2, 0, 0, r);
+  gr.addColorStop(0, '#b0704a'); gr.addColorStop(1, '#552614');
+  g.beginPath(); g.arc(0, 0, r, 0, 7); g.fillStyle = gr; g.fill();
+  g.strokeStyle = '#ffa6cb'; g.lineWidth = 4; g.lineCap = 'round';
+  g.beginPath(); for (let i = 0; i <= 20; i++) { const x = -r * 0.7 + i * r * 0.07; const y = -r * 0.1 + Math.sin(i * 0.5) * r * 0.16; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
+  g.fillStyle = 'rgba(255,255,255,0.6)'; g.beginPath(); g.ellipse(-r * 0.35, -r * 0.45, r * 0.22, r * 0.12, -0.6, 0, 7); g.fill();
+}
+
+// ---------- scene ----------
+let S = null;
+function build() {
+  S = {
+    kaku: glyph('各', 250, paints.pinkDots, P.pinkDeep, { outline: 20, depth: 11 }),
+    ichi: glyph('一', 250, paints.chocBar, P.chocD, { outline: 20, depth: 11 }),
+    lp: glyph('(', 160, paints.chocSolid, P.chocD),
+    T: glyph('T', 160, paints.redStripe, P.redD),
+    a: glyph('a', 160, paints.pinkHeart, P.pinkDeep),
+    p: glyph('p', 160, paints.chocSolid, P.chocD),
+    rp: glyph(')', 160, paints.chocSolid, P.chocD),
+    heart: heartSprite(128, paints.heartRed, P.redD, { outline: 14, depth: 8 }),
+    miniHeartPink: heartSprite(46, paints.pinkDots, P.pinkDeep, { outline: 9, depth: 5 }),
+    miniHeartRed: heartSprite(40, paints.heartRed, P.redD, { outline: 9, depth: 5 }),
+    miniHeartChoc: heartSprite(52, paints.chocBar, P.chocD, { outline: 9, depth: 5 }),
+  };
+}
+
+// place sprites by their glyph-box center
+function blit(sp, cx, cy, sc = 1, rot = 0, sx = 1, sy = 1) {
+  if (sc <= 0.001) return;
+  ctx.save();
+  ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(sc * sx, sc * sy);
+  ctx.drawImage(sp.c, -(sp.ox + sp.w / 2), -(sp.oy + sp.h / 2), sp.c.width / SS, sp.c.height / SS);
+  ctx.restore();
+}
+
+// pop-in: 0 before t0, elastic after
+const pop = (t, t0, d = 0.55) => t < t0 ? 0 : ease.outBack(clamp((t - t0) / d), 2.6);
+
+function frame(t) {
+  ctx.clearRect(0, 0, W, H);
+  const TAU = Math.PI * 2;
+  const L = 2; // idle loop period (s)
+  const ph = t / L * TAU;
+
+  // frill ribbon wipes in from left
+  const fr = clamp((t - 0.05) / 0.6);
+  if (fr > 0) {
+    const fe = 1 - Math.pow(1 - fr, 3);
+    drawFrill(ctx, t, 210, 210 + (1330 - 210) * fe, 392);
+  }
+
+  // main letters: [sprite, x, y, baseRot, delay, bobAmp]
+  const letters = [
+    [S.kaku, 365, 222, -0.08, 0.15, 9],
+    [S.ichi, 610, 248, 0.05, 0.27, 9],
+    [S.lp, 790, 250, -0.06, 0.45, 7],
+    [S.T, 875, 238, -0.1, 0.53, 7],
+    [S.a, 975, 262, 0.07, 0.61, 7],
+    [S.p, 1073, 268, -0.05, 0.69, 7],
+    [S.rp, 1328, 250, 0.06, 0.93, 7],
+  ];
+  letters.forEach(([sp, x, y, r, d, amp], i) => {
+    const s = pop(t, d);
+    const bob = Math.sin(ph - i * 0.75) * amp;
+    const wob = Math.sin(ph - i * 0.75 + 1.2) * 0.035;
+    // squash on landing
+    const k = clamp((t - d) / 0.35);
+    const sq = 1 + Math.sin(k * Math.PI) * 0.08 * (1 - k);
+    blit(sp, x, y + bob, s, r + wob, 1 / sq, sq);
+  });
+
+  // bow sits on top of 各
+  {
+    const s = pop(t, 0.38, 0.6);
+    if (s > 0) {
+      const bob = Math.sin(ph) * 9;
+      ctx.save();
+      ctx.translate(262, 92 + bob); ctx.rotate(-0.3 + Math.sin(ph * 2) * 0.05); ctx.scale(s * 0.78, s * 0.78);
+      drawBow(ctx, 1, Math.sin(ph * 2));
+      ctx.restore();
+    }
+  }
+
+  // tap heart: beat every 1s + press squish, ripples
+  {
+    const s = pop(t, 0.81, 0.6);
+    const hx = 1203, hy = 252;
+    const bt = ((t - 1.0) % 1 + 1) % 1; // beat phase
+    let beat = 1, press = 1;
+    if (t > 1.0) {
+      press = bt < 0.08 ? 1 - bt / 0.08 * 0.16 : 0.84 + 0.16 * ease.outElastic(clamp((bt - 0.08) / 0.5));
+      beat = 1 + Math.max(0, Math.sin(clamp((bt - 0.08) / 0.25) * Math.PI)) * 0.12;
+    }
+    // ripple rings (opaque, shrinking stroke)
+    if (t > 1.0) {
+      for (let k = 0; k < 2; k++) {
+        const rt = clamp((bt - 0.06 - k * 0.12) / 0.55);
+        if (rt <= 0 || rt >= 1) continue;
+        const R = 60 + rt * 60, lw = 9 * (1 - rt);
+        ctx.save(); ctx.translate(hx, hy + 6);
+        heartPath(ctx, 0, 0, R * 2);
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = P.white; ctx.lineWidth = lw + 4; ctx.stroke();
+        ctx.strokeStyle = k ? P.pink : P.red; ctx.lineWidth = lw; ctx.stroke();
+        ctx.restore();
+      }
+      // burst sparkles
+      const bp = clamp((bt - 0.08) / 0.4);
+      if (bp > 0 && bp < 1) {
+        for (let j = 0; j < 6; j++) {
+          const a = -Math.PI / 2 + (j - 2.5) * 0.55;
+          const d = 95 + bp * 45;
+          ctx.save(); ctx.translate(hx + Math.cos(a) * d, hy + Math.sin(a) * d * 0.9);
+          const rr = 13 * Math.sin(bp * Math.PI);
+          if (rr > 1) drawSparkle(ctx, rr, j % 2 ? P.pinkL : '#ffe28a');
+          ctx.restore();
+        }
+      }
+    }
+    blit(S.heart, hx, hy, s * beat, 0.08 + Math.sin(ph) * 0.05, 1 / press * 1.02, press);
+  }
+
+  // floating deco: [type, x, y, scale, delay, phaseOffset]
+  const deco = [
+    ['hp', 175, 330, 1.0, 1.0, 0.0],
+    ['star', 228, 70, 1.0, 1.05, 1.2],
+    ['bon', 555, 70, 0.9, 1.1, 2.1],
+    ['hr', 760, 92, 1.0, 1.15, 0.6],
+    ['star', 845, 420, 0.8, 1.2, 2.8],
+    ['hc', 1015, 88, 1.0, 1.25, 1.7],
+    ['star', 1150, 70, 1.15, 1.3, 0.3],
+    ['hp', 1420, 140, 1.0, 1.35, 2.4],
+    ['bon', 1415, 370, 1.0, 1.4, 1.0],
+    ['star', 1310, 440, 0.8, 1.45, 3.5],
+    ['hr', 520, 440, 0.9, 1.5, 4.1],
+    ['star', 120, 180, 0.75, 1.55, 5.0],
+  ];
+  deco.forEach(([ty, x, y, sc, d, po]) => {
+    const s = pop(t, d, 0.5) * sc;
+    if (s <= 0) return;
+    const by = Math.sin(ph + po) * 8;
+    const rot = Math.sin(ph + po * 1.3) * 0.18;
+    if (ty === 'star') {
+      const tw = 0.75 + 0.25 * Math.abs(Math.sin(ph * 2 + po)); // twinkle
+      ctx.save(); ctx.translate(x, y + by); ctx.rotate(rot); ctx.scale(s * tw, s * tw);
+      drawSparkle(ctx, 22, '#ffe28a'); ctx.restore();
+    } else if (ty === 'bon') {
+      ctx.save(); ctx.translate(x, y + by); ctx.rotate(rot); ctx.scale(s, s);
+      drawBonbon(ctx, 24); ctx.restore();
+    } else {
+      const sp = ty === 'hp' ? S.miniHeartPink : ty === 'hr' ? S.miniHeartRed : S.miniHeartChoc;
+      blit(sp, x, y + by, s, rot);
+    }
+  });
+}
+
+window.ready = (async () => {
+  await document.fonts.load('900 100px MPR', '各一Tap()');
+  build();
+  return true;
+})();
+window.render = (t) => { frame(t); return cv.toDataURL('image/png'); };
+</script></body></html>
