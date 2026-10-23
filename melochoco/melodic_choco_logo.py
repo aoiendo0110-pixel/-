@@ -98,7 +98,7 @@ class Glyph:
             arr[gm, :3] = gc[gm].astype(np.uint8)
             # 縁の少し上に照り
             rim = gm & (Yg > edge - 9) & (Yg < edge - 5)
-            arr[rim, :3] = (150, 92, 64)
+            arr[rim, :3] = st.get("glaze_rim", (150, 92, 64))
             fill = Image.fromarray(arr, "RGBA")
         # ステッチ
         e1 = np.array(m0.filter(ImageFilter.MinFilter(15))) > 128

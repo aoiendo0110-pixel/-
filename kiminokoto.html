@@ -1,0 +1,116 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>君のこと タイポ</title>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@800;900&display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#8a55e6}svg{display:block}</style></head><body>
+<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 -->
+<svg id="art" width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <linearGradient id="g-pink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe0ec"/><stop offset=".5" stop-color="#ffa9cb"/><stop offset="1" stop-color="#ff7fb2"/></linearGradient>
+ <linearGradient id="g-yellow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbd6"/><stop offset=".5" stop-color="#ffec80"/><stop offset="1" stop-color="#ffd23c"/></linearGradient>
+ <linearGradient id="g-lime" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6ffd8"/><stop offset=".5" stop-color="#d6f38a"/><stop offset="1" stop-color="#a9dc4c"/></linearGradient>
+ <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".3" stop-color="#fff" stop-opacity=".25"/><stop offset=".34" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(25)"><circle cx="5" cy="5" r="3.6" fill="#fff" opacity=".8"/></pattern>
+ <path id="heartP" d="M0 12 C-26 -8 -13 -30 0 -14 C13 -30 26 -8 0 12Z"/>
+ <path id="sparkP" d="M0 -20 Q2.5 -2.5 20 0 Q2.5 2.5 0 20 Q-2.5 2.5 -20 0 Q-2.5 -2.5 0 -20Z"/>
+ <path id="flowerP" d="M0 -16 C6 -16 7 -8 4 -5 C8 -8 16 -6 15 0 C16 6 8 8 4 5 C7 8 6 16 0 16 C-6 16 -7 8 -4 5 C-8 8 -16 6 -15 0 C-16 -6 -8 -8 -4 -5 C-7 -8 -6 -16 0 -16Z"/>
+</defs>
+<rect id="bg" width="1600" height="900" fill="#8a55e6"/>
+<g id="stage" transform="translate(-145 -20)"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const stage=document.getElementById('stage');
+const FONT="'M PLUS Rounded 1c'";
+const COL={
+ pink:  {fill:'url(#g-pink)',  line:'#f47aab', depth:'#f59bc0'},
+ yellow:{fill:'url(#g-yellow)',line:'#efb21f', depth:'#f5c94f'},
+ lime:  {fill:'url(#g-lime)',  line:'#86c234', depth:'#a6d35a'},
+};
+const items=[]; // {g,x,y,r,s,t0,kind,ph}
+function addItem(g,o){g.setAttribute('transform','scale(0)');stage.appendChild(g);items.push({g,ph:Math.random()*6.28,bob:6,...o});return g;}
+
+// ぷっくり文字（白フチ＋色フチ＋右下の厚み）
+function glyph(ch,size,c,opt={}){
+ const g=el('g',{});
+ const base={'font-family':FONT,'font-weight':900,'font-size':size,'text-anchor':'middle','dominant-baseline':'central','stroke-linejoin':'round'};
+ const T=(a)=>{const t=el('text',{...base,...a},g);t.textContent=ch;return t;};
+ const ow=size*0.13, ww=size*0.085, depth=Math.round(size*0.045);
+ for(let k=depth;k>=1;k--) T({x:k,y:k,fill:c.depth,stroke:c.depth,'stroke-width':ow});
+ T({fill:c.line,stroke:c.line,'stroke-width':ow});
+ T({fill:'#fff',stroke:'#fff','stroke-width':ww});
+ T({fill:c.fill});
+ if(opt.dots) T({fill:'url(#dots)'});
+ T({fill:'url(#gloss)'});
+ return g;
+}
+function heart(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:line,stroke:line,'stroke-width':10,'stroke-linejoin':'round',transform:`translate(2 3) scale(${sc})`},g);
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':14,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill:fill,stroke:line,'stroke-width':3,transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-8*sc,cy:-13*sc,rx:4*sc,ry:2.4*sc,fill:'#fff',transform:`rotate(-35 ${-8*sc} ${-13*sc})`},g);
+ return g;}
+function spark(fill,sc){const g=el('g',{});
+ el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':8,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#sparkP',fill:fill,transform:`scale(${sc})`},g);return g;}
+function flower(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#flowerP',fill:'#fff',stroke:'#fff','stroke-width':9,transform:`scale(${sc})`},g);
+ el('use',{href:'#flowerP',fill:fill,stroke:line,'stroke-width':2.5,transform:`scale(${sc})`},g);
+ el('circle',{r:4*sc,fill:'#fff'},g);return g;}
+function rubyChip(ch){const g=el('g',{});
+ el('circle',{r:23,fill:'#fff',stroke:'#f47aab','stroke-width':4},g);
+ const t=el('text',{'font-family':FONT,'font-weight':800,'font-size':27,'text-anchor':'middle','dominant-baseline':'central',fill:'#f47aab',y:1},g);t.textContent=ch;return g;}
+
+// ===== 配置 =====
+// ルビ「きみ」
+['き','み'].forEach((c,i)=>addItem(rubyChip(c),{x:530+i*56,y:215-(i%2)*6,r:-5,s:1,t0:0.05+i*0.07,bob:3}));
+// 君
+addItem(glyph('君',290,COL.pink,{dots:1}),{x:555,y:470,r:-6,s:1,t0:0.25});
+// の（小さめ・ちょい下）
+addItem(glyph('の',150,COL.yellow),{x:785,y:610,r:9,s:1,t0:0.45});
+// こと
+addItem(glyph('こ',225,COL.lime),{x:990,y:470,r:-5,s:1,t0:0.6});
+addItem(glyph('と',235,COL.pink,{dots:1}),{x:1215,y:525,r:7,s:1,t0:0.75});
+// お花
+addItem(flower('#d6f38a','#86c234',1.3),{x:385,y:300,r:0,s:1,t0:0.4,spin:1});
+addItem(flower('#ffec80','#efb21f',1.0),{x:880,y:330,r:0,s:1,t0:0.55,spin:1});
+// 文字間のハート
+addItem(heart('#ffec80','#efb21f',0.8),{x:880,y:470,r:-10,s:1,t0:0.7});
+addItem(heart('#d6f38a','#86c234',0.8),{x:1105,y:640,r:12,s:1,t0:0.85});
+// 大きいハート
+addItem(heart('#ffa9cb','#f47aab',2.1),{x:1400,y:330,r:14,s:1,t0:1.0});
+// キラキラ
+[[380,560,'#ffec80',1.3,1.1],[700,300,'#fff',0.9,1.15],[1500,470,'#d6f38a',1.1,1.2],[1110,300,'#fff',0.8,1.25],[450,720,'#d6f38a',1.0,1.3],[1350,660,'#ffec80',1.1,1.35],[960,660,'#fff',0.7,1.4],[1500,220,'#fff',0.8,1.45]]
+ .forEach(([x,y,f,sc,t0])=>addItem(spark(f,sc),{x,y,r:0,s:1,t0,twinkle:1}));
+
+// 細い線の飾り（描かれていく）
+const lines=[];
+function addLine(d,color,t0,w=5){const p=el('path',{d,fill:'none',stroke:color,'stroke-width':w,'stroke-linecap':'round','stroke-linejoin':'round'});
+ stage.insertBefore(p,stage.firstChild);const L=p.getTotalLength();p.setAttribute('stroke-dasharray',L);p.setAttribute('stroke-dashoffset',L);lines.push({p,L,t0});}
+addLine('M440 185 Q560 140 690 178','#fff',0.15,6);
+addLine('M455 203 Q560 165 678 196','#f47aab',0.2,4);
+addLine('M1400 230 L1430 298 L1505 306 L1449 356 L1465 430 L1400 392 L1335 430 L1351 356 L1295 306 L1370 298Z','#d6f38a',0.95,6);
+addLine('M470 740 Q620 785 800 735 Q970 690 1300 745','#fff',1.05,5);
+
+// ===== アニメーション =====
+const clamp=x=>Math.max(0,Math.min(1,x));
+const back=(x,c=2.4)=>1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);
+const eOut=x=>1-Math.pow(1-x,3);
+const TAU=Math.PI*2;
+window.render=function(t){
+ items.forEach(o=>{
+  const p=clamp((t-o.t0)/0.32);
+  if(p<=0){o.g.setAttribute('transform','scale(0)');return;}
+  let s=back(p), r=o.r+(1-eOut(p))*-25;
+  const idle=clamp((t-o.t0-0.32)/0.4);
+  let dy=Math.sin(TAU*(t*0.7)+o.ph)*o.bob*idle;
+  r+=Math.sin(TAU*(t*0.5)+o.ph)*1.5*idle;
+  if(o.spin) r+=t*40;
+  if(o.twinkle) s*=0.75+0.35*Math.abs(Math.sin(TAU*t*0.8+o.ph))*idle+0.25*(1-idle);
+  o.g.setAttribute('transform',`translate(${o.x} ${o.y+dy}) rotate(${r}) scale(${s})`);
+ });
+ lines.forEach(l=>l.p.setAttribute('stroke-dashoffset',l.L*(1-eOut(clamp((t-l.t0)/0.6)))));
+};
+if(location.hash.includes('transparent')){document.getElementById('bg').style.display='none';document.body.style.background='transparent';}
+document.fonts.ready.then(()=>{const m=location.hash.match(/t=([\d.]+)/);render(m?parseFloat(m[1]):5);});
+</script></body></html>

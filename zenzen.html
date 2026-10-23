@@ -1,0 +1,143 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>全然掴めない ロゴ</title>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Fredoka:wght@700&display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#4b2391}svg{display:block}</style></head><body>
+<svg id="art" width="1600" height="900" viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <radialGradient id="bg" cx=".5" cy=".5" r=".75">
+  <stop offset="0" stop-color="#b48cff"/><stop offset=".55" stop-color="#8a55e6"/><stop offset="1" stop-color="#4b2391"/>
+ </radialGradient>
+ <linearGradient id="pk" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#ffc4dd"/><stop offset=".45" stop-color="#ff86b9"/><stop offset="1" stop-color="#ff4f97"/>
+ </linearGradient>
+ <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".38" stop-color="#fff" stop-opacity=".35"/><stop offset=".42" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+ </linearGradient>
+ <pattern id="ldots" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+  <circle cx="5" cy="5" r="3.2" fill="#fff" opacity=".45"/>
+ </pattern>
+ <pattern id="bgdots" width="60" height="60" patternUnits="userSpaceOnUse">
+  <circle cx="10" cy="10" r="5" fill="#fff" opacity=".12"/><circle cx="40" cy="40" r="5" fill="#fff" opacity=".12"/>
+ </pattern>
+ <pattern id="cdots" width="34" height="34" patternUnits="userSpaceOnUse">
+  <circle cx="8" cy="8" r="6" fill="#fff" opacity=".55"/><circle cx="25" cy="25" r="6" fill="#fff" opacity=".55"/>
+ </pattern>
+ <linearGradient id="rib" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8f06a"/><stop offset="1" stop-color="#92d13a"/></linearGradient>
+ <path id="heartP" d="M0 12 C-26 -8 -13 -30 0 -14 C13 -30 26 -8 0 12Z"/>
+ <path id="starP" d="M0 -26 L7.5 -8 L26 -8 L11 4 L17 24 L0 12 L-17 24 L-11 4 L-26 -8 L-7.5 -8Z"/>
+ <path id="sparkP" d="M0 -20 Q2.5 -2.5 20 0 Q2.5 2.5 0 20 Q-2.5 2.5 -20 0 Q-2.5 -2.5 0 -20Z"/>
+ <g id="heart"><use href="#heartP" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/><use href="#heartP" fill="#ff5fa2" stroke="#d93a7e" stroke-width="3"/><ellipse cx="-9" cy="-14" rx="5" ry="3" fill="#fff" transform="rotate(-35 -9 -14)"/></g>
+ <g id="star"><use href="#starP" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/><use href="#starP" fill="#ffe14d" stroke="#f2b705" stroke-width="3" stroke-linejoin="round"/><circle cx="-5" cy="-6" r="3" fill="#fff"/></g>
+ <g id="gstar"><use href="#starP" fill="#fff" stroke="#fff" stroke-width="12" stroke-linejoin="round"/><use href="#starP" fill="#b5e055" stroke="#7fb52a" stroke-width="3" stroke-linejoin="round"/><circle cx="-5" cy="-6" r="3" fill="#fff"/></g>
+ <path id="ribPath" d="M440 818 Q800 770 1160 818"/>
+</defs>
+
+<!-- 背景 (#transparent で透過 / #purple でベタ紫) -->
+<rect id="flat" width="1600" height="900" fill="#8a55e6" display="none"/>
+<g id="bgall">
+<rect width="1600" height="900" fill="url(#bg)"/>
+<g id="rays" opacity=".13" fill="#fff"></g>
+<rect width="1600" height="900" fill="url(#bgdots)"/>
+<g fill="#fff">
+ <circle cx="120" cy="120" r="3"/><circle cx="260" cy="70" r="2"/><circle cx="1480" cy="160" r="3"/><circle cx="1380" cy="60" r="2"/>
+ <circle cx="90" cy="760" r="2.5"/><circle cx="1520" cy="800" r="3"/><circle cx="1500" cy="520" r="2"/><circle cx="70" cy="480" r="2"/>
+</g>
+</g>
+
+<!-- ふわふわ雲フレーム -->
+<g id="cloud"></g>
+
+<!-- ロゴ文字 -->
+<g id="txt" font-family="'Mochiy Pop One'" text-anchor="middle"></g>
+
+<!-- リボン -->
+<g>
+ <path d="M470 790 L300 800 L350 842 L300 888 L470 876Z" fill="#7fb52a" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>
+ <path d="M1130 790 L1300 800 L1250 842 L1300 888 L1130 876Z" fill="#7fb52a" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>
+ <path d="M420 776 Q800 728 1180 776 L1180 862 Q800 814 420 862Z" fill="url(#rib)" stroke="#fff" stroke-width="9" stroke-linejoin="round"/>
+ <path d="M436 790 Q800 744 1164 790" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="10 9" opacity=".9"/>
+ <path d="M436 848 Q800 800 1164 848" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="10 9" opacity=".9"/>
+ <text font-family="Fredoka" font-weight="700" font-size="40" letter-spacing="5" text-anchor="middle" fill="#fff" stroke="#6aa11f" stroke-width="7" paint-order="stroke" stroke-linejoin="round">
+  <textPath href="#ribPath" startOffset="50%">♡ ZENZEN TSUKAMENAI ♡</textPath>
+ </text>
+</g>
+
+<!-- デコ -->
+<g id="deco">
+ <use href="#heart" transform="translate(1235 285) rotate(14) scale(2.3)"/>
+ <use href="#heart" transform="translate(1395 395) rotate(22) scale(1.2)"/>
+ <use href="#heart" transform="translate(240 600) rotate(-18) scale(1.6)"/>
+ <use href="#heart" transform="translate(150 300) rotate(-10) scale(.9)"/>
+ <use href="#heart" transform="translate(1440 700) rotate(12) scale(1.1)"/>
+ <use href="#star" transform="translate(270 200) rotate(-14) scale(1.8)"/>
+ <use href="#star" transform="translate(1060 175) rotate(10) scale(1.3)"/>
+ <use href="#star" transform="translate(1390 560) rotate(-8) scale(1.5)"/>
+ <use href="#star" transform="translate(180 450) rotate(18) scale(.9)"/>
+ <use href="#gstar" transform="translate(880 165) rotate(-12) scale(1.1)"/>
+ <use href="#gstar" transform="translate(1500 300) rotate(15) scale(.9)"/>
+ <use href="#gstar" transform="translate(110 640) rotate(-6) scale(1.1)"/>
+ <g fill="#fff"><use href="#sparkP" transform="translate(370 120) scale(1.3)"/><use href="#sparkP" transform="translate(1330 160) scale(1.5)"/><use href="#sparkP" transform="translate(1210 650) scale(.9)"/><use href="#sparkP" transform="translate(330 700) scale(.8)"/><use href="#sparkP" transform="translate(760 200) scale(.7)"/></g>
+ <g fill="#ffe14d"><use href="#sparkP" transform="translate(1480 450) scale(.9)"/><use href="#sparkP" transform="translate(80 200) scale(1)"/><use href="#sparkP" transform="translate(990 120) scale(.6)"/></g>
+ <g fill="#c8f06a"><use href="#sparkP" transform="translate(560 120) scale(.8)"/><use href="#sparkP" transform="translate(1550 620) scale(.8)"/><use href="#sparkP" transform="translate(50 360) scale(.7)"/></g>
+ <!-- 汗 -->
+ <g fill="#9fe0ff" stroke="#fff" stroke-width="5" stroke-linejoin="round">
+  <path d="M1330 250 q18 26 0 40 q-18 -14 0 -40z"/><path d="M1365 210 q12 18 0 28 q-12 -10 0 -28z"/>
+ </g>
+ <!-- 文字の上のキラッ -->
+ <g fill="#fff" id="glints"></g>
+</g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const mode=location.hash.slice(1);
+if(mode==='transparent'||mode==='purple'){document.getElementById('bgall').style.display='none';document.body.style.background='transparent';document.documentElement.style.background='transparent';}
+if(mode==='purple')document.getElementById('flat').removeAttribute('display');
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);parent.appendChild(e);return e;};
+
+// 放射ライン
+const rays=document.getElementById('rays');
+for(let i=0;i<24;i+=2){const a1=i*Math.PI/12,a2=(i+1)*Math.PI/12,R=1300;
+ el('path',{d:`M800 470 L${800+R*Math.cos(a1)} ${470+R*Math.sin(a1)} L${800+R*Math.cos(a2)} ${470+R*Math.sin(a2)}Z`},rays);}
+
+// 雲フレーム
+const cloud=document.getElementById('cloud'), cx=800, cy=470, rx=520, ry=255, n=24, shapes=[];
+for(let i=0;i<n;i++){const a=i*2*Math.PI/n;shapes.push(['circle',{cx:cx+rx*Math.cos(a),cy:cy+ry*Math.sin(a),r:i%2?78:96}]);}
+shapes.push(['ellipse',{cx,cy,rx,ry}]);
+[{fill:'#3d1a78',stroke:'#3d1a78',w:40,dx:10,dy:14},{fill:'#fff',stroke:'#fff',w:36},{fill:'#ffe14d',stroke:'#ffe14d',w:16},{fill:'#ffd3e6'},{fill:'url(#cdots)'}]
+ .forEach(l=>shapes.forEach(([t,a])=>{const o={...a,fill:l.fill};
+  if(l.w){o.stroke=l.stroke;o['stroke-width']=l.w;}
+  if(l.dx){if(o.cx!==undefined){o.cx+=l.dx;o.cy+=l.dy;}}
+  el(t,o,cloud);}));
+
+// 文字
+const g=document.getElementById('txt');
+const chars=[
+ {c:'全',x:490,y:350,s:165,r:-9},
+ {c:'然',x:670,y:330,s:165,r:-3},
+ {c:'掴',x:510,y:625,s:225,r:-6},
+ {c:'め',x:745,y:600,s:215,r:5},
+ {c:'な',x:975,y:620,s:215,r:-4},
+ {c:'い',x:1190,y:590,s:215,r:7},
+];
+const layers=[
+ {stroke:'#3d1a78',w:62,fill:'#3d1a78',dx:9,dy:14},
+ {stroke:'#b5e055',w:58},
+ {stroke:'#ffe14d',w:44},
+ {stroke:'#ffffff',w:28},
+ {stroke:'#e8407f',w:10},
+ {fill:'url(#pk)'},
+ {fill:'url(#ldots)'},
+ {fill:'url(#gloss)'},
+];
+layers.forEach(l=>chars.forEach(ch=>{
+ const t=el('text',{x:ch.x+(l.dx||0),y:ch.y+(l.dy||0),'font-size':ch.s,fill:l.fill||l.stroke,
+  transform:`rotate(${ch.r} ${ch.x} ${ch.y-ch.s/3})`},g);
+ if(l.w){t.setAttribute('stroke',l.stroke);t.setAttribute('stroke-width',l.w);t.setAttribute('stroke-linejoin','round');}
+ t.textContent=ch.c;
+}));
+
+// キラッ
+const gl=document.getElementById('glints');
+[[435,215,1],[460,465,1.2],[690,450,.9],[920,470,1],[1150,440,1.1],[625,200,.8]].forEach(([x,y,s])=>
+ el('use',{href:'#sparkP',transform:`translate(${x} ${y}) scale(${s})`},gl));
+</script></body></html>

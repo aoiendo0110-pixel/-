@@ -1,0 +1,153 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>牧場ストライプ背景</title>
+<style>html,body{margin:0;background:#ffd6e6}svg{display:block}</style></head><body>
+<!-- #t=秒 でその瞬間を表示（6秒ループ） -->
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <!-- モチーフ -->
+ <path id="heartP" d="M0 12 C-26 -8 -13 -30 0 -14 C13 -30 26 -8 0 12Z"/>
+ <g id="bow">
+  <path d="M0 0 C-10 -14 -34 -20 -36 -4 C-38 12 -12 10 0 0Z"/>
+  <path d="M0 0 C10 -14 34 -20 36 -4 C38 12 12 10 0 0Z"/>
+  <path d="M-3 2 L-14 24 L-6 22 L-2 28Z"/><path d="M3 2 L14 24 L6 22 L2 28Z"/>
+  <circle r="6"/>
+ </g>
+ <g id="clover">
+  <use href="#heartP" transform="rotate(45) translate(0 -8) scale(.62)"/>
+  <use href="#heartP" transform="rotate(135) translate(0 -8) scale(.62)"/>
+  <use href="#heartP" transform="rotate(225) translate(0 -8) scale(.62)"/>
+  <use href="#heartP" transform="rotate(315) translate(0 -8) scale(.62)"/>
+ </g>
+
+ <!-- 1: 淡ピンク＋ちびハート -->
+ <pattern id="p1" width="96" height="120" patternUnits="userSpaceOnUse">
+  <rect width="96" height="120" fill="#ffe1ec"/>
+  <use href="#heartP" fill="#ffc4d9" transform="translate(24 40) scale(.55)"/>
+  <use href="#heartP" fill="#fff" opacity=".9" transform="translate(72 92) scale(.45)"/>
+ </pattern>
+ <!-- 2: ギンガムチェック -->
+ <pattern id="p2" width="56" height="56" patternUnits="userSpaceOnUse">
+  <rect width="56" height="56" fill="#fff6f9"/>
+  <rect width="28" height="56" fill="#ff9fc4" opacity=".55"/>
+  <rect width="56" height="28" fill="#ff9fc4" opacity=".55"/>
+  <path d="M0 14 H56 M14 0 V56" stroke="#fff" stroke-width="1.5" opacity=".35"/>
+ </pattern>
+ <!-- 3: リボン柄 -->
+ <pattern id="p3" width="200" height="140" patternUnits="userSpaceOnUse">
+  <rect width="200" height="140" fill="#ffcfe0"/>
+  <use href="#bow" fill="#ff8fba" transform="translate(50 42) scale(.9)"/>
+  <use href="#bow" fill="#ffb0cd" transform="translate(150 106) scale(.9)"/>
+ </pattern>
+ <!-- 4: 草原＋柵＋クローバー -->
+ <pattern id="p4" width="240" height="155" patternUnits="userSpaceOnUse">
+  <rect width="240" height="155" fill="#e3f6b0"/>
+  <path d="M0 64 H240 M0 96 H240" stroke="#fff" stroke-width="11"/>
+  <g fill="#fff"><path d="M30 126 V46 L44 31 L58 46 V126Z"/><path d="M150 126 V46 L164 31 L178 46 V126Z"/></g>
+  <path d="M0 116 Q15 104 30 116 Q45 104 60 116 Q75 104 90 116 Q105 104 120 116 Q135 104 150 116 Q165 104 180 116 Q195 104 210 116 Q225 104 240 116 V155 H0Z" fill="#cdeb85"/>
+  <use href="#clover" fill="#9fd14a" stroke="#f4ffd6" stroke-width="1.6" transform="translate(100 114) scale(.95)"/><circle cx="100" cy="114" r="3" fill="#fff6a8"/>
+  <use href="#clover" fill="#b6df63" stroke="#f4ffd6" stroke-width="1.6" transform="translate(212 118) scale(.7)"/>
+  <circle cx="98" cy="80" r="5" fill="#fff6a8"/><circle cx="222" cy="78" r="4" fill="#ffd0e0"/>
+ </pattern>
+ <!-- 5: 淡イエロー＋ハート -->
+ <pattern id="p5" width="110" height="120" patternUnits="userSpaceOnUse">
+  <rect width="110" height="120" fill="#fff4bf"/>
+  <use href="#heartP" fill="#ffb3cf" transform="translate(28 40) scale(.85)"/>
+  <use href="#heartP" fill="#ffd0e1" transform="translate(83 94) scale(.85)"/>
+ </pattern>
+ <!-- 6: ピンク牛柄 -->
+ <pattern id="p6" width="300" height="150" patternUnits="userSpaceOnUse">
+  <rect width="300" height="150" fill="#ffb8d2"/>
+  <g fill="#fff" opacity=".92">
+   <path d="M30 20 C60 5 95 18 92 42 C90 64 62 60 50 72 C36 84 12 70 14 50 C15 36 18 26 30 20Z"/>
+   <path d="M170 70 C195 55 240 62 238 88 C236 112 205 108 192 122 C178 132 150 120 152 100 C153 86 158 76 170 70Z"/>
+   <path d="M250 8 C268 2 290 12 286 28 C282 42 262 40 252 36 C240 30 238 14 250 8Z"/>
+   <path d="M72 112 C86 104 108 110 106 124 C104 138 86 140 76 136 C64 130 62 118 72 112Z"/>
+  </g>
+ </pattern>
+ <!-- 7: 水玉 -->
+ <pattern id="p7" width="64" height="64" patternUnits="userSpaceOnUse">
+  <rect width="64" height="64" fill="#ff93bd"/>
+  <circle cx="16" cy="16" r="10" fill="#ffc6db"/><circle cx="48" cy="48" r="10" fill="#ffc6db"/>
+ </pattern>
+ <!-- レース -->
+ <pattern id="lace" width="30" height="44" patternUnits="userSpaceOnUse">
+  <circle cx="15" cy="8" r="9" fill="#fff"/><circle cx="15" cy="36" r="9" fill="#fff"/>
+  <rect y="8" width="30" height="28" fill="#fff"/>
+  <circle cx="15" cy="7" r="2.6" fill="#ffd0e1"/><circle cx="15" cy="37" r="2.6" fill="#ffd0e1"/>
+ </pattern>
+ <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d0457f" stop-opacity=".16"/><stop offset="1" stop-color="#d0457f" stop-opacity="0"/></linearGradient>
+ <radialGradient id="vig" cx=".5" cy=".5" r=".75"><stop offset=".6" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#ff7fae" stop-opacity=".18"/></radialGradient>
+</defs>
+<g id="bands"></g>
+<g id="laces"></g>
+<g id="charms"></g>
+<rect width="1920" height="1080" fill="url(#vig)" pointer-events="none"/>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const LOOP=6, TAU=Math.PI*2;
+// しま: [id, 上端, 下端, パターン幅, 方向×周回数]
+const bands=[
+ ['p1',   0, 140,  96,  1],
+ ['p2', 140, 300,  56, -2],
+ ['p3', 300, 445, 200,  1],
+ ['p4', 445, 600, 240, -1],
+ ['p5', 600, 740, 110,  1],
+ ['p6', 740, 895, 300, -1],
+ ['p7', 895,1080,  64,  2],
+];
+const B=document.getElementById('bands'), Lg=document.getElementById('laces'), C=document.getElementById('charms');
+const pats=bands.map(([id,y0,y1,w,n])=>{
+ el('rect',{x:0,y:y0,width:1920,height:y1-y0,fill:`url(#${id})`},B);
+ return {pat:document.getElementById(id),y0,w,n};
+});
+// しまの境目：影＋レース＋ステッチ
+const seams=bands.slice(1).map(b=>b[1]);
+const laceEls=seams.map((y,i)=>{
+ el('rect',{x:0,y:y+22,width:1920,height:18,fill:'url(#shade)'},Lg);
+ const r=el('rect',{x:-60,y:0,width:2040,height:44,fill:'url(#lace)'},Lg);
+ const d=el('path',{d:`M0 ${y} H1920`,stroke:'#ffa3c6','stroke-width':3,'stroke-dasharray':'14 10','stroke-linecap':'round'},Lg);
+ return {r,d,y,dir:i%2?-1:1};
+});
+
+// チャーム
+function heartCharm(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':2.5,transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-8*sc,cy:-13*sc,rx:4*sc,ry:2.4*sc,fill:'#fff',transform:`rotate(-35 ${-8*sc} ${-13*sc})`},g);return g;}
+function bowCharm(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#bow',fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#bow',fill,stroke:line,'stroke-width':2.2,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('circle',{r:3*sc,cx:-1*sc,cy:-2*sc,fill:'#fff',opacity:.8},g);return g;}
+function cloverCharm(sc){const g=el('g',{});
+ el('use',{href:'#clover',fill:'#fff',stroke:'#fff','stroke-width':10,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('path',{d:`M0 0 Q${4*sc} ${14*sc} ${10*sc} ${22*sc}`,stroke:'#86c234','stroke-width':3*sc,fill:'none','stroke-linecap':'round'},g);
+ el('use',{href:'#clover',fill:'#b5e055',stroke:'#86c234','stroke-width':1.5,transform:`scale(${sc})`},g);
+ el('circle',{r:3*sc,fill:'#fff3a0'},g);return g;}
+const charms=[
+ [heartCharm('#ff8fba','#f06d9f',1.2),  960, seams[0]],
+ [bowCharm('#ff8fba','#f06d9f',1.25),  1640, seams[1]],
+ [heartCharm('#ffec80','#efb21f',1.0),  300, seams[1]],
+ [cloverCharm(1.5),                     1180, seams[2]],
+ [heartCharm('#ff8fba','#f06d9f',1.0),  420, seams[3]],
+ [bowCharm('#ff8fba','#f06d9f',1.6),   1500, seams[4]],
+ [cloverCharm(1.2),                      150, seams[4]],
+ [heartCharm('#d6f38a','#86c234',1.0),  760, seams[5]],
+ [heartCharm('#ff8fba','#f06d9f',0.9), 1760, seams[5]],
+].map(([g,x,y],i)=>{C.appendChild(g);return {g,x,y,ph:i*0.7};});
+
+window.render=function(t){
+ const u=(t%LOOP)/LOOP;
+ pats.forEach(p=>p.pat.setAttribute('patternTransform',`translate(${p.n*p.w*u} ${p.y0})`));
+ laceEls.forEach(l=>{l.r.setAttribute('transform',`translate(${(l.dir*30*u*4)%30} ${l.y-22})`);
+   l.d.setAttribute('stroke-dashoffset',-l.dir*24*u*10);});
+ charms.forEach(c=>{
+  const bob=5*Math.sin(TAU*u*2+c.ph), sw=8*Math.sin(TAU*u+c.ph), s=1+0.05*Math.sin(TAU*u*3+c.ph);
+  c.g.setAttribute('transform',`translate(${c.x} ${c.y+bob}) rotate(${sw}) scale(${s})`);
+ });
+};
+const m=location.hash.match(/t=([\d.]+)/);
+render(m?parseFloat(m[1]):0);
+if(!m&&!location.search.includes('still')){const t0=performance.now();const loop=()=>{render((performance.now()-t0)/1000);requestAnimationFrame(loop);};loop();}
+</script></body></html>
