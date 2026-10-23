@@ -65,40 +65,59 @@ def heart_sprite(s, fill, line=None, shine=True):
     return sprite(s + 6, s + 6, f)
 
 
-def bow_sprite(s, fill, dark, knot=None):
-    """丸っこいリボン. s は横幅."""
-    knot = knot or fill
-    h = int(s * 0.85)
+def bez(p0, p1, p2, p3, n=24):
+    return [((1 - t) ** 3 * p0[0] + 3 * (1 - t) ** 2 * t * p1[0] + 3 * (1 - t) * t * t * p2[0] + t ** 3 * p3[0],
+             (1 - t) ** 3 * p0[1] + 3 * (1 - t) ** 2 * t * p1[1] + 3 * (1 - t) * t * t * p2[1] + t ** 3 * p3[1])
+            for t in [i / n for i in range(n + 1)]]
 
-    def wing(d, k, cx, cy, side, col):
-        pts = []
-        for i in range(48):
-            t = TAU * i / 48
-            x = math.cos(t)
-            y = math.sin(t) * (0.35 + 0.65 * (1 + x * side) / 2)
-            pts.append((cx + side * (x + 1) * s * 0.24 * k, cy + y * s * 0.2 * k))
-        d.polygon(pts, fill=col)
+
+def path(start, *curves):
+    """3次ベジェをつないだ閉じた形 (curves は (c1, c2, end) の並び)."""
+    pts, p = [], start
+    for c1, c2, e in curves:
+        pts += bez(p, c1, c2, e)
+        p = e
+    return pts
+
+
+# 🎀 の形 (横幅 1, 結び目が原点, 右半分. 左は左右反転)
+BOW_LOOP = path((0.05, -0.06), ((0.17, -0.31), (0.45, -0.37), (0.48, -0.13)),
+                ((0.51, 0.06), (0.37, 0.16), (0.22, 0.11)), ((0.14, 0.08), (0.08, 0.06), (0.05, 0.05)))
+BOW_FOLD = path((0.07, -0.03), ((0.14, -0.11), (0.25, -0.1), (0.27, -0.01)),
+                ((0.21, 0.04), (0.13, 0.04), (0.07, 0.03)))
+BOW_SHINE = path((0.12, -0.17), ((0.2, -0.27), (0.35, -0.3), (0.42, -0.22)),
+                 ((0.34, -0.25), (0.22, -0.23), (0.14, -0.14)))
+BOW_TAIL = path((0.02, 0.02), ((0.1, 0.15), (0.2, 0.28), (0.32, 0.42)), ((0.28, 0.42), (0.24, 0.41), (0.21, 0.39)),
+                ((0.19, 0.42), (0.16, 0.45), (0.13, 0.49)), ((0.08, 0.34), (0.03, 0.2), (-0.04, 0.07)))
+
+
+def bow_sprite(s, fill, dark, knot=None):
+    """🎀 みたいなリボン (ふっくらした2つの輪 + 結び目 + V字に切ったしっぽ). s は横幅."""
+    knot = knot or fill
+    h = int(s * 0.9)
+    oy = 0.37   # 結び目の高さ (上端からの割合 × 横幅)
 
     def f(d, k):
-        cx, cy = s * k / 2, h * k * 0.42
-        # しっぽ
-        for side in (-1, 1):
-            tail = [(cx, cy), (cx + side * s * 0.1 * k, cy + 0.08 * s * k), (cx + side * s * 0.26 * k, cy + 0.42 * s * k),
-                    (cx + side * s * 0.15 * k, cy + 0.36 * s * k), (cx + side * s * 0.1 * k, cy + 0.46 * s * k),
-                    (cx - side * s * 0.02 * k, cy + 0.08 * s * k)]
-            d.polygon([(x + 2 * k, y + 3 * k) for x, y in tail], fill=dark)
-            d.polygon(tail, fill=fill)
-        for side in (-1, 1):
-            wing(d, k, cx, cy + 3 * k, side, dark)
-            wing(d, k, cx, cy, side, fill)
-            # ひだのライン
-            d.line([(cx + side * s * 0.06 * k, cy), (cx + side * s * 0.3 * k, cy - s * 0.08 * k)],
-                   fill=dark, width=int(2.2 * k))
-            d.ellipse((cx + side * s * 0.28 * k - 5 * k, cy - s * 0.1 * k - 3 * k, cx + side * s * 0.28 * k + 5 * k,
-                       cy - s * 0.1 * k + 3 * k), fill=(255, 255, 255, 150))
-        r = s * 0.085 * k
-        d.ellipse((cx - r, cy - r * 1.1 + 2 * k, cx + r, cy + r * 1.1 + 2 * k), fill=dark)
-        d.ellipse((cx - r, cy - r * 1.1, cx + r, cy + r * 1.1), fill=knot)
+        S_, cx, cy = s * k, s * k / 2, oy * s * k
+        sh = 0.018 * S_
+
+        def P(pts, side=1, dx=0.0, dy=0.0):
+            return [(cx + side * x * S_ + dx, cy + y * S_ + dy) for x, y in pts]
+        for side in (-1, 1):                       # しっぽ (影 → 本体)
+            d.polygon(P(BOW_TAIL, side, 0, sh), fill=dark)
+            d.polygon(P(BOW_TAIL, side), fill=fill)
+            d.line(P([(0.05, 0.1), (0.2, 0.37)], side), fill=dark, width=max(1, int(0.012 * S_)))
+        for side in (-1, 1):                       # 輪
+            d.polygon(P(BOW_LOOP, side, 0, sh), fill=dark)
+            d.polygon(P(BOW_LOOP, side), fill=fill)
+            d.polygon(P(BOW_FOLD, side), fill=dark)
+            d.polygon(P(BOW_SHINE, side), fill=(255, 255, 255, 120))
+        kw, kh = 0.075 * S_, 0.09 * S_             # 結び目
+        d.rounded_rectangle((cx - kw, cy - kh + sh, cx + kw, cy + kh + sh), radius=kw * 0.7, fill=dark)
+        d.rounded_rectangle((cx - kw, cy - kh, cx + kw, cy + kh), radius=kw * 0.7, fill=knot)
+        d.line([(cx - kw * 0.45, cy - kh * 0.55), (cx - kw * 0.45, cy + kh * 0.5)], fill=dark,
+               width=max(1, int(0.01 * S_)))
+        d.ellipse((cx - kw * 0.55, cy - kh * 0.7, cx - kw * 0.05, cy - kh * 0.3), fill=(255, 255, 255, 140))
     return sprite(s, h, f)
 
 
@@ -316,11 +335,11 @@ class Scene:
         self.drips = [(x, rng.uniform(12, 20), rng.uniform(40, 150), rng.uniform(0, TAU), rng.choice([1, 2]))
                       for x in np.linspace(40, W - 40, 10) + np.array([rng.uniform(-30, 30) for _ in range(10)])]
         # 飾り
-        self.big_bows = [(bow_sprite(230, RED + (255,), RED_D + (255,), knot=(255, 140, 170, 255)), 820,
+        self.big_bows = [(bow_sprite(230, RED + (255,), RED_D + (255,)), 820,
                           self.seams[1] + 4, 0.0),
-                         (bow_sprite(190, (250, 110, 155, 255), (210, 70, 115, 255), knot=RED + (255,)), 210,
+                         (bow_sprite(190, (250, 110, 155, 255), (210, 70, 115, 255)), 210,
                           self.seams[3] + 4, 1.7),
-                         (bow_sprite(200, RED + (255,), RED_D + (255,), knot=(255, 140, 170, 255)), 640,
+                         (bow_sprite(200, RED + (255,), RED_D + (255,)), 640,
                           self.seams[4] + 4, 3.1)]
         self.charms = [(heart_sprite(46, RED + (255,), line=(255, 255, 255, 255)), x, self.seams[s], ph)
                        for x, s, ph in [(560, 0, 0.3), (180, 1, 1.2), (930, 2, 2.0), (400, 2, 2.6), (880, 3, 0.8),
