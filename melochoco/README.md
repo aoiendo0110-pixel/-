@@ -155,3 +155,13 @@ python3 choconyan.py --out nyan_out --font-pop MochiyPopOne-Regular.ttf --font-h
 
 - `choconyan_main / mogu / love` の .svg と .png (2000x2000 透過)、`choconyan_sheet.png` (キャラクターシート)
 - 色は `C`、表情は `eyes()` (sleepy / happy / heart)、持ち物は `held_heart()` / `choco_bar()` で変えられる
+
+## 柄の帯の動く背景 9:16 (`stripe_bg.py`)
+
+チョコの垂れ・ギンガム・リボン柄・板チョコ・ハート柄・水玉の帯を白いレースでつないだ縦長背景。
+帯が左右交互にゆっくり流れ、リボンやハートのチャームが揺れ、ハートとキラキラが上っていく 10 秒ループ (1080x1920)。
+
+```
+python3 stripe_bg.py --out stripe_bg.mp4
+python3 stripe_bg.py --out stripe_bg.mp4 --preview 2.5   # 静止画だけ
+```
