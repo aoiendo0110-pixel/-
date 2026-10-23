@@ -165,3 +165,14 @@ python3 choconyan.py --out nyan_out --font-pop MochiyPopOne-Regular.ttf --font-h
 python3 stripe_bg.py --out stripe_bg.mp4
 python3 stripe_bg.py --out stripe_bg.mp4 --preview 2.5   # 静止画だけ
 ```
+
+## バレンタインの正方形フレーム (`valentine_frame.py`)
+
+ピンク・赤・茶の 1:1 フレーム。中央が大きく透過で抜けている PNG (2048x2048)。
+上辺にチョコの垂れ、窓のふちは白いレースのフリル + ステッチ、四隅に🎀リボン・ハートのチョコ・ハート・キラキラ。
+
+```
+python3 valentine_frame.py --out frame_out [--size 1080]
+```
+
+- `frame_square.png` (角丸の四角の窓) と `frame_heart.png` (大きいハートの窓)、確認用の `*_preview.png`
