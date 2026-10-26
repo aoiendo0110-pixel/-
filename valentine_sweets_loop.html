@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Valentine Sweets Loop</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #fde3ec; overflow: hidden; }
+  svg { display: block; width: 100vw; height: auto; }
+</style>
+</head>
+<body>
+<!-- 12秒で継ぎ目なくループ / #t=秒 でその瞬間を静止表示 -->
+<div id="root"></div>
+<script>
+const W = 1920, H = 1080, T = 12;
+const C = {
+  bg: '#fde4ee',
+  pink: '#f7a8c4', pinkDeep: '#ee88ab', pinkLine: '#e0739a', light: '#fcd3e1', pale: '#fff0f5',
+  cream: '#fffaf3', creamLine: '#f0d6cc',
+  sponge: '#fde3b8', spongeLine: '#e9be8c',
+  choco: '#a56d57', chocoDark: '#7e4c3c', chocoLight: '#bd8770',
+  berry: '#f3708a', berryDark: '#d9506d',
+  leaf: '#a6d3a0', leafDark: '#7fb37b',
+  silver: '#ddd2da', silverLine: '#bfb0bb',
+};
+
+let seed = 20260214;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+const HEART = 'M0,-22 C -10,-42 -45,-37 -45,-12 C -45,8 -20,23 0,38 C 20,23 45,8 45,-12 C 45,-37 10,-42 0,-22 Z';
+const heart = (fill, stroke, sw = 2, extra = '') =>
+  `<path d="${HEART}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" ${extra}/>`;
+
+function bow(fill = C.pink, line = C.pinkLine, dots = true) {
+  const loopL = 'M0,0 C -10,-16 -36,-18 -34,0 C -36,16 -10,14 0,0 Z';
+  const tailL = 'M-3,3 C -8,12 -12,20 -16,27 L -9,24 L -6,31 C -3,22 -1,12 2,4 Z';
+  let s = `<g stroke="${line}" stroke-width="2" stroke-linejoin="round">`;
+  s += `<path d="${tailL}" fill="${fill}"/><path d="${tailL}" fill="${fill}" transform="scale(-1,1)"/>`;
+  s += `<path d="${loopL}" fill="${fill}"/><path d="${loopL}" fill="${fill}" transform="scale(-1,1)"/>`;
+  s += `<path d="M-6,-5 C -14,-8 -22,-6 -26,0" fill="none" stroke-width="1.5" opacity=".6"/>`;
+  s += `<path d="M6,-5 C 14,-8 22,-6 26,0" fill="none" stroke-width="1.5" opacity=".6"/>`;
+  s += `<ellipse cx="0" cy="0" rx="6.5" ry="7.5" fill="${fill}"/></g>`;
+  if (dots) {
+    for (const [x, y] of [[-22, -4], [-14, 5], [-26, 6], [22, -4], [14, 5], [26, 6], [-10, 18], [10, 18]])
+      s += `<circle cx="${x}" cy="${y}" r="1.8" fill="#fff"/>`;
+  }
+  return s;
+}
+
+// 線だけのリボン (参考画像のような細いリボン)
+function lineBow(color = C.pinkDeep) {
+  return `<g fill="none" stroke="${color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0,0 C -8,-12 -30,-14 -28,-2 C -27,6 -10,4 0,0 C 10,4 27,6 28,-2 C 30,-14 8,-12 0,0 Z"/>
+    <path d="M-2,2 C -10,10 -22,16 -34,18 M2,2 C 10,10 22,16 34,18"/>
+    <circle cx="0" cy="0" r="3.5" fill="${color}"/></g>`;
+}
+
+function strawberry() {
+  let s = `<path d="M0,22 C -18,14 -22,-4 -16,-12 C -10,-18 10,-18 16,-12 C 22,-4 18,14 0,22 Z" fill="${C.berry}" stroke="${C.berryDark}" stroke-width="2" stroke-linejoin="round"/>`;
+  for (const [x, y] of [[-8, -6], [0, -9], [8, -6], [-11, 3], [-3, 1], [5, 2], [12, 3], [-6, 10], [2, 11], [8, 9], [0, 17]])
+    s += `<ellipse cx="${x}" cy="${y}" rx="1.3" ry="2" fill="#ffe7a8"/>`;
+  s += `<ellipse cx="-8" cy="-3" rx="3" ry="6" fill="#fff" opacity=".45" transform="rotate(20 -8 -3)"/>`;
+  s += `<g fill="${C.leaf}" stroke="${C.leafDark}" stroke-width="1.5">`;
+  for (const a of [-70, -35, 0, 35, 70, 180])
+    s += `<ellipse cx="0" cy="-20" rx="4" ry="9" transform="rotate(${a + 180} 0 -14)"/>`;
+  s += `</g><path d="M0,-16 C 0,-22 2,-26 5,-28" stroke="${C.leafDark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  return s;
+}
+
+function heartFrame() {
+  let s = `<g transform="translate(0,-6)">`;
+  s += heart(C.light, C.light, 16, 'stroke-dasharray="0 10" stroke-linecap="round"');
+  s += heart('#fff', C.pinkDeep, 2.5);
+  s += `<g transform="scale(.72)">${heart(C.choco, C.chocoDark, 3)}`;
+  s += `<g clip-path="url(#heartClip)" fill="none" stroke="${C.pink}" stroke-width="4" stroke-linecap="round">`;
+  for (const y of [-14, 2, 18]) s += `<path d="M-50,${y} q 8,-8 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0 t 16,0"/>`;
+  s += `</g><ellipse cx="-24" cy="-20" rx="7" ry="4" fill="#fff" opacity=".35" transform="rotate(-35 -24 -20)"/></g>`;
+  s += `<g transform="translate(0,-26) scale(.75)">${bow()}</g>`;
+  return s + `</g>`;
+}
+
+function shortcake() {
+  let s = `<g transform="translate(-4,6) scale(.88)" stroke-linejoin="round">`;
+  s += `<rect x="-55" y="-5" width="90" height="45" fill="${C.sponge}"/>`;
+  s += `<rect x="-55" y="-5" width="90" height="8" fill="${C.cream}"/>`;
+  s += `<rect x="-55" y="13" width="90" height="9" fill="${C.cream}"/>`;
+  for (const x of [-44, -28, -12, 4, 20]) s += `<path d="M${x - 6},17.5 a6,6 0 0 1 12,0 z" fill="${C.berry}" stroke="${C.berryDark}" stroke-width="1"/><path d="M${x - 3},17.5 a3,3 0 0 1 6,0 z" fill="#fbb3c2"/>`;
+  s += `<path d="M35,-5 L52,-22 L52,23 L35,40 Z" fill="#f6d39f"/>`;
+  s += `<path d="M35,-5 L52,-22 L52,-14 L35,3 Z" fill="#fbefe3"/><path d="M35,13 L52,-4 L52,5 L35,22 Z" fill="#fbefe3"/>`;
+  s += `<path d="M-55,-5 L35,-5 L52,-22 Z" fill="${C.cream}" stroke="${C.creamLine}" stroke-width="2"/>`;
+  s += `<rect x="-55" y="-5" width="90" height="45" fill="none" stroke="${C.spongeLine}" stroke-width="2"/>`;
+  s += `<path d="M35,-5 L52,-22 L52,23 L35,40 Z" fill="none" stroke="${C.spongeLine}" stroke-width="2"/>`;
+  s += `<g fill="#fff" stroke="${C.creamLine}" stroke-width="1.8"><ellipse cx="30" cy="-14" rx="14" ry="6"/><ellipse cx="30" cy="-20" rx="10" ry="5"/><ellipse cx="30" cy="-25" rx="6" ry="3.5"/></g>`;
+  s += `<g transform="translate(30,-38) scale(.72)">${strawberry()}</g>`;
+  s += `<g fill="#fff" stroke="${C.creamLine}" stroke-width="1.5"><ellipse cx="0" cy="-9" rx="7" ry="3"/><ellipse cx="0" cy="-12" rx="4" ry="2.4"/></g>`;
+  s += `<ellipse cx="0" cy="44" rx="66" ry="7" fill="#fff" stroke="${C.light}" stroke-width="2"/>`;
+  s += `<path d="M-55,40 L35,40" stroke="${C.spongeLine}" stroke-width="2"/>`;
+  return s + `</g>`;
+}
+
+function chocoBar() {
+  let s = `<g transform="rotate(-10) scale(.92)">`;
+  s += `<rect x="-28" y="-48" width="56" height="70" rx="6" fill="${C.choco}" stroke="${C.chocoDark}" stroke-width="2.5"/>`;
+  for (const y of [-42, -24]) for (const x of [-22, 2])
+    s += `<rect x="${x}" y="${y}" width="20" height="14" rx="3" fill="${C.chocoLight}" stroke="${C.chocoDark}" stroke-width="1.2"/><path d="M${x + 3},${y + 3} h8" stroke="#e6b9a4" stroke-width="2" stroke-linecap="round"/>`;
+  s += `<path d="M-30,-6 l6,-6 l6,6 l6,-6 l6,6 l6,-6 l6,6 l6,-6 l6,6 l6,-6 v14 h-60 z" fill="${C.silver}" stroke="${C.silverLine}" stroke-width="1.5" stroke-linejoin="round"/>`;
+  s += `<rect x="-32" y="0" width="64" height="50" rx="4" fill="${C.pink}" stroke="${C.pinkLine}" stroke-width="2.5"/>`;
+  for (let y = 6; y < 48; y += 9) for (let x = -27 + ((y / 9) % 2) * 5; x < 30; x += 10)
+    s += `<circle cx="${x}" cy="${y}" r="1.7" fill="#fff" opacity=".85"/>`;
+  s += `<rect x="-32" y="14" width="64" height="20" fill="#fff" stroke="${C.pinkLine}" stroke-width="1.5"/>`;
+  s += `<g transform="translate(0,25) scale(.22)">${heart(C.chocoDark, C.chocoDark, 4)}</g>`;
+  s += `<path d="M-26,24 h14 M12,24 h14" stroke="${C.pink}" stroke-width="2" stroke-dasharray="2 3"/>`;
+  return s + `</g>`;
+}
+
+function truffle() {
+  let s = `<g transform="translate(0,4)">`;
+  s += `<path d="M-30,0 L30,0 L22,30 L-22,30 Z" fill="${C.light}" stroke="${C.pinkDeep}" stroke-width="2" stroke-linejoin="round"/>`;
+  for (let i = -4; i <= 4; i++) s += `<path d="M${i * 7},2 L${i * 5.3},29" stroke="${C.pinkDeep}" stroke-width="1.3" opacity=".7"/>`;
+  s += `<path d="M-28,4 C -28,-34 28,-34 28,4 Z" fill="${C.choco}" stroke="${C.chocoDark}" stroke-width="2.5"/>`;
+  s += `<path d="M-24,-8 q 6,-7 12,0 t 12,0 t 12,0 t 12,0" fill="none" stroke="${C.pink}" stroke-width="3.5" stroke-linecap="round"/>`;
+  s += `<path d="M-20,-18 q 6,-6 10,0 t 10,0 t 10,0 t 10,0" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".9"/>`;
+  s += `<ellipse cx="-14" cy="-12" rx="5" ry="3" fill="#fff" opacity=".3" transform="rotate(-30 -14 -12)"/>`;
+  for (let x = -30; x <= 30; x += 7.5) s += `<circle cx="${x}" cy="1" r="4" fill="${C.light}" stroke="${C.pinkDeep}" stroke-width="1.5"/>`;
+  s += `<rect x="-31" y="-1" width="62" height="3" fill="${C.light}"/>`;
+  s += `<g transform="translate(0,-30) scale(.16)">${heart(C.berry, C.berryDark, 8)}</g>`;
+  return s + `</g>`;
+}
+
+function whisk() {
+  let s = `<g transform="rotate(28) translate(0,-4)">`;
+  for (const w of [26, 16, 6])
+    s += `<path d="M0,6 C ${-w},-14 ${-w * 0.8},-58 0,-60 C ${w * 0.8},-58 ${w},-14 0,6" fill="none" stroke="${C.silverLine}" stroke-width="3"/>`;
+  s += `<path d="M0,6 C -26,-14 -21,-58 0,-60" fill="none" stroke="#fff" stroke-width="1" opacity=".8"/>`;
+  s += `<path d="M-12,-46 C -8,-54 6,-54 10,-46 C 14,-40 6,-36 0,-38 C -6,-36 -16,-40 -12,-46 Z" fill="#fff" stroke="${C.creamLine}" stroke-width="1.5"/>`;
+  s += `<rect x="-7" y="2" width="14" height="10" rx="2" fill="${C.silver}" stroke="${C.silverLine}" stroke-width="2"/>`;
+  s += `<rect x="-7" y="11" width="14" height="46" rx="7" fill="${C.pink}" stroke="${C.pinkLine}" stroke-width="2.5"/>`;
+  s += `<circle cx="0" cy="50" r="2.5" fill="#fff"/>`;
+  s += `<g transform="translate(0,20) scale(.55)">${bow(C.berry, C.berryDark)}</g>`;
+  return s + `</g>`;
+}
+
+function cookie() {
+  let s = `<g transform="translate(0,-4) scale(1.05)">`;
+  s += heart('#f2cb9a', '#d4a06c', 3);
+  s += `<g transform="scale(.78)">${heart(C.light, C.pinkDeep, 2.5)}</g>`;
+  s += `<g transform="scale(.6)">${heart('none', '#fff', 4, 'stroke-dasharray="0 9" stroke-linecap="round"')}</g>`;
+  s += `<g transform="translate(0,2) scale(.25)">${heart(C.choco, C.chocoDark, 6)}</g>`;
+  return s + `</g>`;
+}
+
+function bowl() {
+  let s = `<g transform="translate(0,6)">`;
+  s += `<path d="M18,-14 L44,-52" stroke="${C.chocoLight}" stroke-width="6" stroke-linecap="round"/>`;
+  s += `<rect x="9" y="-24" width="16" height="22" rx="7" fill="${C.pale}" stroke="${C.pinkLine}" stroke-width="2" transform="rotate(34 17 -13)"/>`;
+  s += `<ellipse cx="0" cy="-6" rx="44" ry="11" fill="${C.choco}" stroke="${C.chocoDark}" stroke-width="2"/>`;
+  s += `<path d="M-20,-8 q 10,-6 20,0 t 20,0" fill="none" stroke="${C.chocoLight}" stroke-width="3" stroke-linecap="round"/>`;
+  s += `<path d="M-46,-6 C -44,26 -22,36 0,36 C 22,36 44,26 46,-6 C 40,6 -40,6 -46,-6 Z" fill="${C.pale}" stroke="${C.pinkLine}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  s += `<path d="M-38,14 C -24,22 24,22 38,14" fill="none" stroke="${C.pink}" stroke-width="5" stroke-linecap="round"/>`;
+  for (const x of [-24, -8, 8, 24]) s += `<g transform="translate(${x},19) scale(.09)">${heart('#fff', '#fff', 1)}</g>`;
+  return s + `</g>`;
+}
+
+// ホイップクリーム (チョコプレート付き)
+function whipCream() {
+  let s = `<g transform="translate(0,10)" stroke="${C.creamLine}" stroke-width="2" stroke-linejoin="round">`;
+  s += `<ellipse cx="0" cy="22" rx="46" ry="9" fill="${C.light}" stroke="${C.pinkDeep}"/>`;
+  s += `<ellipse cx="0" cy="22" rx="46" ry="9" fill="none" stroke="#fff" stroke-dasharray="0 7" stroke-linecap="round" stroke-width="3"/>`;
+  s += `<path d="M-40,16 C -48,2 -34,-8 -24,-4 C -16,-14 16,-14 24,-4 C 34,-8 48,2 40,16 C 26,24 -26,24 -40,16 Z" fill="#fff"/>`;
+  s += `<path d="M-28,-2 C -34,-16 -20,-24 -10,-20 C -2,-28 18,-26 22,-16 C 32,-14 32,-4 26,0 C 12,6 -16,6 -28,-2 Z" fill="#fff"/>`;
+  s += `<path d="M-16,-18 C -18,-30 -6,-34 0,-32 C 8,-36 18,-30 14,-20 C 6,-14 -8,-14 -16,-18 Z" fill="#fff"/>`;
+  s += `<path d="M-4,-31 C -6,-42 4,-46 8,-54 C 14,-44 12,-36 8,-31 Z" fill="#fff"/>`;
+  s += `<path d="M-30,8 C -20,12 -6,12 6,10 M-18,-8 C -10,-6 4,-6 14,-9" fill="none" stroke="${C.light}" stroke-width="2.5" stroke-linecap="round"/>`;
+  s += `</g>`;
+  s += `<g transform="translate(-20,-18) rotate(-18)"><rect x="-13" y="-10" width="26" height="20" rx="3" fill="${C.choco}" stroke="${C.chocoDark}" stroke-width="2"/><g transform="scale(.15)">${heart(C.pink, C.pink, 1)}</g></g>`;
+  s += `<g transform="translate(22,-20) scale(.6)">${strawberry()}</g>`;
+  return s;
+}
+
+// 絞り袋でクリームを絞るところ
+function pipingBag() {
+  let s = `<g transform="translate(6,-6) rotate(-28)" stroke-linejoin="round">`;
+  s += `<path d="M-24,-46 C -26,-30 -12,6 -6,22 L6,22 C 12,6 26,-30 24,-46 Z" fill="${C.pale}" stroke="${C.pinkLine}" stroke-width="2.5"/>`;
+  s += `<path d="M-14,-20 C -8,0 -4,10 -2,20" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9"/>`;
+  s += `<path d="M-24,-46 C -14,-52 14,-52 24,-46 L18,-58 C 8,-62 -8,-62 -18,-58 Z" fill="${C.pink}" stroke="${C.pinkLine}" stroke-width="2.5"/>`;
+  s += `<g transform="translate(0,-36) scale(.45)">${bow(C.berry, C.berryDark)}</g>`;
+  s += `<path d="M-6,22 L6,22 L3,34 L-3,34 Z" fill="${C.silver}" stroke="${C.silverLine}" stroke-width="2"/>`;
+  s += `</g>`;
+  s += `<g transform="translate(-22,46)" fill="#fff" stroke="${C.creamLine}" stroke-width="1.8"><ellipse cx="0" cy="0" rx="18" ry="7"/><ellipse cx="0" cy="-7" rx="13" ry="6"/><ellipse cx="0" cy="-13" rx="8" ry="4.5"/><path d="M-3,-16 C -2,-22 3,-24 5,-28 C 7,-22 6,-18 4,-16 Z"/></g>`;
+  return s;
+}
+
+const sparkle = (r = 10, fill = '#fff') =>
+  `<path d="M0,${-r} C ${r * .15},${-r * .15} ${r * .15},${-r * .15} ${r},0 C ${r * .15},${r * .15} ${r * .15},${r * .15} 0,${r} C ${-r * .15},${r * .15} ${-r * .15},${r * .15} ${-r},0 C ${-r * .15},${-r * .15} ${-r * .15},${-r * .15} 0,${-r} Z" fill="${fill}"/>`;
+
+// ------- レイアウト -------
+const UNIT = W / 5;          // 384px ごとに「レース列 + 細いリボン列」
+const TILE = 540;            // 縦スクロールの繰り返し高さ (1ループで1タイル分動く)
+const PAIR = TILE / 2;
+const motifs = [heartFrame, shortcake, whipCream, chocoBar, truffle, pipingBag, cookie, bowl, whisk];
+// レース列ごとの2モチーフ
+const COLUMN_PAIRS = [
+  [0, 7], // ハートチョコ + ボウル
+  [4, 3], // トリュフ + 板チョコ
+  [5, 1], // 絞り袋 + ショートケーキ
+  [2, 6], // ホイップ + クッキー
+  [8, 0], // 泡立て器 + ハートチョコ
+];
+
+// レース列の1タイル
+function laceTile(i) {
+  let s = '';
+  const half = 82, r = 13, step = 30;
+  s += `<rect x="-104" y="0" width="208" height="${TILE}" fill="${C.light}"/>`;
+  for (let y = step / 2; y < TILE + step; y += step) for (const sx of [-1, 1])
+    s += `<circle cx="${sx * half}" cy="${y}" r="${r}" fill="#fff" stroke="#fde6ee" stroke-width="2"/>`;
+  s += `<rect x="${-half}" y="0" width="${half * 2}" height="${TILE}" fill="#fff"/>`;
+  for (let y = step / 2; y < TILE + step; y += step) for (const sx of [-1, 1]) {
+    s += `<circle cx="${sx * (half + 4)}" cy="${y}" r="3" fill="${C.light}"/>`;
+    s += `<circle cx="${sx * (half - 6)}" cy="${y + step / 2}" r="1.6" fill="${C.pink}"/>`;
+  }
+  s += `<line x1="${-half + 14}" y1="0" x2="${-half + 14}" y2="${TILE}" stroke="${C.light}" stroke-width="2" stroke-dasharray="4 5"/>`;
+  s += `<line x1="${half - 14}" y1="0" x2="${half - 14}" y2="${TILE}" stroke="${C.light}" stroke-width="2" stroke-dasharray="4 5"/>`;
+  const [a, b] = COLUMN_PAIRS[i];
+  s += `<use href="#m${a}" x="0" y="${PAIR * 0 + 100}"/>`;
+  s += `<use href="#lb" x="0" y="${PAIR * 0 + 100 + PAIR / 2}"/>`;
+  s += `<use href="#m${b}" x="0" y="${PAIR * 1 + 100}"/>`;
+  s += `<use href="#lb" x="0" y="${PAIR * 1 + 100 + PAIR / 2}"/>`;
+  return s;
+}
+
+// 細いリボン列の1タイル
+function ribbonTile() {
+  let s = '';
+  const half = 26, step = 18;
+  for (let y = step / 2; y < TILE + step; y += step) for (const sx of [-1, 1])
+    s += `<circle cx="${sx * half}" cy="${y}" r="7" fill="#fff" stroke="#fde6ee" stroke-width="1.5"/>`;
+  s += `<rect x="${-half}" y="0" width="${half * 2}" height="${TILE}" fill="#fff"/>`;
+  const items = [
+    `<g transform="scale(.62)">${lineBow()}</g>`,
+    `<g transform="scale(.24)">${heart(C.pink, C.pinkLine, 6)}</g>`,
+    `<g transform="scale(.62)">${lineBow()}</g>`,
+    `<g transform="scale(.62)">${strawberry()}</g>`,
+    `<g transform="scale(.62)">${lineBow()}</g>`,
+    `<g transform="scale(.24)">${heart(C.choco, C.chocoDark, 6)}</g>`,
+  ];
+  items.forEach((it, k) => s += `<g transform="translate(0,${k * 90 + 45})">${it}</g>`);
+  return s;
+}
+
+// 上下の帯 (ギンガム参考のハート柄レース帯)
+function heartLaceBand(width, h, flip) {
+  let s = '';
+  const step = 32;
+  for (let x = step / 2; x < width + step; x += step) {
+    s += `<circle cx="${x}" cy="${h}" r="14" fill="#fff" stroke="#fde6ee" stroke-width="2"/>`;
+  }
+  s += `<rect x="0" y="0" width="${width + step}" height="${h}" fill="#fff"/>`;
+  for (let x = step / 2; x < width + step; x += step) {
+    s += `<circle cx="${x}" cy="${h + 4}" r="2.6" fill="${C.light}"/>`;
+    s += `<circle cx="${x + step / 2}" cy="${h - 6}" r="1.5" fill="${C.pink}"/>`;
+  }
+  s += `<line x1="0" y1="${h - 14}" x2="${width + step}" y2="${h - 14}" stroke="${C.light}" stroke-width="2" stroke-dasharray="4 5"/>`;
+  for (let x = 48; x < width + step; x += 96) {
+    const y = flip ? (x / 96 % 2 < 1 ? h * .38 : h * .62) : (x / 96 % 2 < 1 ? h * .62 : h * .38);
+    s += `<g transform="translate(${x},${y - 6}) rotate(${(x / 96 % 2 < 1) ? -12 : 12}) scale(.22)">${heart(C.pink, C.pink, 2)}</g>`;
+  }
+  return s;
+}
+
+// ------- SVG 組み立て -------
+let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+<defs>
+  <pattern id="gingham" width="30" height="30" patternUnits="userSpaceOnUse">
+    <rect width="30" height="30" fill="#fff"/>
+    <rect width="15" height="30" fill="${C.pink}" opacity=".36"/>
+    <rect width="30" height="15" fill="${C.pink}" opacity=".36"/>
+  </pattern>
+  <clipPath id="heartClip"><path d="${HEART}"/></clipPath>
+  <g id="lb">${lineBow()}</g>
+  ${motifs.map((m, k) => `<g id="m${k}"><g class="sway" data-k="${k}"><g transform="scale(1.32)">${m()}</g></g></g>`).join('\n')}
+  ${COLUMN_PAIRS.map((_, i) => `<g id="lace${i}">${laceTile(i)}</g>`).join('\n')}
+  <g id="ribbonTile">${ribbonTile()}</g>
+  <g id="bandTop">${heartLaceBand(UNIT, 46, false)}</g>
+</defs>
+<rect width="${W}" height="${H}" fill="url(#gingham)"/>`;
+
+// 細いリボン列 (列ごとに上下交互にスクロール)
+for (let j = 0; j <= 5; j++) {
+  svg += `<g class="col" data-dir="${j % 2 ? 1 : -1}" data-x="${j * UNIT}">`;
+  for (let k = -1; k < 3; k++) svg += `<use href="#ribbonTile" y="${k * TILE}"/>`;
+  svg += `</g>`;
+}
+// レース列
+for (let i = 0; i < 5; i++) {
+  svg += `<g class="col" data-dir="${i % 2 ? -1 : 1}" data-x="${UNIT / 2 + i * UNIT}">`;
+  for (let k = -1; k < 3; k++) svg += `<use href="#lace${i}" y="${k * TILE}"/>`;
+  svg += `</g>`;
+}
+
+// ふわふわ舞う小物
+const floaters = [];
+const kinds = [
+  () => `<g transform="scale(.3)">${heart(C.pink, C.pinkLine, 5)}</g>`,
+  () => sparkle(12),
+  () => `<g transform="scale(.26)">${heart(C.choco, C.chocoDark, 6)}</g>`,
+  () => sparkle(9, C.pinkDeep),
+  () => `<g transform="scale(.3)">${heart('#fff', C.pinkDeep, 5)}</g>`,
+];
+for (let n = 0; n < 34; n++) {
+  floaters.push({ x: rnd() * W, phase: rnd(), cycles: 1 + Math.floor(rnd() * 2), amp: 14 + rnd() * 26, swayN: 1 + Math.floor(rnd() * 3), rotN: Math.floor(rnd() * 2) + 1, s: .8 + rnd() * .6 });
+  svg += `<g class="fl" data-n="${n}">${kinds[n % kinds.length]()}</g>`;
+}
+
+// 上下の帯 (横スクロール)
+svg += `<g id="topBand">`;
+for (let k = -1; k <= 5; k++) svg += `<use href="#bandTop" x="${k * UNIT}"/>`;
+svg += `</g>`;
+svg += `<g transform="translate(0,${H}) scale(1,-1)"><g id="botBand">`;
+for (let k = -1; k <= 5; k++) svg += `<use href="#bandTop" x="${k * UNIT}"/>`;
+svg += `</g></g>`;
+
+// 上の帯にぶら下がるリボン
+for (let k = 0; k <= 5; k++) svg += `<g class="topbow" data-k="${k}" data-x="${k * UNIT}"><g transform="scale(1.25)">${bow()}</g></g>`;
+svg += `</svg>`;
+document.getElementById('root').innerHTML = svg;
+
+// ------- アニメーション -------
+const cols = [...document.querySelectorAll('.col')];
+const sways = [...document.querySelectorAll('#root .sway')];
+const fls = [...document.querySelectorAll('.fl')];
+const topBows = [...document.querySelectorAll('.topbow')];
+const topBand = document.getElementById('topBand');
+const botBand = document.getElementById('botBand');
+const TAU = Math.PI * 2;
+
+function renderAt(t) {
+  const p = ((t % T) + T) % T / T; // 0..1 のループ位相
+  for (const c of cols) {
+    const dir = +c.dataset.dir;
+    const y = ((dir * p * TILE) % TILE + TILE) % TILE;
+    c.setAttribute('transform', `translate(${c.dataset.x},${(y - TILE).toFixed(2)})`);
+  }
+  for (const s of sways) {
+    const k = +s.dataset.k;
+    const a = 5 * Math.sin(TAU * (2 * p + k * .17));
+    const sc = 1 + .03 * Math.sin(TAU * (4 * p + k * .23));
+    s.setAttribute('transform', `rotate(${a.toFixed(2)}) scale(${sc.toFixed(3)})`);
+  }
+  fls.forEach((f, n) => {
+    const d = floaters[n];
+    const q = (d.cycles * p + d.phase) % 1;
+    const y = H + 40 - q * (H + 80);
+    const x = d.x + d.amp * Math.sin(TAU * (d.swayN * p + d.phase));
+    const rot = 18 * Math.sin(TAU * (d.rotN * p + d.phase * 2));
+    const op = Math.min(1, q * 6, (1 - q) * 6) * .9;
+    f.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${rot.toFixed(1)}) scale(${d.s.toFixed(2)})`);
+    f.setAttribute('opacity', op.toFixed(2));
+  });
+  topBand.setAttribute('transform', `translate(${(-p * UNIT).toFixed(2)},0)`);
+  botBand.setAttribute('transform', `translate(${(p * UNIT - UNIT).toFixed(2)},0)`);
+  topBows.forEach((b, k) => {
+    const a = 7 * Math.sin(TAU * (p * 2 + k * .25));
+    b.setAttribute('transform', `translate(${b.dataset.x},50) rotate(${a.toFixed(2)})`);
+  });
+}
+window.renderAt = renderAt;
+
+const m = location.hash.match(/t=([\d.]+)/);
+if (m) renderAt(+m[1]);
+else {
+  const t0 = performance.now();
+  const loop = now => { renderAt((now - t0) / 1000); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
