@@ -9,10 +9,12 @@
 </style>
 </head>
 <body>
-<!-- 16:9 は12秒・#portrait で 9:16 (15秒) / どちらも継ぎ目なくループ / #t=秒 でその瞬間を静止表示 -->
+<!-- 16:9 は12秒・#portrait で 9:16 (15秒)・#red でチェックを赤に / どちらも継ぎ目なくループ / #t=秒 でその瞬間を静止表示 -->
 <div id="root"></div>
 <script>
 const PORTRAIT = location.hash.includes('portrait');
+// #red でギンガムチェックを赤に
+const GINGHAM = location.hash.includes('red') ? { color: '#e23a4e', op: .5 } : { color: '#f7a8c4', op: .36 };
 const W = PORTRAIT ? 1080 : 1920, H = PORTRAIT ? 1920 : 1080, T = PORTRAIT ? 15 : 12;
 const C = {
   bg: '#fde4ee',
@@ -280,8 +282,8 @@ let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width
 <defs>
   <pattern id="gingham" width="30" height="30" patternUnits="userSpaceOnUse">
     <rect width="30" height="30" fill="#fff"/>
-    <rect width="15" height="30" fill="${C.pink}" opacity=".36"/>
-    <rect width="30" height="15" fill="${C.pink}" opacity=".36"/>
+    <rect width="15" height="30" fill="${GINGHAM.color}" opacity="${GINGHAM.op}"/>
+    <rect width="30" height="15" fill="${GINGHAM.color}" opacity="${GINGHAM.op}"/>
   </pattern>
   <clipPath id="heartClip"><path d="${HEART}"/></clipPath>
   <g id="lb">${lineBow()}</g>
