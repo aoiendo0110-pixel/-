@@ -9,10 +9,11 @@
 </style>
 </head>
 <body>
-<!-- 12秒で継ぎ目なくループ / #t=秒 でその瞬間を静止表示 -->
+<!-- 16:9 は12秒・#portrait で 9:16 (15秒) / どちらも継ぎ目なくループ / #t=秒 でその瞬間を静止表示 -->
 <div id="root"></div>
 <script>
-const W = 1920, H = 1080, T = 12;
+const PORTRAIT = location.hash.includes('portrait');
+const W = PORTRAIT ? 1080 : 1920, H = PORTRAIT ? 1920 : 1080, T = PORTRAIT ? 15 : 12;
 const C = {
   bg: '#fde4ee',
   pink: '#f7a8c4', pinkDeep: '#ee88ab', pinkLine: '#e0739a', light: '#fcd3e1', pale: '#fff0f5',
@@ -194,12 +195,18 @@ const sparkle = (r = 10, fill = '#fff') =>
   `<path d="M0,${-r} C ${r * .15},${-r * .15} ${r * .15},${-r * .15} ${r},0 C ${r * .15},${r * .15} ${r * .15},${r * .15} 0,${r} C ${-r * .15},${r * .15} ${-r * .15},${r * .15} ${-r},0 C ${-r * .15},${-r * .15} ${-r * .15},${-r * .15} 0,${-r} Z" fill="${fill}"/>`;
 
 // ------- レイアウト -------
-const UNIT = W / 5;          // 384px ごとに「レース列 + 細いリボン列」
-const TILE = 540;            // 縦スクロールの繰り返し高さ (1ループで1タイル分動く)
-const PAIR = TILE / 2;
+const NCOL = PORTRAIT ? 3 : 5;
+const UNIT = W / NCOL;       // UNIT ごとに「レース列 + 細いリボン列」
+const SLOT = 270;            // モチーフ1個 + リボン1個の高さ
+const TILE = SLOT * (PORTRAIT ? 3 : 2); // 縦スクロールの繰り返し高さ (1ループで1タイル分動く)
+const COPIES = Math.ceil(H / TILE) + 1;
 const motifs = [heartFrame, shortcake, whipCream, chocoBar, truffle, pipingBag, cookie, bowl, whisk];
 // レース列ごとの2モチーフ
-const COLUMN_PAIRS = [
+const COLUMN_PAIRS = PORTRAIT ? [
+  [0, 7, 3], // ハートチョコ + ボウル + 板チョコ
+  [5, 1, 4], // 絞り袋 + ショートケーキ + トリュフ
+  [2, 6, 8], // ホイップ + クッキー + 泡立て器
+] : [
   [0, 7], // ハートチョコ + ボウル
   [4, 3], // トリュフ + 板チョコ
   [5, 1], // 絞り袋 + ショートケーキ
@@ -221,11 +228,10 @@ function laceTile(i) {
   }
   s += `<line x1="${-half + 14}" y1="0" x2="${-half + 14}" y2="${TILE}" stroke="${C.light}" stroke-width="2" stroke-dasharray="4 5"/>`;
   s += `<line x1="${half - 14}" y1="0" x2="${half - 14}" y2="${TILE}" stroke="${C.light}" stroke-width="2" stroke-dasharray="4 5"/>`;
-  const [a, b] = COLUMN_PAIRS[i];
-  s += `<use href="#m${a}" x="0" y="${PAIR * 0 + 100}"/>`;
-  s += `<use href="#lb" x="0" y="${PAIR * 0 + 100 + PAIR / 2}"/>`;
-  s += `<use href="#m${b}" x="0" y="${PAIR * 1 + 100}"/>`;
-  s += `<use href="#lb" x="0" y="${PAIR * 1 + 100 + PAIR / 2}"/>`;
+  COLUMN_PAIRS[i].forEach((m, k) => {
+    s += `<use href="#m${m}" x="0" y="${SLOT * k + 100}"/>`;
+    s += `<use href="#lb" x="0" y="${SLOT * k + 100 + SLOT / 2}"/>`;
+  });
   return s;
 }
 
@@ -244,14 +250,14 @@ function ribbonTile() {
     `<g transform="scale(.62)">${lineBow()}</g>`,
     `<g transform="scale(.24)">${heart(C.choco, C.chocoDark, 6)}</g>`,
   ];
-  items.forEach((it, k) => s += `<g transform="translate(0,${k * 90 + 45})">${it}</g>`);
+  for (let k = 0; k < TILE / 90; k++) s += `<g transform="translate(0,${k * 90 + 45})">${items[k % items.length]}</g>`;
   return s;
 }
 
 // 上下の帯 (ギンガム参考のハート柄レース帯)
 function heartLaceBand(width, h, flip) {
   let s = '';
-  const step = 32;
+  const step = width / 12, hs = width / 4;
   for (let x = step / 2; x < width + step; x += step) {
     s += `<circle cx="${x}" cy="${h}" r="14" fill="#fff" stroke="#fde6ee" stroke-width="2"/>`;
   }
@@ -261,9 +267,10 @@ function heartLaceBand(width, h, flip) {
     s += `<circle cx="${x + step / 2}" cy="${h - 6}" r="1.5" fill="${C.pink}"/>`;
   }
   s += `<line x1="0" y1="${h - 14}" x2="${width + step}" y2="${h - 14}" stroke="${C.light}" stroke-width="2" stroke-dasharray="4 5"/>`;
-  for (let x = 48; x < width + step; x += 96) {
-    const y = flip ? (x / 96 % 2 < 1 ? h * .38 : h * .62) : (x / 96 % 2 < 1 ? h * .62 : h * .38);
-    s += `<g transform="translate(${x},${y - 6}) rotate(${(x / 96 % 2 < 1) ? -12 : 12}) scale(.22)">${heart(C.pink, C.pink, 2)}</g>`;
+  for (let x = hs / 2; x < width + step; x += hs) {
+    const odd = Math.floor(x / hs) % 2 === 0;
+    const y = flip ? (odd ? h * .38 : h * .62) : (odd ? h * .62 : h * .38);
+    s += `<g transform="translate(${x},${y - 6}) rotate(${odd ? -12 : 12}) scale(.22)">${heart(C.pink, C.pink, 2)}</g>`;
   }
   return s;
 }
@@ -286,15 +293,15 @@ let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width
 <rect width="${W}" height="${H}" fill="url(#gingham)"/>`;
 
 // 細いリボン列 (列ごとに上下交互にスクロール)
-for (let j = 0; j <= 5; j++) {
+for (let j = 0; j <= NCOL; j++) {
   svg += `<g class="col" data-dir="${j % 2 ? 1 : -1}" data-x="${j * UNIT}">`;
-  for (let k = -1; k < 3; k++) svg += `<use href="#ribbonTile" y="${k * TILE}"/>`;
+  for (let k = -1; k < COPIES; k++) svg += `<use href="#ribbonTile" y="${k * TILE}"/>`;
   svg += `</g>`;
 }
 // レース列
-for (let i = 0; i < 5; i++) {
+for (let i = 0; i < NCOL; i++) {
   svg += `<g class="col" data-dir="${i % 2 ? -1 : 1}" data-x="${UNIT / 2 + i * UNIT}">`;
-  for (let k = -1; k < 3; k++) svg += `<use href="#lace${i}" y="${k * TILE}"/>`;
+  for (let k = -1; k < COPIES; k++) svg += `<use href="#lace${i}" y="${k * TILE}"/>`;
   svg += `</g>`;
 }
 
@@ -307,21 +314,21 @@ const kinds = [
   () => sparkle(9, C.pinkDeep),
   () => `<g transform="scale(.3)">${heart('#fff', C.pinkDeep, 5)}</g>`,
 ];
-for (let n = 0; n < 34; n++) {
+for (let n = 0; n < (PORTRAIT ? 30 : 34); n++) {
   floaters.push({ x: rnd() * W, phase: rnd(), cycles: 1 + Math.floor(rnd() * 2), amp: 14 + rnd() * 26, swayN: 1 + Math.floor(rnd() * 3), rotN: Math.floor(rnd() * 2) + 1, s: .8 + rnd() * .6 });
   svg += `<g class="fl" data-n="${n}">${kinds[n % kinds.length]()}</g>`;
 }
 
 // 上下の帯 (横スクロール)
 svg += `<g id="topBand">`;
-for (let k = -1; k <= 5; k++) svg += `<use href="#bandTop" x="${k * UNIT}"/>`;
+for (let k = -1; k <= NCOL; k++) svg += `<use href="#bandTop" x="${k * UNIT}"/>`;
 svg += `</g>`;
 svg += `<g transform="translate(0,${H}) scale(1,-1)"><g id="botBand">`;
-for (let k = -1; k <= 5; k++) svg += `<use href="#bandTop" x="${k * UNIT}"/>`;
+for (let k = -1; k <= NCOL; k++) svg += `<use href="#bandTop" x="${k * UNIT}"/>`;
 svg += `</g></g>`;
 
 // 上の帯にぶら下がるリボン
-for (let k = 0; k <= 5; k++) svg += `<g class="topbow" data-k="${k}" data-x="${k * UNIT}"><g transform="scale(1.25)">${bow()}</g></g>`;
+for (let k = 0; k <= NCOL; k++) svg += `<g class="topbow" data-k="${k}" data-x="${k * UNIT}"><g transform="scale(1.25)">${bow()}</g></g>`;
 svg += `</svg>`;
 document.getElementById('root').innerHTML = svg;
 
