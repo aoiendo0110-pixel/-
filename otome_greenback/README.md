@@ -10,6 +10,7 @@
 | 1 | `heart_float_greenback.mp4` | 6秒 | ハートとキラキラがふわふわ上昇 | **シームレスループ**。画面全体のデコ |
 | 2 | `ribbon_pop_greenback.mp4` | 4秒 | 中央に大きなリボンがポンッと弾んで登場＋ハートが飛び散る | 冒頭・強調 |
 | 3 | `lace_frame_greenback.mp4` | 5秒 | 四辺のレースが伸びて、四隅にリボン＋パールライン | 画面フレーム（中央は抜け） |
+| 3b | `lace_frame_skyyellow_greenback.mp4` | 5秒 | 3 のリボンだけ水色×黄色（対角で交互） | 画面フレーム（中央は抜け） |
 | 4 | `frill_telop_greenback.mp4` | 5秒 | フリル付きテロップ枠が登場→待機→退場 | 下部テロップ。中は空欄で文字入れ用 |
 | 5 | `heart_burst_greenback.mp4` | 2秒 | ハートがパーンと弾ける | 強調・トランジション |
 | 6 | `lace_line_greenback.mp4` | 3秒 | リボン付きレースラインが中央から伸びる | タイトル下の区切り線 |

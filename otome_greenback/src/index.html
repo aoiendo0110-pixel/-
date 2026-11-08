@@ -15,7 +15,7 @@ const layer = mk(W, H), c = layer.getContext('2d');
 const P = {
   pink: '#ff8fbf', hot: '#f2568e', rose: '#d63a74', pale: '#ffd1e3', baby: '#ffb8d2',
   cream: '#fff5f9', white: '#ffffff', lav: '#d4b0f5', lavD: '#a77ad8', peach: '#ffb3a7',
-  pinkD: '#e66b9b', gold: '#ffe08a'
+  pinkD: '#e66b9b', gold: '#ffe08a', sky: '#9fd6ff', skyD: '#4fa3e8', yel: '#ffe27a', yelD: '#f2a93b'
 };
 const TAU = Math.PI * 2;
 const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
@@ -251,9 +251,12 @@ M.lace_frame = { dur: 5, setup() {
     const s = ease.back(clamp((t - 0.8 - i * 0.15) / 0.5));
     const sw = 0.05 * Math.sin(TAU * t / 2.5 + i);
     heart(c, x + (x < W / 2 ? 150 : -150), y + (y < H / 2 ? 30 : -30), 46 * s * (1 + 0.15 * Math.sin(TAU * t * 1.2 + i)), 0, i % 2 ? P.lav : P.hot);
-    bow(c, x, y, 250 * s, r + sw);
+    bow(c, x, y, 250 * s, r + sw, ...(this.bows ? this.bows[i] : [P.pink, P.hot]));
   });
 }};
+
+// 03b レースフレーム（リボンだけ水色×黄色・対角で交互）
+M.lace_frame_skyyellow = { ...M.lace_frame, bows: [[P.sky, P.skyD], [P.yel, P.yelD], [P.yel, P.yelD], [P.sky, P.skyD]] };
 
 // 04 フリル付きテロップ枠（下部・中は空欄）
 M.frill_telop = { dur: 5, setup() {
