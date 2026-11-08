@@ -2,7 +2,7 @@
 <title>メルト タイポ</title>
 <style>@font-face{font-family:"Mochiy Pop One";src:url(fonts/MochiyPopOne.ttf)}@font-face{font-family:"Hachi Maru Pop";src:url(fonts/HachiMaruPop.ttf)}
 html,body{margin:0;background:#00ff00;overflow:hidden}svg{display:block}</style></head><body>
-<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 -->
+<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 / #only=main（メルトだけ）#only=sub（溶けてしまいそうだけ） -->
 <svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
 <defs>
  <path id="heartP" d="M0 14 C-28 -6 -15 -32 0 -15 C15 -32 28 -6 0 14Z"/>
@@ -14,7 +14,7 @@ html,body{margin:0;background:#00ff00;overflow:hidden}svg{display:block}</style>
  <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd6e7"/><stop offset=".55" stop-color="#ffa6cb"/><stop offset="1" stop-color="#ff8dbd"/></linearGradient>
  <linearGradient id="gBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2f6ff"/><stop offset=".55" stop-color="#a9e0ff"/><stop offset="1" stop-color="#86cff9"/></linearGradient>
 </defs>
-<g id="stage"></g>
+<g id="root"><g id="stage"></g></g>
 </svg>
 <script>
 const NS='http://www.w3.org/2000/svg';
@@ -160,6 +160,8 @@ const MAIN=[['メ',585,452,-7,'pink'],['ル',962,432,3,'blue'],['ト',1340,458,7
 const mainObjs=[];
 const bowTop=bow('#a9defb','#4fa6e0',1.05,'url(#dotsS)');
 const floaters=[];
+const ONLY=(location.hash.match(/only=(main|sub)/)||[])[1]||'';
+const TOFF=ONLY==='sub'?1.1:0;
 
 function build(){
  MAIN.forEach(([ch,x,y,r,col],i)=>{
@@ -177,13 +179,20 @@ function build(){
   subObjs.push({...o,x,y,r:(i%2?5:-5),t0:1.55+i*0.11,ph:i*0.8});
   x+=i===0?176:163;});
  stage.appendChild(bowTop);
- const H=[[250,240,'#ffb3d1','#ef78a8',1.3],[1690,230,'#a9defb','#4fa6e0',1.2],[1745,560,'#ffb3d1','#ef78a8',1.0],[175,600,'#a9defb','#4fa6e0',1.0],[1150,110,'#ffb3d1','#ef78a8',0.8],[760,105,'#a9defb','#4fa6e0',0.75]];
+ const SUBMODE=ONLY==='sub';
+ const H=SUBMODE?[[230,700,'#ffb3d1','#ef78a8',1.2],[1690,690,'#a9defb','#4fa6e0',1.2],[1600,985,'#ffb3d1','#ef78a8',1.0],[300,975,'#a9defb','#4fa6e0',1.0],[720,680,'#a9defb','#4fa6e0',0.8],[1230,985,'#ffb3d1','#ef78a8',0.8]]:[[250,240,'#ffb3d1','#ef78a8',1.3],[1690,230,'#a9defb','#4fa6e0',1.2],[1745,560,'#ffb3d1','#ef78a8',1.0],[175,600,'#a9defb','#4fa6e0',1.0],[1150,110,'#ffb3d1','#ef78a8',0.8],[760,105,'#a9defb','#4fa6e0',0.75]];
  H.forEach(([x,y,f,l,s],i)=>{const g=heart(f,l,s);stage.appendChild(g);floaters.push({g,x,y,s:1,t0:2.0+i*0.12,ph:i*1.1,rot:i%2?14:-14,kind:'h'});});
- const S=[[420,130,'#bfe8ff',1.2],[1500,120,'#ffd1e4',1.1],[1600,410,'#fff',0.9],[330,420,'#ffd1e4',0.9],[1830,700,'#bfe8ff',0.8],[95,780,'#ffd1e4',0.8],[1080,640,'#fff',0.7],[820,650,'#bfe8ff',0.7]];
+ const S=SUBMODE?[[450,675,'#bfe8ff',1.1],[1480,680,'#ffd1e4',1.1],[960,1000,'#fff',0.8],[1080,670,'#ffd1e4',0.8],[560,990,'#ffd1e4',0.8]]:[[420,130,'#bfe8ff',1.2],[1500,120,'#ffd1e4',1.1],[1600,410,'#fff',0.9],[330,420,'#ffd1e4',0.9],[1830,700,'#bfe8ff',0.8],[95,780,'#ffd1e4',0.8],[1080,640,'#fff',0.7],[820,650,'#bfe8ff',0.7]];
  S.forEach(([x,y,f,s],i)=>{const g=spark(f,s);stage.appendChild(g);floaters.push({g,x,y,s,t0:1.9+i*0.1,ph:i*0.9,kind:'s'});});
+ const root=document.getElementById('root');
+ if(ONLY==='main'){root.setAttribute('transform','translate(0 125)');
+  [band,bowL,bowR,...subObjs.map(o=>o.g)].forEach(g=>g.style.display='none');}
+ if(ONLY==='sub'){root.setAttribute('transform',`translate(960 540) scale(1.08) translate(-960 ${-BAND.cy})`);
+  [bowTop,...mainObjs.map(o=>o.g)].forEach(g=>g.style.display='none');}
 }
 
 window.render=function(t){
+ t+=TOFF;
  // メルト：上からぽよんと落ちて、ゆるく溶けるようにむにゅむにゅ
  mainObjs.forEach(o=>{const p=clamp((t-o.t0)/0.5);
   if(p<=0){o.g.setAttribute('transform','translate(-9999 0)');return;}

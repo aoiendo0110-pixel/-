@@ -1,0 +1,204 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>メルト タイポ2</title>
+<style>@font-face{font-family:"Mochiy Pop One";src:url(fonts/MochiyPopOne.ttf)}@font-face{font-family:"Hachi Maru Pop";src:url(fonts/HachiMaruPop.ttf)}
+html,body{margin:0;background:#00ff00;overflow:hidden}svg{display:block}</style></head><body>
+<!-- #only=main（メルト）/ #only=sub（溶けてしまいそう）/ #transparent で背景なし / #t=秒 -->
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <path id="heartP" d="M0 14 C-28 -6 -15 -32 0 -15 C15 -32 28 -6 0 14Z"/>
+ <path id="sparkP" d="M0 -22 Q3 -3 22 0 Q3 3 0 22 Q-3 3 -22 0 Q-3 -3 0 -22Z"/>
+ <pattern id="dotsW" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="3.8" fill="#fff" opacity=".6"/><circle cx="19" cy="19" r="3.8" fill="#fff" opacity=".6"/></pattern>
+ <pattern id="dotsS" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="#fff" opacity=".55"/><circle cx="12" cy="12" r="2.2" fill="#fff" opacity=".55"/></pattern>
+ <pattern id="dotsPk" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="3.4" fill="#ffc6dc"/><circle cx="22" cy="22" r="3.4" fill="#c9eaff"/></pattern>
+ <pattern id="gingB" width="56" height="56" patternUnits="userSpaceOnUse"><rect width="56" height="56" fill="#f1faff"/><rect width="28" height="56" fill="#b4e1fb" opacity=".55"/><rect width="56" height="28" fill="#b4e1fb" opacity=".55"/></pattern>
+ <pattern id="gingP" width="56" height="56" patternUnits="userSpaceOnUse"><rect width="56" height="56" fill="#fff2f7"/><rect width="28" height="56" fill="#ffc4db" opacity=".55"/><rect width="56" height="28" fill="#ffc4db" opacity=".55"/></pattern>
+ <linearGradient id="liqP" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb5d3"/><stop offset="1" stop-color="#ff7fb4"/></linearGradient>
+ <linearGradient id="liqB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b3e4ff"/><stop offset="1" stop-color="#6fc3f6"/></linearGradient>
+</defs>
+<g id="stage"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const stage=document.getElementById('stage'), defs=document.querySelector('defs');
+const F1="Mochiy Pop One", F2="Hachi Maru Pop";
+const ONLY=(location.hash.match(/only=(main|sub)/)||[])[1]||'main';
+const clamp=x=>Math.max(0,Math.min(1,x));
+const back=(x,c=2.2)=>1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);
+const eOut=x=>1-Math.pow(1-x,3);
+const TAU=Math.PI*2;
+let uid=0;
+const C={pink:{line:'#f27aaa',dark:'#d95b91',body:'#ffc6dc',liq:'url(#liqP)',bow:'#ffb3d1'},blue:{line:'#5fb0e6',dark:'#4c9ad3',body:'#c4e8ff',liq:'url(#liqB)',bow:'#a9defb'}};
+
+function heart(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':3,transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill:'url(#dotsS)',transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-9*sc,cy:-14*sc,rx:4.5*sc,ry:2.6*sc,fill:'#fff',transform:`rotate(-35 ${-9*sc} ${-14*sc})`},g);return g;}
+function spark(fill,sc){const g=el('g',{});
+ el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':9,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#sparkP',fill,transform:`scale(${sc})`},g);return g;}
+function bow(main,line,sc){const g=el('g',{});const in_=el('g',{transform:`scale(${sc})`},g);
+ const loopL='M0 0 C-30 -50 -95 -48 -92 -5 C-90 35 -35 30 0 0Z', loopR='M0 0 C30 -50 95 -48 92 -5 C90 35 35 30 0 0Z';
+ const tails='M-8 6 L-40 78 L-22 70 L-14 90 L6 10Z M8 6 L40 78 L22 70 L14 90 L-6 10Z';
+ [tails,loopL,loopR].forEach(d=>el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':16,'stroke-linejoin':'round'},in_));
+ [tails,loopL,loopR].forEach(d=>{el('path',{d,fill:main,stroke:line,'stroke-width':4,'stroke-linejoin':'round'},in_);el('path',{d,fill:'url(#dotsS)'},in_);});
+ el('path',{d:'M-60 -10 C-50 -22 -30 -20 -18 -8 M60 -10 C50 -22 30 -20 18 -8',fill:'none',stroke:line,'stroke-width':3,'stroke-linecap':'round',opacity:.7},in_);
+ el('rect',{x:-17,y:-17,width:34,height:34,rx:12,fill:main,stroke:line,'stroke-width':4},in_);
+ el('ellipse',{cx:-5,cy:-7,rx:6,ry:3.5,fill:'#fff'},in_);return g;}
+const floaters=[];
+function addFloaters(H,S){
+ H.forEach(([x,y,f,l,s],i)=>{const g=heart(f,l,s);stage.appendChild(g);floaters.push({g,x,y,s:1,t0:0.9+i*0.1,ph:i*1.1,rot:i%2?14:-14,kind:'h'});});
+ S.forEach(([x,y,f,s],i)=>{const g=spark(f,s);stage.appendChild(g);floaters.push({g,x,y,s,t0:0.8+i*0.1,ph:i*0.9,kind:'s'});});}
+function renderFloaters(t){floaters.forEach(o=>{const p=clamp((t-o.t0)/0.4);const b=p<=0?0.0001:back(p,2.6);
+ if(o.kind==='h')o.g.setAttribute('transform',`translate(${o.x} ${o.y+Math.sin(TAU*t*0.5+o.ph)*12}) rotate(${o.rot+Math.sin(TAU*t*0.4+o.ph)*10}) scale(${b*(1+0.06*Math.sin(TAU*t*1.2+o.ph))})`);
+ else o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${t*35+o.ph*20}) scale(${b*o.s*(0.6+0.4*Math.abs(Math.sin(TAU*t*0.6+o.ph)))})`);});}
+
+// =====================================================================
+// メルト：ハートのレースドイリー × ジュースが溜まるガラス文字
+// =====================================================================
+let renderMain;
+function buildMain(){
+ const HC={x:960,y:505,s:27.5};
+ const hp=t=>[16*Math.pow(Math.sin(t),3),-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))];
+ const heartPath=(k)=>{let d='';for(let i=0;i<=200;i++){const [x,y]=hp(i/200*TAU);d+=(i?'L':'M')+(x*HC.s*k).toFixed(1)+' '+(y*HC.s*k).toFixed(1);}return d+'Z';};
+ const doily=el('g',{},stage);const doilyIn=el('g',{},doily);
+ // 輪郭に沿って等間隔のスカラップ
+ const tmp=el('path',{d:heartPath(1)},defs);const len=tmp.getTotalLength();const N=Math.round(len/44);
+ const pts=[...Array(N)].map((_,i)=>tmp.getPointAtLength(i/N*len));
+ pts.forEach(p=>el('circle',{cx:p.x,cy:p.y,r:33,fill:'#f48fb8'},doilyIn));
+ pts.forEach(p=>el('circle',{cx:p.x,cy:p.y,r:28.5,fill:'#fff'},doilyIn));
+ pts.forEach(p=>{const k=1+10/Math.hypot(p.x,p.y-60);el('circle',{cx:p.x*k,cy:(p.y-60)*k+60,r:6,fill:'#ffc1da'},doilyIn);});
+ el('path',{d:heartPath(1),fill:'#fff'},doilyIn);
+ el('path',{d:heartPath(0.93),fill:'url(#gingB)',stroke:'#7cc3ee','stroke-width':5},doilyIn);
+ el('path',{d:heartPath(0.86),fill:'none',stroke:'#fff','stroke-width':6,'stroke-dasharray':'18 13','stroke-linecap':'round'},doilyIn);
+ // 上がってくるハートの泡（ドイリーの前・文字の後ろ）
+ const bubbles=[];
+ for(let i=0;i<12;i++){const col=i%2?C.blue:C.pink;const g=heart(col.bow,col.line,0.7+(i%3)*0.25);stage.appendChild(g);
+  bubbles.push({g,x:200+((i*137)%1520),P:5+(i%4)*1.1,ph:(i*0.37)%1,sw:20+(i%3)*12});}
+ // 文字
+ const L=[['メ',575,715,-6,'pink'],['ル',962,695,3,'blue'],['ト',1350,720,6,'pink']];
+ const size=420;
+ const letters=L.map(([ch,x,y,r,col],i)=>{
+  const c=C[col],g=el('g',{},stage);
+  const cv=document.createElement('canvas').getContext('2d');cv.font=`${size}px "${F1}"`;const m=cv.measureText(ch);
+  const top=-m.actualBoundingBoxAscent,bot=m.actualBoundingBoxDescent;
+  const base={'font-family':F1,'font-size':size,'text-anchor':'middle','stroke-linejoin':'round'};
+  const T=(a,p)=>{const e=el('text',{...base,...a},p||g);e.textContent=ch;return e;};
+  T({fill:c.dark,stroke:c.dark,'stroke-width':64,transform:'translate(10 15)'});
+  T({fill:c.line,stroke:c.line,'stroke-width':64});
+  T({fill:'#fff',stroke:'#fff','stroke-width':46});
+  T({fill:c.line,stroke:c.line,'stroke-width':12});
+  T({fill:'#fffafd'});
+  const id='mc'+(uid++);const cp=el('clipPath',{id},defs);T({},cp);
+  const inner=el('g',{'clip-path':`url(#${id})`},g);
+  el('rect',{x:-size,y:-size*1.2,width:size*2,height:size*1.6,fill:'url(#dotsPk)'},inner);
+  const liq=el('path',{fill:c.liq},inner);
+  const liqDots=el('path',{fill:'url(#dotsW)'},inner);
+  const surf=el('path',{fill:'none',stroke:'#fff','stroke-width':9,'stroke-linecap':'round',opacity:.85},inner);
+  const bub=[...Array(6)].map((_,k)=>({c:el('circle',{fill:'#fff',opacity:.85},inner),x:-size*0.35+k*size*0.14,P:1.6+k*0.31,ph:k*0.23}));
+  el('ellipse',{cx:-size*0.12,cy:top+size*0.13,rx:size*0.4,ry:size*0.085,fill:'#fff',opacity:.75,transform:`rotate(-16 ${-size*0.12} ${top+size*0.13})`},inner);
+  return {ch,g,x,y,r,top,bot,liq,liqDots,surf,bub,t0:0.35+i*0.17,ph:i*1.3};});
+ const bowTop=bow('#ffb3d1','#ef78a8',1.25);stage.appendChild(bowTop);
+ addFloaters([[160,240,'#ffb3d1','#ef78a8',1.3],[1760,230,'#a9defb','#4fa6e0',1.3],[1800,620,'#ffb3d1','#ef78a8',1.0],[130,680,'#a9defb','#4fa6e0',1.0],[330,950,'#ffb3d1','#ef78a8',0.85],[1600,960,'#a9defb','#4fa6e0',0.85]],
+  [[300,120,'#bfe8ff',1.2],[1620,110,'#ffd1e4',1.2],[1690,430,'#fff',0.9],[240,450,'#ffd1e4',0.9],[110,950,'#bfe8ff',0.8],[1830,900,'#ffd1e4',0.8]]);
+ renderMain=t=>{
+  const dp=clamp(t/0.55),ds=dp<=0?0.0001:back(dp,1.8);
+  doily.setAttribute('transform',`translate(${HC.x} ${HC.y}) rotate(${(1-eOut(dp))*-25+Math.sin(TAU*t*0.2)*2.5}) scale(${ds*(1+0.015*Math.sin(TAU*t*0.5))})`);
+  bubbles.forEach(b=>{const show=clamp((t-0.6)/0.5);const u=((t/b.P)+b.ph)%1;
+   const y=1120-u*1300, x=b.x+Math.sin(TAU*u*2+b.ph*9)*b.sw;
+   b.g.setAttribute('transform',`translate(${x} ${y}) rotate(${Math.sin(TAU*u*3)*15}) scale(${show*(u<0.08?u/0.08:1)||0.0001})`);});
+  letters.forEach(o=>{const p=clamp((t-o.t0)/0.45);
+   if(p<=0){o.g.setAttribute('transform','translate(-9999 0)');return;}
+   const s=back(p,2.4),idle=clamp((t-o.t0-0.45)/0.5);
+   const dy=Math.sin(TAU*t*0.45+o.ph)*8*idle, wob=Math.sin(TAU*t*0.35+o.ph)*2.5*idle;
+   o.g.setAttribute('transform',`translate(${o.x} ${o.y+dy}) rotate(${o.r+wob+(1-eOut(p))*-30}) scale(${s})`);
+   // ジュースがとろ〜っと溜まる
+   const f=eOut(clamp((t-o.t0-0.35)/1.8));
+   const H=o.bot-o.top, lv=o.bot-H*(0.04+0.58*f)+Math.sin(TAU*t*0.4+o.ph)*H*0.02*f;
+   const A=10+8*(1-f), k=TAU/170, w=TAU*t*0.9+o.ph;
+   let d='',ds='';for(let x=-260;x<=260;x+=10){const y=lv+A*Math.sin(k*x+w)+A*0.4*Math.sin(k*2.3*x-w*1.3);d+=(x===-260?'M':'L')+x+' '+y.toFixed(1);ds+=(x===-260?'M':'L')+x+' '+(y+12).toFixed(1);}
+   const full=d+' L260 400 L-260 400Z';o.liq.setAttribute('d',full);o.liqDots.setAttribute('d',full);o.surf.setAttribute('d',ds);
+   o.bub.forEach(b=>{const u=((t/b.P)+b.ph)%1;const y=o.bot-(o.bot-lv)*u;
+    b.c.setAttribute('cx',b.x+Math.sin(TAU*u*2+b.ph*7)*8);b.c.setAttribute('cy',y);b.c.setAttribute('r',f>0.15&&u<0.92?5+4*u:0);});});
+  const bp=clamp((t-1.0)/0.45);
+  bowTop.setAttribute('transform',`translate(960 ${225+Math.sin(TAU*t*0.45)*5}) rotate(${Math.sin(TAU*t*0.6)*6}) scale(${bp<=0?0.0001:back(bp,3)})`);
+  renderFloaters(t);};
+}
+
+// =====================================================================
+// 溶けてしまいそう：レースのワッペン × リボンのガーランド（下からとろける）
+// =====================================================================
+let renderSub;
+function buildSub(){
+ const CH=[...'溶けてしまいそう'];
+ const R=86, X0=183, DX=222;
+ const pos=CH.map((_,i)=>[X0+i*DX,530+58*Math.sin(i*0.85-0.6)]);
+ // ガーランド（ねじりリボン）
+ const gp=[[50,pos[0][1]-70],...pos.map(([x,y])=>[x,y-R-14]),[1870,pos[7][1]-70]];
+ let gd=`M${gp[0][0]} ${gp[0][1]}`;
+ for(let i=1;i<gp.length;i++){const [x0,y0]=gp[i-1],[x1,y1]=gp[i];const mx=(x0+x1)/2;gd+=` Q${mx} ${Math.max(y0,y1)+46} ${x1} ${y1}`;}
+ const gar=el('g',{},stage);
+ const gW=el('path',{d:gd,fill:'none',stroke:'#fff','stroke-width':22,'stroke-linecap':'round'},gar);
+ const gP=el('path',{d:gd,fill:'none',stroke:'#ff9cc4','stroke-width':11,'stroke-linecap':'round'},gar);
+ const gB=el('path',{d:gd,fill:'none',stroke:'#9fd8f8','stroke-width':11,'stroke-dasharray':'16 16','stroke-linecap':'butt'},gar);
+ const gLen=gW.getTotalLength();
+ const bows=[bow('#ffb3d1','#ef78a8',0.75),bow('#a9defb','#4fa6e0',0.75)];bows.forEach(b=>stage.appendChild(b));
+ const badges=CH.map((ch,i)=>{
+  const col=i%2?C.blue:C.pink, g=el('g',{},stage), body=el('g',{},g);
+  // 吊り紐
+  el('line',{x1:0,y1:-R-16,x2:0,y2:-R+4,stroke:'#fff','stroke-width':12,'stroke-linecap':'round'},body);
+  el('line',{x1:0,y1:-R-16,x2:0,y2:-R+4,stroke:col.line,'stroke-width':5,'stroke-linecap':'round'},body);
+  el('circle',{cx:4,cy:5,r:R+22,fill:col.dark},body);
+  const n=24;const sc=[...Array(n)].map((_,k)=>[Math.cos(k/n*TAU)*(R+8),Math.sin(k/n*TAU)*(R+8)]);
+  sc.forEach(([x,y])=>el('circle',{cx:x,cy:y,r:18.5,fill:col.line},body));
+  // とろける垂れ（ワッペン本体の色が下にのびる）
+  const dr=[[-R*0.42,0.55,0.0],[R*0.22,0.85,0.45],[R*0.62,0.4,0.8]].map(([x,L,ph])=>({x,L:L*R,ph,w:R*0.22}));
+  const dripLayers=[[col.line,8],['#fff',5]];
+  dr.forEach(d=>{d.parts=[];dripLayers.forEach(([f,o])=>d.parts.push({o,r:el('rect',{fill:f},body),c:el('circle',{fill:f},body)}));});
+  sc.forEach(([x,y])=>el('circle',{cx:x,cy:y,r:15,fill:'#fff'},body));
+  sc.forEach(([x,y],k)=>el('circle',{cx:x*1.06,cy:y*1.06,r:3.6,fill:col===C.pink?'#ffc1da':'#bfe5fb'},body));
+  el('circle',{r:R+4,fill:'#fff'},body);
+  el('circle',{r:R-4,fill:col.body,stroke:col.line,'stroke-width':4},body);
+  dr.forEach(d=>{d.parts.push({o:0,r:el('rect',{fill:col.body},body),c:el('circle',{fill:col.body},body)});});
+  el('circle',{r:R-4,fill:'url(#dotsW)'},body);
+  dr.forEach(d=>{d.hl=el('ellipse',{fill:'#fff',opacity:.8},body);});
+  el('circle',{r:R-16,fill:'none',stroke:'#fff','stroke-width':4,'stroke-dasharray':'10 8','stroke-linecap':'round'},body);
+  el('ellipse',{cx:-R*0.4,cy:-R*0.5,rx:R*0.26,ry:R*0.1,fill:'#fff',opacity:.8,transform:`rotate(-35 ${-R*0.4} ${-R*0.5})`},body);
+  // 文字
+  const cg=el('g',{},g);const s=i===0?138:122;
+  const base={'font-family':F2,'font-size':s,'text-anchor':'middle','stroke-linejoin':'round'};
+  const T=a=>{const e=el('text',{...base,y:s*0.36,...a},cg);e.textContent=ch;return e;};
+  T({fill:col.dark,stroke:col.dark,'stroke-width':30,transform:'translate(4 6)'});
+  T({fill:col.line,stroke:col.line,'stroke-width':30});
+  T({fill:'#fff',stroke:'#fff','stroke-width':6});
+  const [x,y]=pos[i];
+  return {g,body,cg,x,y,dr,t0:0.55+i*0.12,ph:i*0.75};});
+ addFloaters([[150,250,'#ffb3d1','#ef78a8',1.2],[1770,260,'#a9defb','#4fa6e0',1.2],[560,850,'#a9defb','#4fa6e0',1.0],[1380,860,'#ffb3d1','#ef78a8',1.0],[960,230,'#ffb3d1','#ef78a8',0.9],[120,830,'#a9defb','#4fa6e0',0.8],[1800,820,'#ffb3d1','#ef78a8',0.8]],
+  [[400,250,'#bfe8ff',1.1],[1540,240,'#ffd1e4',1.1],[760,860,'#fff',0.8],[1150,870,'#bfe8ff',0.8],[700,230,'#ffd1e4',0.8],[1240,220,'#bfe8ff',0.8],[1920-60,560,'#fff',0.7],[60,560,'#fff',0.7]]);
+ renderSub=t=>{
+  const gpr=eOut(clamp(t/0.8));
+  [gW,gP,gB].forEach(p=>{p.setAttribute('stroke-dasharray',p===gB?'16 16':`${gLen} ${gLen}`);});
+  gar.setAttribute('clip-path','');gW.setAttribute('stroke-dashoffset',gLen*(1-gpr));gP.setAttribute('stroke-dashoffset',gLen*(1-gpr));
+  gB.style.visibility=gpr>0.98?'visible':'hidden';
+  [[0,50,gp[0][1]],[1,1870,gp[gp.length-1][1]]].forEach(([k,x,y])=>{const p=clamp((t-0.7)/0.4);
+   bows[k].setAttribute('transform',`translate(${x} ${y}) rotate(${(k?14:-14)+Math.sin(TAU*t*0.6)*5}) scale(${p<=0?0.0001:back(p,3)})`);});
+  badges.forEach(o=>{const p=clamp((t-o.t0)/0.45);
+   if(p<=0){o.g.setAttribute('transform','translate(-9999 0)');return;}
+   const s=back(p,2.6),idle=clamp((t-o.t0-0.45)/0.5);
+   const sw=Math.sin(TAU*t*0.4+o.ph)*5*idle, m=Math.sin(TAU*t*0.5+o.ph+1)*idle;
+   o.g.setAttribute('transform',`translate(${o.x} ${o.y-R-14}) rotate(${sw+(1-eOut(p))*40}) translate(0 ${R+14}) scale(${s*(1+0.025*m)} ${s*(1-0.03*m)})`);
+   o.cg.setAttribute('transform',`rotate(${Math.sin(TAU*t*0.55+o.ph)*6*idle})`);
+   const grow=eOut(clamp((t-o.t0-0.5)/1.4));
+   o.dr.forEach(d=>{const L=d.L*grow*(1+0.12*Math.sin(TAU*t*0.5+d.ph*6+o.ph));const y0=R*0.55,tip=y0+L,bulb=d.w*0.68*grow;
+    d.parts.forEach(q=>{const hw=d.w/2*grow+q.o;q.r.setAttribute('x',d.x-hw);q.r.setAttribute('y',y0);q.r.setAttribute('width',Math.max(0,hw*2));q.r.setAttribute('height',Math.max(0,L));q.r.setAttribute('rx',hw);
+     q.c.setAttribute('cx',d.x);q.c.setAttribute('cy',tip);q.c.setAttribute('r',grow>0?bulb+q.o:0);});
+    d.hl.setAttribute('cx',d.x-bulb*0.35);d.hl.setAttribute('cy',tip-bulb*0.3);d.hl.setAttribute('rx',bulb*0.3);d.hl.setAttribute('ry',bulb*0.18);});});
+  renderFloaters(t);};
+}
+
+window.render=t=>(ONLY==='main'?renderMain:renderSub)(t);
+if(location.hash.includes('transparent'))document.body.style.background='transparent';
+window.ready=Promise.all([document.fonts.load(`380px "${F1}"`,'メルト'),document.fonts.load(`150px "${F2}"`,'溶けてしまいそう')]).then(()=>document.fonts.ready).then(()=>{
+ (ONLY==='main'?buildMain:buildSub)();const m=location.hash.match(/t=([\d.]+)/);render(m?parseFloat(m[1]):5);});
+</script></body></html>
