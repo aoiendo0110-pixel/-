@@ -1,0 +1,182 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>絶対 タイポ</title>
+<style>@font-face{font-family:"Mochiy Pop One";src:url(fonts/MochiyPopOne.ttf)}
+html,body{margin:0;background:#00ff00;overflow:hidden}svg{display:block}</style></head><body>
+<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 -->
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <path id="heartP" d="M0 14 C-28 -6 -15 -32 0 -15 C15 -32 28 -6 0 14Z"/>
+ <path id="sparkP" d="M0 -22 Q3 -3 22 0 Q3 3 0 22 Q-3 3 -22 0 Q-3 -3 0 -22Z"/>
+ <pattern id="dotsS" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="#fff" opacity=".55"/><circle cx="12" cy="12" r="2.2" fill="#fff" opacity=".55"/></pattern>
+ <pattern id="heartPat" width="46" height="46" patternUnits="userSpaceOnUse"><use href="#heartP" fill="#fff" opacity=".55" transform="translate(12 12) scale(.32)"/><use href="#heartP" fill="#fff" opacity=".55" transform="translate(35 35) scale(.32)"/></pattern>
+ <pattern id="gingB" width="56" height="56" patternUnits="userSpaceOnUse"><rect width="56" height="56" fill="#eef9ff"/><rect width="28" height="56" fill="#b0dffa" opacity=".55"/><rect width="56" height="28" fill="#b0dffa" opacity=".55"/></pattern>
+ <linearGradient id="split" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffc9df"/><stop offset=".5" stop-color="#ff96c2"/><stop offset=".5" stop-color="#9ad9fd"/><stop offset="1" stop-color="#74c4f5"/></linearGradient>
+ <linearGradient id="shackleG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb8d5"/><stop offset=".35" stop-color="#ffe3ee"/><stop offset="1" stop-color="#ff9cc4"/></linearGradient>
+</defs>
+<g id="stage"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const stage=document.getElementById('stage'), defs=document.querySelector('defs');
+const F1="Mochiy Pop One";
+const clamp=x=>Math.max(0,Math.min(1,x));
+const back=(x,c=2.2)=>1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);
+const eOut=x=>1-Math.pow(1-x,3), eIn=x=>x*x*x, eIO=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const TAU=Math.PI*2;
+
+function heart(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':3,transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill:'url(#dotsS)',transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-9*sc,cy:-14*sc,rx:4.5*sc,ry:2.6*sc,fill:'#fff',transform:`rotate(-35 ${-9*sc} ${-14*sc})`},g);return g;}
+function spark(fill,sc){const g=el('g',{});
+ el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':9,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#sparkP',fill,transform:`scale(${sc})`},g);return g;}
+function bow(main,line,sc){const g=el('g',{});const b=el('g',{transform:`scale(${sc})`},g);
+ const loopL='M0 0 C-30 -50 -95 -48 -92 -5 C-90 35 -35 30 0 0Z', loopR='M0 0 C30 -50 95 -48 92 -5 C90 35 35 30 0 0Z';
+ const tails='M-8 6 L-40 78 L-22 70 L-14 90 L6 10Z M8 6 L40 78 L22 70 L14 90 L-6 10Z';
+ [tails,loopL,loopR].forEach(d=>el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':16,'stroke-linejoin':'round'},b));
+ [tails,loopL,loopR].forEach(d=>{el('path',{d,fill:main,stroke:line,'stroke-width':4,'stroke-linejoin':'round'},b);el('path',{d,fill:'url(#dotsS)'},b);});
+ el('path',{d:'M-60 -10 C-50 -22 -30 -20 -18 -8 M60 -10 C50 -22 30 -20 18 -8',fill:'none',stroke:line,'stroke-width':3,'stroke-linecap':'round',opacity:.7},b);
+ el('rect',{x:-17,y:-17,width:34,height:34,rx:12,fill:main,stroke:line,'stroke-width':4},b);
+ el('ellipse',{cx:-5,cy:-7,rx:6,ry:3.5,fill:'#fff'},b);return g;}
+
+// ========== ハートの南京錠 ==========
+const LK={x:960,y:585,s:24};
+const lock=el('g',{},stage);
+// つる（シャックル）
+const shackle=el('g',{},lock);
+(()=>{const d='M-185 40 L-185 -150 A185 185 0 0 1 185 -150 L185 40';
+ el('path',{d,fill:'none',stroke:'#fff','stroke-width':104,'stroke-linecap':'round'},shackle);
+ el('path',{d,fill:'none',stroke:'#f27aaa','stroke-width':86,'stroke-linecap':'round'},shackle);
+ el('path',{d,fill:'none',stroke:'url(#shackleG)','stroke-width':74,'stroke-linecap':'round'},shackle);
+ el('path',{d:'M-160 -140 A165 165 0 0 1 -60 -300',fill:'none',stroke:'#fff','stroke-width':14,'stroke-linecap':'round',opacity:.85},shackle);
+ el('path',{d,fill:'none',stroke:'url(#dotsS)','stroke-width':74},shackle);
+})();
+const bodyG=el('g',{},lock);
+const hp=t=>[16*Math.pow(Math.sin(t),3),-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))];
+const heartPath=k=>{let d='';for(let i=0;i<=200;i++){const [x,y]=hp(i/200*TAU);d+=(i?'L':'M')+(x*LK.s*k).toFixed(1)+' '+(y*LK.s*k).toFixed(1);}return d+'Z';};
+(()=>{const g=bodyG;
+ el('path',{d:heartPath(1.04),fill:'#4c9ad3',transform:'translate(12 16)'},g);
+ const tmp=el('path',{d:heartPath(1)},defs),len=tmp.getTotalLength(),N=Math.round(len/40);
+ const pts=[...Array(N)].map((_,i)=>tmp.getPointAtLength(i/N*len));
+ pts.forEach(p=>el('circle',{cx:p.x,cy:p.y,r:30,fill:'#5fb0e6'},g));
+ pts.forEach(p=>el('circle',{cx:p.x,cy:p.y,r:25.5,fill:'#fff'},g));
+ pts.forEach(p=>{const dx=p.x,dy=p.y-40,L=Math.hypot(dx,dy)||1;el('circle',{cx:p.x+dx/L*11,cy:p.y+dy/L*11,r:5.5,fill:'#bfe5fb'},g);});
+ el('path',{d:heartPath(1),fill:'#fff'},g);
+ el('path',{d:heartPath(0.93),fill:'url(#gingB)',stroke:'#5fb0e6','stroke-width':5},g);
+ el('path',{d:heartPath(0.85),fill:'none',stroke:'#fff','stroke-width':6,'stroke-dasharray':'18 13','stroke-linecap':'round'},g);
+ // 鍵穴
+ const kh=el('g',{transform:'translate(0 250)'},g);
+ const khD='M0 -42 A30 30 0 0 1 17 12 L26 58 L-26 58 L-17 12 A30 30 0 0 1 0 -42Z';
+ el('path',{d:khD,fill:'#fff',stroke:'#fff','stroke-width':22,'stroke-linejoin':'round'},kh);
+ el('path',{d:khD,fill:'#e0679c',stroke:'#c9548a','stroke-width':4,'stroke-linejoin':'round'},kh);
+ el('path',{d:'M-12 -28 A16 16 0 0 1 8 -32',fill:'none',stroke:'#fff','stroke-width':5,'stroke-linecap':'round',opacity:.7},kh);
+})();
+// 鍵
+const key=el('g',{},stage);const keyIn=el('g',{},key);
+(()=>{const g=keyIn;
+ const shaft='M0 0 L250 0';
+ el('path',{d:shaft,stroke:'#fff','stroke-width':52,'stroke-linecap':'round'},g);
+ const teeth='M175 0 L175 46 L200 46 L200 22 L222 22 L222 50 L246 50 L246 0Z';
+ el('path',{d:teeth,fill:'#fff',stroke:'#fff','stroke-width':18,'stroke-linejoin':'round'},g);
+ el('path',{d:teeth,fill:'#9ad9fd',stroke:'#4fa6e0','stroke-width':4,'stroke-linejoin':'round'},g);
+ el('path',{d:shaft,stroke:'#4fa6e0','stroke-width':34,'stroke-linecap':'round'},g);
+ el('path',{d:shaft,stroke:'#b9e6ff','stroke-width':25,'stroke-linecap':'round'},g);
+ el('path',{d:'M20 -5 L230 -5',stroke:'#fff','stroke-width':6,'stroke-linecap':'round',opacity:.8},g);
+ // 持ち手（ハート）
+ const hd=el('g',{transform:'translate(310 0) rotate(-90)'},g);
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':6,'stroke-linejoin':'round',transform:'scale(3.6)'},hd);
+ el('use',{href:'#heartP',fill:'#9ad9fd',stroke:'#4fa6e0','stroke-width':1.3,transform:'scale(3.6)'},hd);
+ el('use',{href:'#heartP',fill:'url(#dotsS)',transform:'scale(3.6)'},hd);
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#4fa6e0','stroke-width':3,transform:'translate(0 -6) scale(1.3)'},hd);
+ el('ellipse',{cx:-34,cy:-40,rx:14,ry:7,fill:'#fff',transform:'rotate(-35 -34 -40)'},hd);
+ const b=bow('#ffb3d1','#ef78a8',0.55);b.setAttribute('transform','translate(255 0) rotate(90)');g.appendChild(b);
+})();
+// カチッの衝撃線
+const impact=el('g',{},stage);const impLines=[];
+for(let i=0;i<10;i++){const a=i/10*TAU+0.3,g=el('g',{},impact);
+ el('line',{x1:0,y1:0,x2:70,y2:0,stroke:'#fff','stroke-width':24,'stroke-linecap':'round'},g);
+ el('line',{x1:0,y1:0,x2:70,y2:0,stroke:i%2?'#5fb0e6':'#f27aaa','stroke-width':11,'stroke-linecap':'round'},g);impLines.push({g,a});}
+
+// ========== 絶対 ==========
+const chars=[];
+function bigChar(ch,size){
+ const g=el('g',{}),base={'font-family':F1,'font-size':size,'text-anchor':'middle','stroke-linejoin':'round'};
+ const T=a=>{const e=el('text',{...base,...a},g);e.textContent=ch;return e;};
+ for(let i=14;i>=1;i--)T({fill:'#4c9ad3',stroke:'#4c9ad3','stroke-width':64,transform:`translate(${i*0.8} ${i*1.15})`});
+ T({fill:'#69b6ea',stroke:'#69b6ea','stroke-width':64});
+ T({fill:'#fff',stroke:'#fff','stroke-width':46});
+ T({fill:'#f06d9f',stroke:'#f06d9f','stroke-width':12});
+ T({fill:'url(#split)'});
+ T({fill:'url(#heartPat)'});
+ const id='zc'+chars.length;const cp=el('clipPath',{id},defs);const ct=el('text',base,cp);ct.textContent=ch;
+ const sh=el('g',{'clip-path':`url(#${id})`},g);
+ el('rect',{x:-size,y:-size*0.4,width:size*2,height:6,fill:'#fff',opacity:.9},sh);
+ el('ellipse',{cx:-size*0.14,cy:-size*0.68,rx:size*0.42,ry:size*0.1,fill:'#fff',opacity:.7,transform:`rotate(-18 ${-size*0.14} ${-size*0.68})`},sh);
+ return g;}
+const shackleBow=bow('#ffb3d1','#ef78a8',1.2);
+const burst=[],floaters=[];
+function build(){
+ [['絶',755,690,-5],['対',1170,700,5]].forEach(([ch,x,y,r],i)=>{const g=bigChar(ch,410);stage.appendChild(g);chars.push({g,x,y,r,t0:1.75+i*0.2,ph:i*1.4});});
+ stage.appendChild(shackleBow);
+ for(let i=0;i<14;i++){const pk=i%2===0;const g=heart(pk?'#ffb3d1':'#a9defb',pk?'#ef78a8':'#4fa6e0',0.8+(i%3)*0.3);stage.appendChild(g);
+  burst.push({g,a:(i/14)*TAU+0.2,d:470+(i%3)*60,ph:i*0.7});}
+ [[150,220,'#ffb3d1','#ef78a8',1.3],[1770,210,'#a9defb','#4fa6e0',1.3],[1790,640,'#ffb3d1','#ef78a8',1.0],[140,680,'#a9defb','#4fa6e0',1.0],[330,980,'#ffb3d1','#ef78a8',0.9],[1600,990,'#a9defb','#4fa6e0',0.9]]
+  .forEach(([x,y,f,l,s],i)=>{const g=heart(f,l,s);stage.appendChild(g);floaters.push({g,x,y,s:1,t0:2.3+i*0.1,ph:i*1.1,rot:i%2?14:-14,kind:'h'});});
+ [[380,110,'#bfe8ff',1.2],[1540,100,'#ffd1e4',1.2],[1660,430,'#fff',0.9],[270,450,'#ffd1e4',0.9],[90,880,'#bfe8ff',0.8],[1840,860,'#ffd1e4',0.8]]
+  .forEach(([x,y,f,s],i)=>{const g=spark(f,s);stage.appendChild(g);floaters.push({g,x,y,s,t0:2.2+i*0.1,ph:i*0.9,kind:'s'});});
+}
+const KH={x:LK.x,y:LK.y+250};   // 鍵穴の位置
+const CLICK=1.45;
+window.render=function(t){
+ // 画面ゆれ（カチッ＆ドンッ）
+ const shk=(tt,amp)=>t>tt?amp*Math.sin((t-tt)*70)*Math.exp(-(t-tt)*9):0;
+ const sx=shk(CLICK,7)+shk(1.95,10)+shk(2.15,10), sy=shk(CLICK+0.02,5)+shk(1.97,9)+shk(2.17,9);
+ stage.setAttribute('transform',`translate(${sx} ${sy})`);
+ // 錠前ぽんっ＋ゆらゆら
+ const lp=clamp(t/0.5),ls=lp<=0?0.0001:back(lp,2);
+ const sway=Math.sin(TAU*t*0.35)*2*clamp((t-2.5)/0.6);
+ const ci=clamp((t-CLICK)/0.4),jig=t>CLICK?Math.sin(ci*Math.PI)*(1-ci)*0.05:0;
+ lock.setAttribute('transform',`translate(${LK.x} ${LK.y}) rotate(${sway}) scale(${ls*(1+jig)} ${ls*(1-jig)})`);
+ // つる：開いてる→カチッと閉まる
+ const close=eIn(clamp((t-(CLICK-0.12))/0.12));
+ shackle.setAttribute('transform',`translate(0 ${-95*(1-close)+(close>=1?Math.sin(clamp((t-CLICK)/0.25)*Math.PI)*-10:0)}) translate(185 0) rotate(${-14*(1-close)}) translate(-185 0)`);
+ // 鍵：くるくる飛んできて鍵穴へ→回す
+ const kp=clamp((t-0.55)/0.75), ke=eOut(kp);
+ const kx=KH.x+(1-ke)*900, ky=KH.y-(1-ke)*420+Math.sin(ke*Math.PI)*-120;
+ const turn=t>CLICK-0.15?eIO(clamp((t-(CLICK-0.15))/0.25)):0;
+ const kRot=32+(1-ke)*-300+Math.sin(TAU*t*0.6)*3*clamp((t-2)/0.5);
+ key.style.visibility=kp>0?'visible':'hidden';
+ key.setAttribute('transform',`translate(${kx+sway*3} ${ky}) rotate(${kRot}) scale(${0.6+0.4*ke})`);
+ const ky2=Math.cos(turn*Math.PI);keyIn.setAttribute('transform',`scale(1 ${Math.abs(ky2)<0.05?0.05*Math.sign(ky2||1):ky2})`);
+ // 衝撃線
+ const ip=clamp((t-CLICK)/0.35);
+ impLines.forEach(o=>{const d=80+110*eOut(ip),len=ip<=0||ip>=1?0.0001:Math.sin(ip*Math.PI);
+  o.g.setAttribute('transform',`translate(${KH.x+Math.cos(o.a)*d} ${KH.y+Math.sin(o.a)*d}) rotate(${o.a*180/Math.PI}) scale(${len} ${len})`);});
+ // 絶対：ドンッとハンコ押し
+ chars.forEach(o=>{const p=clamp((t-o.t0)/0.22);
+  if(p<=0){o.g.setAttribute('transform','translate(-9999 0)');return;}
+  const s=2.6-1.6*eIn(p), land=clamp((t-o.t0-0.22)/0.4);
+  const sq=land>0&&land<1?Math.sin(Math.PI*land)*(1-land*0.5):0;
+  const idle=clamp((t-o.t0-0.6)/0.5);
+  const bt=(t-o.t0-0.6)%1.2, beat=idle*(Math.max(0,Math.sin(Math.PI*clamp(bt/0.16)))*0.05+Math.max(0,Math.sin(Math.PI*clamp((bt-0.2)/0.16)))*0.03);
+  o.g.setAttribute('transform',`translate(${o.x} ${o.y+Math.sin(TAU*t*0.4+o.ph)*6*idle}) rotate(${o.r+(1-p)*-12+Math.sin(TAU*t*0.3+o.ph)*1.5*idle}) scale(${s*(1+0.12*sq+beat)} ${s*(1-0.14*sq+beat)})`);});
+ // つるのリボン
+ const bp=clamp((t-2.35)/0.4);
+ shackleBow.setAttribute('transform',`translate(${LK.x+sway*4} ${LK.y-335}) rotate(${Math.sin(TAU*t*0.6)*6}) scale(${bp<=0?0.0001:back(bp,3)})`);
+ // ハートがはじける
+ burst.forEach(o=>{const p=clamp((t-CLICK)/0.7);
+  if(p<=0){o.g.setAttribute('transform','scale(0)');return;}
+  const d=o.d*eOut(p),idle=clamp((t-CLICK-0.7)/0.5);
+  const x=LK.x+d*Math.cos(o.a)*1.55, y=LK.y-20+d*Math.sin(o.a)*0.95+Math.sin(TAU*t*0.6+o.ph)*9*idle;
+  o.g.setAttribute('transform',`translate(${x} ${y}) rotate(${(1-p)*180+Math.sin(TAU*t*0.5+o.ph)*12}) scale(${back(clamp(p*1.6),2)})`);});
+ floaters.forEach(o=>{const p=clamp((t-o.t0)/0.4);const b=p<=0?0.0001:back(p,2.6);
+  if(o.kind==='h')o.g.setAttribute('transform',`translate(${o.x} ${o.y+Math.sin(TAU*t*0.5+o.ph)*12}) rotate(${o.rot+Math.sin(TAU*t*0.4+o.ph)*10}) scale(${b*(1+0.06*Math.sin(TAU*t*1.2+o.ph))})`);
+  else o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${t*35+o.ph*20}) scale(${b*o.s*(0.6+0.4*Math.abs(Math.sin(TAU*t*0.6+o.ph)))})`);});
+};
+if(location.hash.includes('transparent'))document.body.style.background='transparent';
+window.ready=document.fonts.load(`410px "${F1}"`,'絶対').then(()=>document.fonts.ready).then(()=>{
+ build();const m=location.hash.match(/t=([\d.]+)/);render(m?parseFloat(m[1]):6);});
+</script></body></html>
