@@ -33,7 +33,7 @@ function bowSticker(g, x, y, s, rot) {
   g.restore();
 }
 
-function card(img, variant) {
+function card(img, variant, fit) {
   const CW = 1080, CH = 1720, k = mk(CW, CH), g = k.getContext('2d');
   const card = new Path2D(); card.roundRect(0, 0, CW, CH, 24);
   g.save(); g.clip(card);
@@ -46,8 +46,14 @@ function card(img, variant) {
   seed = 3; g.fillStyle = 'rgba(150,110,120,0.035)'; for (let i = 0; i < 9000; i++) g.fillRect(rnd() * CW, rnd() * CH, 1.5, 1.5);
   // 写真（instax mini 比率 46:62）
   const px = 80, py = 96, pw = 920, ph = 1240;
-  const sa = pw / ph, sw = img.width, sh = sw / sa, sy = Math.min(img.height - sh, 10);
-  g.drawImage(img, 0, sy, sw, sh, px, py, pw, ph);
+  if (fit) { // 全身が入るように収める（元絵の白背景で余白を埋める）
+    g.fillStyle = '#ffffff'; g.fillRect(px, py, pw, ph);
+    const sc = Math.min(pw / img.width, (ph - 40) / img.height), dw = img.width * sc, dh = img.height * sc;
+    g.drawImage(img, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
+  } else {
+    const sa = pw / ph, sw = img.width, sh = sw / sa, sy = Math.min(img.height - sh, 10);
+    g.drawImage(img, 0, sy, sw, sh, px, py, pw, ph);
+  }
   // ほんのりツヤ
   const gl = g.createLinearGradient(px, py, px + pw, py + ph);
   gl.addColorStop(0, 'rgba(255,255,255,0.10)'); gl.addColorStop(0.3, 'rgba(255,255,255,0)'); gl.addColorStop(0.62, 'rgba(255,255,255,0)'); gl.addColorStop(0.7, 'rgba(255,255,255,0.08)'); gl.addColorStop(0.78, 'rgba(255,255,255,0)');
@@ -79,14 +85,14 @@ function card(img, variant) {
   return k;
 }
 
-window.make = async (srcURL, tapeA, tapeB, variant, bg) => {
+window.make = async (srcURL, tapeA, tapeB, variant, bg, fit) => {
   const [img, ta, tb] = await Promise.all([load(srcURL), load(tapeA), load(tapeB)]);
   const OW = 1500, OH = 2100, k = mk(OW, OH), g = k.getContext('2d');
   if (bg) { // ピンクギンガムの背景
     g.fillStyle = '#fff3f7'; g.fillRect(0, 0, OW, OH); g.fillStyle = 'rgba(255,170,200,0.35)';
     for (let x = 0; x < OW; x += 80) g.fillRect(x, 0, 40, OH); for (let y = 0; y < OH; y += 80) g.fillRect(0, y, OW, 40);
   }
-  const c = card(img, variant);
+  const c = card(img, variant, fit);
   g.save(); g.translate(OW / 2, OH / 2 + 10); g.rotate(-0.045);
   g.shadowColor = 'rgba(150,80,110,0.28)'; g.shadowBlur = 40; g.shadowOffsetY = 14;
   g.drawImage(c, -c.width / 2, -c.height / 2); g.shadowColor = 'transparent';
@@ -101,16 +107,17 @@ window.make = async (srcURL, tapeA, tapeB, variant, bg) => {
 (async () => {
   const b = await chromium.launch(); const p = await b.newPage();
   await p.setContent(html);
-  const src = durl(path.join(here, 'source.jpg'), 'image/jpeg');
+  const SRC = process.env.SRC || 'source.jpg', PRE = process.env.PRE || 'cheki', FIT = !!process.env.FIT;
+  const src = durl(path.join(here, SRC), 'image/jpeg');
   const T = n => durl(path.join(tapeDir, n), 'image/png');
   const jobs = [
-    ['cheki_white_transparent', '07_lace_print_short.png', '01_pink_gingham_short.png', 'white', false],
-    ['cheki_white_gingham', '07_lace_print_short.png', '01_pink_gingham_short.png', 'white', true],
-    ['cheki_pink_transparent', '13_sky_heart_short.png', '08_lavender_star_short.png', 'pink', false],
-    ['cheki_pink_gingham', '13_sky_heart_short.png', '08_lavender_star_short.png', 'pink', true],
+    [PRE + '_white_transparent', '07_lace_print_short.png', '01_pink_gingham_short.png', 'white', false],
+    [PRE + '_white_gingham', '07_lace_print_short.png', '01_pink_gingham_short.png', 'white', true],
+    [PRE + '_pink_transparent', '13_sky_heart_short.png', '08_lavender_star_short.png', 'pink', false],
+    [PRE + '_pink_gingham', '13_sky_heart_short.png', '08_lavender_star_short.png', 'pink', true],
   ];
   for (const [name, a, bb, v, bg] of jobs) {
-    const u = await p.evaluate(([s, x, y, v, bg]) => window.make(s, x, y, v, bg), [src, T(a), T(bb), v, bg]);
+    const u = await p.evaluate(([s, x, y, v, bg, f]) => window.make(s, x, y, v, bg, f), [src, T(a), T(bb), v, bg, FIT]);
     fs.writeFileSync(path.join(here, name + '.png'), Buffer.from(u.split(',')[1], 'base64'));
     console.log(name);
   }
