@@ -1,6 +1,7 @@
 // usage:
 //   node render.js preview <outdir>          … 各素材の代表フレームをPNGで書き出し
 //   node render.js video <outdir> [name ...] … 1920x1080 30fps のグリーンバックMP4を書き出し
+//   PAGE=moon.html node render.js ...          … 満月3D素材
 const { chromium } = require('/opt/node-tools/node_modules/playwright');
 const { spawn } = require('child_process');
 const fs = require('fs'), path = require('path');
@@ -9,9 +10,11 @@ const FPS = 30;
 (async () => {
   const [mode, outdir, ...only] = process.argv.slice(2);
   fs.mkdirSync(outdir, { recursive: true });
-  const b = await chromium.launch();
+  const page = process.env.PAGE || 'index.html';
+  const b = await chromium.launch({ args: ['--allow-file-access-from-files', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
-  await p.goto('file://' + path.join(__dirname, 'index.html'));
+  await p.goto('file://' + path.join(__dirname, page));
+  await p.waitForFunction(() => window.materials, null, { timeout: 60000 });
   const mats = (await p.evaluate(() => window.materials)).filter(([n]) => !only.length || only.includes(n));
   const png = u => Buffer.from(u.split(',')[1], 'base64');
 

@@ -1,0 +1,190 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>ふんわり満月3D</title>
+<style>html,body{margin:0;background:#00ff00;overflow:hidden}canvas{display:block;width:100vw;height:auto}</style>
+</head><body>
+<!-- #m=moon_3d  &t=<秒>  &transparent で背景なし -->
+<script type="module">
+import * as THREE from '../../three.module.min.js';
+const W = 1920, H = 1080, TAU = Math.PI * 2;
+const opts = Object.fromEntries(location.hash.slice(1).split('&').filter(Boolean).map(s => { const [k, v] = s.split('='); return [k, v ?? true]; }));
+const transparent = !!opts.transparent;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x00ff00, transparent ? 0 : 1);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, W / H, 0.1, 100);
+camera.position.set(0, 0, 9.4); camera.lookAt(0, -0.22, 0);
+scene.add(new THREE.HemisphereLight(0xfffaf2, 0xffd3e2, 2.1));
+const key = new THREE.DirectionalLight(0xfff6e6, 1.5); key.position.set(-3, 3.5, 5); scene.add(key);
+const rim = new THREE.DirectionalLight(0xe6d2ff, 1.4); rim.position.set(3, 1, -4); scene.add(rim);
+
+let seed = 3; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+function mk(w, h) { const k = document.createElement('canvas'); k.width = w; k.height = h; return k; }
+
+// ---------- 月のテクスチャ（ふんわりクレーター＋ハートのクレーター） ----------
+function moonTextures(face) {
+  const TW = 2048, TH = 1024, col = mk(TW, TH), bump = mk(TW, TH);
+  const g = col.getContext('2d'), b = bump.getContext('2d');
+  g.fillStyle = '#fff1b8'; g.fillRect(0, 0, TW, TH);
+  b.fillStyle = '#808080'; b.fillRect(0, 0, TW, TH);
+  seed = 7;
+  // やわらかいムラ
+  for (let i = 0; i < 60; i++) {
+    const x = rnd() * TW, y = TH * (0.15 + rnd() * 0.7), r = 60 + rnd() * 160;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r);
+    const c = rnd() < .5 ? '255,226,150' : '255,248,214';
+    gr.addColorStop(0, `rgba(${c},0.45)`); gr.addColorStop(1, `rgba(${c},0)`);
+    for (const ox of [-TW, 0, TW]) { g.save(); g.translate(ox, 0); g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2); g.restore(); }
+  }
+  const faceU = 0.25 * TW, faceV = TH / 2;
+  const crater = (x, y, r, heart) => {
+    const lat = (y / TH - 0.5) * Math.PI, sx = 1 / Math.max(0.35, Math.cos(lat));
+    for (const ox of [-TW, 0, TW]) {
+      for (const [ctx, layers] of [[g, [['#f8dc92', 1], ['#f2cf7e', 0.78]]], [b, [['#5a5a5a', 1], ['#444', 0.75]]]]) {
+        ctx.save(); ctx.translate(x + ox, y); ctx.scale(sx, 1);
+        // 縁のハイライト
+        ctx.fillStyle = ctx === g ? '#fffbe6' : '#a8a8a8';
+        shape(ctx, r * 1.14, heart, -r * 0.06); ctx.fill();
+        for (const [cc, k] of layers) { ctx.fillStyle = cc; shape(ctx, r * k, heart, r * (1 - k) * 0.25); ctx.fill(); }
+        ctx.restore();
+      }
+    }
+  };
+  const shape = (ctx, r, heart, dy) => {
+    ctx.beginPath();
+    if (!heart) { ctx.arc(0, dy, r, 0, TAU); return; }
+    const s = r * 2.1; ctx.save(); ctx.translate(0, dy);
+    ctx.moveTo(0, -0.2 * s);
+    ctx.bezierCurveTo(-0.1 * s, -0.47 * s, -0.52 * s, -0.47 * s, -0.52 * s, -0.12 * s);
+    ctx.bezierCurveTo(-0.52 * s, 0.15 * s, -0.2 * s, 0.3 * s, 0, 0.47 * s);
+    ctx.bezierCurveTo(0.2 * s, 0.3 * s, 0.52 * s, 0.15 * s, 0.52 * s, -0.12 * s);
+    ctx.bezierCurveTo(0.52 * s, -0.47 * s, 0.1 * s, -0.47 * s, 0, -0.2 * s);
+    ctx.restore();
+  };
+  seed = 19;
+  const placed = [];
+  for (let n = 0; placed.length < 26 && n < 2000; n++) {
+    const x = rnd() * TW, y = TH * (0.22 + rnd() * 0.56), r = 18 + Math.pow(rnd(), 2) * 70, heart = rnd() < 0.18;
+    if (face && Math.abs(x - faceU) < 330 && Math.abs(y - faceV) < 220) continue;
+    if (placed.some(p => Math.hypot(p[0] - x, p[1] - y) < p[2] + r + 30)) continue;
+    placed.push([x, y, r]); crater(x, y, r, heart);
+  }
+  if (face) {
+    // ねむねむ笑顔＋ほっぺ
+    g.save(); g.translate(faceU, faceV);
+    g.fillStyle = '#ffb3c4';
+    for (const d of [-1, 1]) { g.beginPath(); g.ellipse(d * 150, 40, 52, 30, 0, 0, TAU); g.fill(); }
+    g.fillStyle = '#fff6f8';
+    for (const d of [-1, 1]) { g.beginPath(); g.arc(d * 150 - 14, 30, 8, 0, TAU); g.fill(); }
+    g.strokeStyle = '#7a4a3a'; g.lineWidth = 13; g.lineCap = 'round';
+    for (const d of [-1, 1]) { g.beginPath(); g.arc(d * 100, -8, 34, Math.PI * 1.12, Math.PI * 1.88); g.stroke(); }
+    g.lineWidth = 10;
+    g.beginPath(); g.arc(-17, 38, 17, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+    g.beginPath(); g.arc(17, 38, 17, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+    g.restore();
+  }
+  const map = new THREE.CanvasTexture(col); map.colorSpace = THREE.SRGBColorSpace; map.anisotropy = 8;
+  const bm = new THREE.CanvasTexture(bump);
+  return { map, bm };
+}
+
+// ---------- パーツ ----------
+function starGeo(R = 0.2, r = 0.1) {
+  const s = new THREE.Shape();
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * TAU - Math.PI / 2, rr = i % 2 ? r : R;
+    const p = [Math.cos(a) * rr, -Math.sin(a) * rr];
+    if (i === 0) s.moveTo(...p); else s.lineTo(...p);
+  }
+  s.closePath();
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.04, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.06, bevelSegments: 8, curveSegments: 12 });
+  geo.center(); return geo;
+}
+const outlineMat = c => new THREE.MeshBasicMaterial({ color: c, side: THREE.BackSide });
+function soft(c, em = 0x000000) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, metalness: 0, emissive: em }); }
+
+function cloud(scale) {
+  const grp = new THREE.Group(), m = soft(0xffffff, 0x221a22), o = outlineMat(0xfff4fa);
+  const puffs = [[0, 0, 0.55], [-0.6, -0.12, 0.42], [0.62, -0.1, 0.45], [-0.28, 0.28, 0.42], [0.3, 0.3, 0.38], [-1.0, -0.22, 0.3], [1.05, -0.2, 0.3]];
+  for (const [x, y, r] of puffs) {
+    const sg = new THREE.SphereGeometry(r, 48, 32);
+    const a = new THREE.Mesh(sg, m); a.position.set(x, y, 0); a.scale.z = 0.7; grp.add(a);
+    const b = new THREE.Mesh(sg, o); b.position.set(x, y, -0.12); b.scale.set(1.07, 1.07, 0.6); grp.add(b);
+  }
+  grp.scale.setScalar(scale); return grp;
+}
+
+// ---------- シーン ----------
+const R = 1.35;
+const root = new THREE.Group(); scene.add(root);
+const moonPivot = new THREE.Group(); root.add(moonPivot);
+const sg = new THREE.SphereGeometry(R, 128, 96);
+const tex = { moon_3d: moonTextures(false) };
+const moonMat = new THREE.MeshStandardMaterial({ map: tex.moon_3d.map, bumpMap: tex.moon_3d.bm, bumpScale: 2.2, roughness: 0.95, metalness: 0, emissive: 0x6a5020 });
+const moon = new THREE.Mesh(sg, moonMat); moonPivot.add(moon);
+const hull = new THREE.Mesh(sg, outlineMat(0xfffbe8)); hull.scale.setScalar(1.035); moonPivot.add(hull);
+
+// 公転する星（月の後ろに回ると隠れる＝3D感）
+const starCols = [0xfff08a, 0xffa8c8, 0xd6b8ff, 0xa8dcff, 0xfff08a, 0xffa8c8, 0xd6b8ff];
+const ring = new THREE.Group(); ring.rotation.set(0.32, 0, -0.22); root.add(ring);
+const sGeo = starGeo();
+const stars = starCols.map((c, i) => {
+  const grp = new THREE.Group();
+  grp.add(new THREE.Mesh(sGeo, soft(c, 0x2a1a10)));
+  const o = new THREE.Mesh(sGeo, outlineMat(0xffffff)); o.scale.setScalar(1.12); grp.add(o);
+  const sc = 0.8 + (i % 3) * 0.25; grp.scale.setScalar(sc);
+  ring.add(grp); return { grp, ph: i / starCols.length * TAU, spin: i % 2 ? 1 : -1 };
+});
+
+// キラッとする小さな粒
+const twGeo = new THREE.OctahedronGeometry(0.07, 0);
+const twinkles = [];
+seed = 31;
+for (let i = 0; i < 12; i++) {
+  const m = new THREE.Mesh(twGeo, new THREE.MeshBasicMaterial({ color: i % 3 ? 0xffffff : 0xfff3b0 }));
+  const a = rnd() * TAU, d = 2.0 + rnd() * 1.6;
+  m.position.set(Math.cos(a) * d * 1.5, Math.sin(a) * d * 0.75, -0.5 + rnd());
+  scene.add(m); twinkles.push({ m, ph: rnd() * TAU, n: rnd() < .5 ? 2 : 3 });
+}
+
+const cl1 = cloud(0.95), cl2 = cloud(0.75);
+cl1.position.set(-1.25, -1.6, 1.2); cl2.position.set(1.45, -1.4, 1.5);
+scene.add(cl1, cl2);
+
+// ---------- 素材定義（ともに8秒シームレスループ） ----------
+const D = 8;
+const M = {
+  moon_3d: t => { moon.rotation.y = TAU * t / D; },
+};
+let cur = M[opts.m] ? opts.m : 'moon_3d';
+function setMaterial(name) {
+  cur = name; moonMat.map = tex[name].map; moonMat.bumpMap = tex[name].bm; moonMat.needsUpdate = true; return D;
+}
+window.render = t => {
+  M[cur](t);
+  moonPivot.position.y = 0.1 * Math.sin(TAU * t / 4);
+  moonPivot.rotation.z = 0.12 + 0.06 * Math.sin(TAU * t / D);
+  const sq = 0.018 * Math.sin(TAU * t / 2);           // ふにっと柔らかい伸び縮み
+  moonPivot.scale.set(1 - sq * 0.6, 1 + sq, 1 - sq * 0.6);
+  stars.forEach(({ grp, ph, spin }, i) => {
+    const a = ph + TAU * t / D;
+    grp.position.set(Math.cos(a) * 2.35, 0.12 * Math.sin(a * 2 + i), Math.sin(a) * 2.35);
+    grp.rotation.set(0.3 * Math.sin(TAU * t / 4 + i), spin * 0.55 * Math.sin(TAU * t / 4 + i), 0.2 * Math.sin(TAU * t / D + i));
+  });
+  twinkles.forEach(({ m, ph, n }) => { const v = Math.max(0, Math.sin(TAU * n * t / D + ph)); m.scale.setScalar(v * v * 1.6); m.rotation.y = TAU * t / 2; });
+  cl1.position.y = -1.5 + 0.07 * Math.sin(TAU * t / 4 + 1); cl1.position.x = -1.25 + 0.08 * Math.sin(TAU * t / D);
+  cl2.position.y = -1.3 + 0.07 * Math.sin(TAU * t / 4 + 2.6); cl2.position.x = 1.45 - 0.08 * Math.sin(TAU * t / D);
+  renderer.render(scene, camera);
+  return renderer.domElement.toDataURL('image/png');
+};
+window.setMaterial = setMaterial;
+setMaterial(cur);
+window.render(+(opts.t || 1));
+window.materials = Object.keys(M).map(k => [k, D]);
+</script>
+</body></html>
