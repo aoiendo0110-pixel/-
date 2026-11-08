@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Mitsuki One Cut</title>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@900&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #fde4ee; overflow: hidden; }
+  svg { display: block; width: 100vw; height: auto; }
+</style>
+</head>
+<body>
+<!-- 「夢絵注意 BORUTOよりミツキ」3秒ワンク (16:9) / 満月×リボン×フリル / #t=秒 でその瞬間を静止表示 -->
+<div id="root"></div>
+<script>
+const W = 1920, H = 1080, T = 3;
+const TAU = Math.PI * 2;
+const POP = "'Mochiy Pop One', 'M PLUS Rounded 1c', sans-serif";
+const ROUND = "'M PLUS Rounded 1c', sans-serif";
+const C = {
+  pink: '#f7a8c4', pinkDeep: '#ee88ab', pinkLine: '#df7299', light: '#fcd3e1', pale: '#fff2f7',
+  blue: '#bfe3f5', blueDeep: '#94cbe8', blueLine: '#6fb0d8',
+  yellow: '#fff3b8', yellowDeep: '#ffe38a', yellowLine: '#eebf55',
+};
+let seed = 3200;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const f = n => n.toFixed(2);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const easeOutBack = x => { const c = 2.2; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+
+// ---------- 部品 ----------
+const HEART = 'M0,-22 C -10,-42 -45,-37 -45,-12 C -45,8 -20,23 0,38 C 20,23 45,8 45,-12 C 45,-37 10,-42 0,-22 Z';
+const heart = (fill, stroke, sw = 3) =>
+  `<path d="${HEART}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>
+   <path d="M-30,-18 C -30,-26 -24,-30 -18,-28" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".8"/>`;
+function starPath(R, r, n = 5) {
+  let d = '';
+  for (let i = 0; i < n * 2; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / n, rad = i % 2 ? r : R;
+    d += (i ? 'L' : 'M') + f(Math.cos(a) * rad) + ',' + f(Math.sin(a) * rad);
+  }
+  return d + 'Z';
+}
+const star = (fill, stroke, s = 1) =>
+  `<path d="${starPath(30 * s, 14 * s)}" fill="${fill}" stroke="${stroke}" stroke-width="${6 * s}" stroke-linejoin="round" paint-order="stroke"/>
+   <path d="${starPath(30 * s, 14 * s)}" fill="${fill}"/><circle cx="${-7 * s}" cy="${-8 * s}" r="${3.2 * s}" fill="#fff" opacity=".85"/>`;
+const sparkle = (fill, s = 1) =>
+  `<path d="M0,${-24 * s} C ${3 * s},${-5 * s} ${5 * s},${-3 * s} ${24 * s},0 C ${5 * s},${3 * s} ${3 * s},${5 * s} 0,${24 * s} C ${-3 * s},${5 * s} ${-5 * s},${3 * s} ${-24 * s},0 C ${-5 * s},${-3 * s} ${-3 * s},${-5 * s} 0,${-24 * s} Z" fill="${fill}"/>`;
+function bow(fill = C.pink, line = C.pinkLine, dot = '#fff') {
+  const loopL = 'M0,0 C -12,-22 -48,-26 -46,0 C -48,22 -12,20 0,0 Z';
+  const tailL = 'M-4,4 C -10,16 -16,28 -22,38 L -12,34 L -8,44 C -4,30 -1,16 3,5 Z';
+  let s = `<g stroke="${line}" stroke-width="2.5" stroke-linejoin="round">`;
+  s += `<path d="${tailL}" fill="${fill}"/><path d="${tailL}" fill="${fill}" transform="scale(-1,1)"/>`;
+  s += `<path d="${loopL}" fill="${fill}"/><path d="${loopL}" fill="${fill}" transform="scale(-1,1)"/>`;
+  s += `<ellipse cx="0" cy="0" rx="8.5" ry="10" fill="${fill}"/></g>`;
+  for (const [x, y] of [[-30, -6], [-20, 6], [-36, 8], [-24, -14], [30, -6], [20, 6], [36, 8], [24, -14], [-13, 26], [13, 26]])
+    s += `<circle cx="${x}" cy="${y}" r="2.3" fill="${dot}"/>`;
+  return s;
+}
+
+// 参考動画っぽい「白フチ+色フチ+グラデ+影」のぷっくり文字
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+function puffy(ch, { size, font = POP, grad, line, shadow, white = 26, lw = 9, dots = false }) {
+  const a = `x="0" y="0" font-family="${font}" font-size="${size}" text-anchor="middle" dominant-baseline="central" stroke-linejoin="round"`;
+  return `<text ${a} fill="${shadow}" stroke="${shadow}" stroke-width="${white + 4}" transform="translate(5,8)">${esc(ch)}</text>
+    <text ${a} fill="#fff" stroke="#fff" stroke-width="${white}">${esc(ch)}</text>
+    <text ${a} fill="url(#${grad})" stroke="${line}" stroke-width="${lw}" paint-order="stroke">${esc(ch)}</text>
+    ${dots ? `<text ${a} fill="url(#txtDots)">${esc(ch)}</text>` : ''}
+    <text ${a} fill="none" stroke="#fff" stroke-width="3" opacity=".75" transform="translate(-3,-4) scale(.97)" stroke-dasharray="4 10" stroke-linecap="round">${esc(ch)}</text>`;
+}
+
+// ---------- SVG ----------
+let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+<defs>
+  <linearGradient id="bgG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbcfe0"/><stop offset="1" stop-color="#fde8f0"/></linearGradient>
+  <pattern id="check" width="72" height="72" patternUnits="userSpaceOnUse">
+    <rect width="36" height="36" fill="#fff" opacity=".42"/><rect x="36" y="36" width="36" height="36" fill="#fff" opacity=".42"/>
+  </pattern>
+  <radialGradient id="moonG" cx=".4" cy=".36" r=".72"><stop offset="0" stop-color="#fffef4"/><stop offset=".65" stop-color="#fff6cc"/><stop offset="1" stop-color="#ffe9a8"/></radialGradient>
+  <radialGradient id="glow"><stop offset=".5" stop-color="#fffbe6" stop-opacity=".9"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gPB" x1="0" y1="0" x2="0" y2="1"><stop offset=".15" stop-color="#ff9cc2"/><stop offset=".85" stop-color="#9fd6f2"/></linearGradient>
+  <linearGradient id="gBP" x1="0" y1="0" x2="0" y2="1"><stop offset=".15" stop-color="#9fd6f2"/><stop offset=".85" stop-color="#ff9cc2"/></linearGradient>
+  <linearGradient id="gYB" x1="0" y1="0" x2="0" y2="1"><stop offset=".1" stop-color="#ffe680"/><stop offset=".55" stop-color="#ffd2e2"/><stop offset=".95" stop-color="#9fd6f2"/></linearGradient>
+  <pattern id="txtDots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="3.2" fill="#fff" opacity=".8"/><circle cx="17" cy="17" r="3.2" fill="#fff" opacity=".8"/></pattern>
+  <pattern id="tape" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <rect width="40" height="40" fill="#fff"/><rect width="20" height="40" fill="${C.pink}"/>
+  </pattern>
+</defs>
+<rect width="${W}" height="${H}" fill="url(#bgG)"/>
+<rect width="${W}" height="${H}" fill="url(#check)"/>
+`;
+
+// 満月 (中央の後ろ)
+const MX = 960, MY = 540, MR = 330;
+let lace = '';
+{
+  const NS = 34, R1 = MR + 44;
+  let d = '';
+  for (let i = 0; i <= NS; i++) {
+    const a = i / NS * TAU;
+    d += i ? `A 24 24 0 0 1 ${f(Math.cos(a) * R1)} ${f(Math.sin(a) * R1)} ` : `M ${f(Math.cos(a) * R1)} ${f(Math.sin(a) * R1)} `;
+  }
+  lace += `<path d="${d}Z" fill="#fff" opacity=".9"/>`;
+  for (let i = 0; i < NS; i++) {
+    const a = (i + .5) / NS * TAU;
+    lace += `<circle cx="${f(Math.cos(a) * (R1 + 6))}" cy="${f(Math.sin(a) * (R1 + 6))}" r="6" fill="${C.light}"/>`;
+  }
+  lace += `<circle r="${MR + 22}" fill="none" stroke="${C.blueDeep}" stroke-width="3" stroke-dasharray="3 10" stroke-linecap="round"/>`;
+}
+svg += `<g id="moon" transform="translate(${MX},${MY})">
+  <circle id="halo" r="${MR * 1.5}" fill="url(#glow)"/>
+  <g id="lace">${lace}</g>
+  <circle r="${MR}" fill="url(#moonG)" stroke="${C.yellowLine}" stroke-width="3" stroke-opacity=".45"/>
+  <circle cx="-120" cy="-110" r="46" fill="#fde3a2" opacity=".35"/>
+  <circle cx="150" cy="120" r="62" fill="#fde3a2" opacity=".3"/>
+  <circle cx="160" cy="-150" r="22" fill="#fde3a2" opacity=".35"/>
+  <ellipse cx="-170" cy="-190" rx="56" ry="22" fill="#fff" opacity=".6" transform="rotate(-40 -170 -190)"/>
+</g>`;
+
+// またたき
+const twinkles = [];
+svg += `<g>`;
+for (let i = 0; i < 34; i++) {
+  const x = 80 + rnd() * (W - 160), y = 170 + rnd() * (H - 340);
+  twinkles.push({ x, y, s: .3 + rnd() * .4, n: 1 + Math.floor(rnd() * 2), ph: rnd() });
+  svg += `<g class="tw">${sparkle([C.yellowDeep, '#fff', C.blueDeep][i % 3])}</g>`;
+}
+svg += `</g>`;
+
+// 角のパステル注意テープ
+svg += `<g id="tapes">
+  <g class="tape" data-x="110" data-y="215" data-r="-28"><rect x="-420" y="-30" width="840" height="60" fill="url(#tape)" stroke="${C.pinkLine}" stroke-width="3"/>
+    <text x="0" y="2" font-family="${ROUND}" font-size="34" fill="${C.pinkLine}" text-anchor="middle" dominant-baseline="central" letter-spacing="6" stroke="#fff" stroke-width="8" paint-order="stroke">♡ CAUTION ♡ 夢 ♡</text></g>
+  <g class="tape" data-x="1810" data-y="865" data-r="-28"><rect x="-420" y="-30" width="840" height="60" fill="url(#tape)" stroke="${C.pinkLine}" stroke-width="3"/>
+    <text x="0" y="2" font-family="${ROUND}" font-size="34" fill="${C.pinkLine}" text-anchor="middle" dominant-baseline="central" letter-spacing="6" stroke="#fff" stroke-width="8" paint-order="stroke">♡ CAUTION ♡ 夢 ♡</text></g>
+</g>`;
+
+// 上下のフリル
+function scallop(yEdge, w, depth, flip) {
+  let d = flip ? `M -10 ${H + 10} L -10 ${yEdge} ` : `M -10 -10 L -10 ${yEdge} `;
+  for (let x = -10; x < W + w; x += w) d += `Q ${x + w / 2} ${yEdge + (flip ? -1 : 1) * depth * 2} ${x + w} ${yEdge} `;
+  return d + `L ${W + w} ${flip ? H + 10 : -10} Z`;
+}
+svg += `<path d="${scallop(74, 120, 22)}" fill="${C.blue}" stroke="${C.blueLine}" stroke-width="3"/>
+<path d="${scallop(44, 80, 16)}" fill="${C.pinkDeep}"/>
+<path d="${scallop(14, 40, 7)}" fill="#fff"/>
+<path d="${scallop(H - 70, 120, 22, true)}" fill="${C.pink}" stroke="${C.pinkLine}" stroke-width="3"/>
+<path d="${scallop(H - 36, 80, 16, true)}" fill="#fff"/>`;
+for (let x = 60; x < W; x += 120) svg += `<circle cx="${x}" cy="${H - 80}" r="6" fill="#fff"/><circle cx="${x}" cy="96" r="6" fill="#fff"/>`;
+
+// 角のリボン
+svg += `<g class="cbow" data-x="150" data-y="150" data-k="0"><g transform="scale(1.9)">${bow()}</g></g>
+<g class="cbow" data-x="1770" data-y="150" data-k="1"><g transform="scale(1.9)">${bow(C.blue, C.blueLine)}</g></g>`;
+
+// ふわふわハート
+const floaters = [];
+svg += `<g>`;
+for (let i = 0; i < 12; i++) {
+  floaters.push({ x: 80 + i / 12 * (W - 160) + (rnd() - .5) * 80, y0: 300 + rnd() * 750, s: .3 + rnd() * .25, sp: 90 + rnd() * 80, ph: rnd() });
+  const ci = i % 3;
+  svg += `<g class="fl">${heart([C.pink, C.yellow, C.blue][ci], [C.pinkLine, C.yellowLine, C.blueLine][ci])}</g>`;
+}
+svg += `</g>`;
+
+// ---------- 文字 ----------
+const items = [];
+function addChar(ch, x, y, t0, opt, rot = 0) {
+  items.push({ x, y, t0, rot, k: items.length });
+  svg += `<g class="ch"><g>${puffy(ch, opt)}</g></g>`;
+}
+// 夢絵注意 (ピンク→水色)
+const L1 = ['夢', '絵', '注', '意'];
+L1.forEach((ch, i) => addChar(ch, 960 + (i - 1.5) * 205, 300, .05 + i * .1,
+  { size: 190, grad: i % 2 ? 'gBP' : 'gPB', line: i % 2 ? C.blueLine : C.pinkLine, shadow: i % 2 ? '#c9e6f6' : '#f6b9cf' }, (i % 2 ? 4 : -4)));
+// ハート
+items.push({ x: 1395, y: 245, t0: .5, rot: 12, k: items.length, small: true });
+svg += `<g class="ch"><g transform="scale(1.3)">${heart(C.pink, C.pinkLine, 4)}</g></g>`;
+
+// BORUTO より (チップ)
+const L2 = ['B', 'O', 'R', 'U', 'T', 'O'];
+const chipCol = [[C.pink, C.pinkLine], [C.blue, C.blueLine], [C.yellow, C.yellowLine]];
+L2.forEach((ch, i) => {
+  const [fc, lc] = chipCol[i % 3];
+  items.push({ x: 640 + i * 96, y: 540, t0: .55 + i * .06, rot: (i % 2 ? 5 : -5), k: items.length, chip: true });
+  svg += `<g class="ch"><g>
+    <rect x="-40" y="-40" width="80" height="80" rx="22" fill="${lc}" transform="translate(4,6)" opacity=".5"/>
+    <rect x="-40" y="-40" width="80" height="80" rx="22" fill="#fff" stroke="${lc}" stroke-width="5"/>
+    <rect x="-30" y="-30" width="60" height="60" rx="15" fill="${fc}"/>
+    <text x="0" y="3" font-family="${ROUND}" font-size="54" fill="#fff" stroke="${lc}" stroke-width="7" paint-order="stroke" text-anchor="middle" dominant-baseline="central">${ch}</text>
+  </g></g>`;
+});
+['よ', 'り'].forEach((ch, i) => addChar(ch, 1250 + i * 90, 548, .95 + i * .07,
+  { size: 92, font: ROUND, grad: 'gYB', line: C.yellowLine, shadow: '#f8deb0', white: 18, lw: 7 }, i ? 6 : -6));
+
+// ミツキ (大きく、ドット入り)
+const L3 = ['ミ', 'ツ', 'キ'];
+L3.forEach((ch, i) => addChar(ch, 960 + (i - 1) * 260, 775, 1.15 + i * .12,
+  { size: 250, grad: ['gYB', 'gBP', 'gYB'][i], line: [C.yellowLine, C.blueLine, C.yellowLine][i], shadow: ['#f8deb0', '#c9e6f6', '#f8deb0'][i], white: 30, lw: 10, dots: true }, [-5, 3, 6][i]));
+// 両脇の星
+items.push({ x: 560, y: 720, t0: 1.55, rot: -12, k: items.length, small: true });
+svg += `<g class="ch"><g transform="scale(1.7)">${star(C.yellow, C.yellowLine)}</g></g>`;
+items.push({ x: 1370, y: 880, t0: 1.65, rot: 10, k: items.length, small: true });
+svg += `<g class="ch"><g transform="scale(1.2)">${star(C.blue, C.blueLine)}</g></g>`;
+
+// ポンッと弾けるキラキラ
+const bursts = [];
+svg += `<g id="bursts">`;
+items.forEach((it, i) => {
+  if (it.small || i % 2) return;
+  for (let j = 0; j < 5; j++) {
+    bursts.push({ x: it.x, y: it.y, t0: it.t0, a: (j / 5 + rnd() * .1) * TAU, d: 130 + rnd() * 80 });
+    svg += `<g class="bst">${j % 2 ? sparkle([C.yellowDeep, C.blueDeep, C.pinkDeep][j % 3], .5) : `<circle r="7" fill="${[C.pink, C.blue, C.yellowDeep][j % 3]}"/>`}</g>`;
+  }
+});
+svg += `</g>`;
+
+svg += `</svg>`;
+document.getElementById('root').innerHTML = svg;
+
+// ---------- アニメーション ----------
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const chEls = $$('.ch'), bstEls = $$('.bst'), tws = $$('.tw'), fls = $$('.fl'), tapes = $$('.tape'), cbows = $$('.cbow');
+
+function renderAt(t) {
+  t = clamp(t, 0, T);
+  // 背景はふわっと出る
+  const intro = easeOutBack(clamp(t / .5));
+  $('#moon').setAttribute('transform', `translate(${MX},${f(MY + 8 * Math.sin(TAU * t / 1.5))}) scale(${f(.85 + .15 * intro)})`);
+  $('#lace').setAttribute('transform', `rotate(${f(t * 6)})`);
+  $('#halo').setAttribute('r', f(MR * (1.45 + .06 * Math.sin(TAU * t))));
+  tapes.forEach((g, k) => {
+    const u = clamp((t - .1 - k * .1) / .45), e = 1 - Math.pow(1 - u, 3);
+    const dx = (k ? 1 : -1) * 700 * (1 - e);
+    g.setAttribute('transform', `translate(${f(+g.dataset.x + dx)},${f(+g.dataset.y)}) rotate(${g.dataset.r})`);
+  });
+  cbows.forEach((b, k) => {
+    const s = easeOutBack(clamp((t - .15 - k * .1) / .4));
+    b.setAttribute('transform', `translate(${b.dataset.x},${b.dataset.y}) rotate(${f(8 * Math.sin(TAU * (t / 1.5 + k * .3)))}) scale(${f(s)})`);
+  });
+  tws.forEach((el, i) => {
+    const d = twinkles[i], v = .5 + .5 * Math.sin(TAU * (d.n * t / 1.5 + d.ph));
+    el.setAttribute('transform', `translate(${f(d.x)},${f(d.y)}) scale(${f(d.s * (.5 + .6 * v))}) rotate(${f(45 * v)})`);
+    el.setAttribute('opacity', f(.3 + .7 * v));
+  });
+
+  // 文字: ぽよんと出てきて、そのあとゆらゆら
+  chEls.forEach((el, i) => {
+    const it = items[i];
+    const u = clamp((t - it.t0) / .38);
+    if (u <= 0) { el.setAttribute('opacity', 0); return; }
+    const s = easeOutBack(u);
+    // 着地のつぶれ
+    const sq = Math.sin(clamp((t - it.t0 - .3) / .25) * Math.PI) * .12;
+    const sx = s * (1 + sq), sy = s * (1 - sq);
+    const bob = u >= 1 ? 6 * Math.sin(TAU * ((t - it.t0) / 1.2) + it.k) : 0;
+    const drop = (1 - clamp(u * 1.4)) * -60;
+    const rot = it.rot * (1 - clamp(u * 1.2)) * 3 + it.rot * .4 + (u >= 1 ? 2 * Math.sin(TAU * (t - it.t0) / 1.4 + it.k) : 0);
+    el.setAttribute('opacity', f(clamp(u * 3)));
+    el.setAttribute('transform', `translate(${f(it.x)},${f(it.y + bob + drop)}) rotate(${f(rot)}) scale(${f(sx)},${f(sy)})`);
+  });
+  bstEls.forEach((el, i) => {
+    const b = bursts[i], u = clamp((t - b.t0 - .12) / .5);
+    if (u <= 0 || u >= 1) { el.setAttribute('opacity', 0); return; }
+    const e = 1 - Math.pow(1 - u, 2);
+    el.setAttribute('transform', `translate(${f(b.x + Math.cos(b.a) * b.d * e)},${f(b.y + Math.sin(b.a) * b.d * e)}) scale(${f(1 - u * .6)})`);
+    el.setAttribute('opacity', f(1 - u));
+  });
+  fls.forEach((el, i) => {
+    const d = floaters[i];
+    const y = d.y0 - d.sp * t;
+    el.setAttribute('transform', `translate(${f(d.x + 25 * Math.sin(TAU * (t / 1.5 + d.ph)))},${f(y)}) rotate(${f(15 * Math.sin(TAU * (t + d.ph)))}) scale(${f(d.s)})`);
+    el.setAttribute('opacity', f(.85 * clamp(t / .4)));
+  });
+}
+window.renderAt = renderAt;
+window.ready = document.fonts.ready.then(() => document.fonts.load(`100px 'Mochiy Pop One'`, '夢絵注意ミツキ')).then(() => document.fonts.load(`900 100px 'M PLUS Rounded 1c'`, 'BORUTOより CAUTION 夢♡'));
+window.ready.then(() => {
+  const m = location.hash.match(/t=([\d.]+)/);
+  if (m) renderAt(+m[1]);
+  else {
+    const t0 = performance.now();
+    // 3秒で止めず、プレビュー用にくり返し再生
+    const loop = now => { renderAt(((now - t0) / 1000) % (T + .8)); requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  }
+});
+</script>
+</body>
+</html>
