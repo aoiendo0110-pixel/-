@@ -17,6 +17,7 @@
 | 7 | `heart_bubble_greenback.mp4` | 5秒 | フリル縁のハート吹き出しが登場→鼓動→退場 | セリフ・コメント枠 |
 | 8 | `garland_greenback.mp4` | 4秒 | ハート・レース・リボンのガーランドがゆらゆら | **シームレスループ**。画面上部 |
 | 9 | `moon_3d_greenback.mp4` | 8秒 | ふんわり3D満月（ハートのクレーター入り）がくるっと自転、パステルの星が周りを回って、もこもこ雲がゆらゆら | **シームレスループ**。夜・おやすみ系の演出 |
+| 10 | `dream_float_bg_greenback.mp4` | 10秒 | ゆめかわ浮遊3D背景：お姫さまベッド・満月・おすわり黒猫・リボンのへび・リボン・ハート・星が奥行きのある空間でゆらゆら、手前に雲海 | **シームレスループ**。ステージ・MV背景 |
 
 ## 再生成
 
@@ -25,6 +26,7 @@ cd src
 node render.js preview <出力先>   # 代表フレームPNG
 node render.js video ..           # MP4を書き出し（素材名を後ろに付けると個別に）
 PAGE=moon.html node render.js video ..   # 満月3D（three.js）
+PAGE=dream_bg.html node render.js video ..   # ゆめかわ浮遊3D背景
 ```
 
 `src/index.html#m=<素材名>&t=<秒>` でブラウザ確認、`&transparent` で背景なし。

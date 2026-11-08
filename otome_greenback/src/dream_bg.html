@@ -1,0 +1,255 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>ゆめかわ浮遊3D背景</title>
+<style>html,body{margin:0;background:#00ff00;overflow:hidden}canvas{display:block;width:100vw;height:auto}</style>
+</head><body>
+<!-- #t=<秒> でその瞬間 / &transparent で背景なし。10秒シームレスループ -->
+<script type="module">
+import * as THREE from '../../three.module.min.js';
+const W = 1920, H = 1080, TAU = Math.PI * 2, D = 10;
+const opts = Object.fromEntries(location.hash.slice(1).split('&').filter(Boolean).map(s => { const [k, v] = s.split('='); return [k, v ?? true]; }));
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(W, H);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x00ff00, opts.transparent ? 0 : 1);
+document.body.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xffe4ef, 13, 36);   // 奥ほどパステルピンクにかすむ（不透明なのでキーに影響なし）
+const camera = new THREE.PerspectiveCamera(40, W / H, 0.1, 100);
+scene.add(new THREE.HemisphereLight(0xfffaf4, 0xffc8dc, 2.0));
+const key = new THREE.DirectionalLight(0xfff4e8, 1.4); key.position.set(-4, 6, 6); scene.add(key);
+const rim = new THREE.DirectionalLight(0xe2ccff, 1.5); rim.position.set(5, 2, -6); scene.add(rim);
+
+let seed = 5; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const mk = (w, h) => { const k = document.createElement('canvas'); k.width = w; k.height = h; return k; };
+const soft = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, metalness: 0, ...o });
+const outline = c => new THREE.MeshBasicMaterial({ color: c, side: THREE.BackSide });
+const C = { pink: 0xff9cc4, hot: 0xf2689c, pale: 0xffd6e6, white: 0xffffff, cream: 0xfff3e6, lav: 0xcfb2f5, lilac: 0xbfa0ee,
+  sky: 0xa8d8ff, yel: 0xffe38a, cat: 0x2c2636, gold: 0xf6cf7a };
+
+// ---------- 形 ----------
+function heartShape(s = 1) {
+  const h = new THREE.Shape();
+  h.moveTo(0, -0.5 * s);
+  h.bezierCurveTo(-0.1 * s, -0.35 * s, -0.62 * s, -0.12 * s, -0.62 * s, 0.22 * s);
+  h.bezierCurveTo(-0.62 * s, 0.52 * s, -0.25 * s, 0.62 * s, 0, 0.36 * s);
+  h.bezierCurveTo(0.25 * s, 0.62 * s, 0.62 * s, 0.52 * s, 0.62 * s, 0.22 * s);
+  h.bezierCurveTo(0.62 * s, -0.12 * s, 0.1 * s, -0.35 * s, 0, -0.5 * s);
+  return h;
+}
+const puffy = (shape, depth, bevel) => { const g = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.8, bevelSegments: 10, curveSegments: 36 }); g.center(); return g; };
+const heartGeo = puffy(heartShape(1), 0.12, 0.2);
+function roundBox(w, h, d, r) {
+  const s = new THREE.Shape(), x = -w / 2 + r, y = -h / 2 + r, ww = w - 2 * r, hh = h - 2 * r;
+  s.moveTo(x, y - r); s.lineTo(x + ww, y - r); s.quadraticCurveTo(x + ww + r, y - r, x + ww + r, y);
+  s.lineTo(x + ww + r, y + hh); s.quadraticCurveTo(x + ww + r, y + hh + r, x + ww, y + hh + r);
+  s.lineTo(x, y + hh + r); s.quadraticCurveTo(x - r, y + hh + r, x - r, y + hh); s.lineTo(x - r, y); s.quadraticCurveTo(x - r, y - r, x, y - r);
+  const g = new THREE.ExtrudeGeometry(s, { depth: d - 2 * r, bevelEnabled: true, bevelThickness: r, bevelSize: r * 0.6, bevelSegments: 6, curveSegments: 8 });
+  g.center(); return g;
+}
+function starGeo() {
+  const s = new THREE.Shape();
+  for (let i = 0; i < 10; i++) { const a = i / 10 * TAU - Math.PI / 2, rr = i % 2 ? 0.2 : 0.42; const p = [Math.cos(a) * rr, -Math.sin(a) * rr]; i ? s.lineTo(...p) : s.moveTo(...p); }
+  return puffy(s, 0.06, 0.12);
+}
+const sGeo = starGeo();
+
+function withOutline(geo, mat, col = C.white, k = 1.08) {
+  const g = new THREE.Group(); g.add(new THREE.Mesh(geo, mat));
+  const o = new THREE.Mesh(geo, outline(col)); o.scale.setScalar(k); g.add(o); return g;
+}
+function heart(col) { return withOutline(heartGeo, soft(col, { roughness: 0.45 }), C.white, 1.07); }
+function star(col) { return withOutline(sGeo, soft(col, { roughness: 0.5 }), C.white, 1.1); }
+
+function bow(col = C.pink, dark = C.hot) {
+  const g = new THREE.Group(), m = soft(col, { roughness: 0.5 }), md = soft(dark, { roughness: 0.5 });
+  const ls = new THREE.Shape();
+  ls.moveTo(0.04, 0.06); ls.bezierCurveTo(0.28, 0.66, 0.98, 0.6, 0.92, 0.06); ls.bezierCurveTo(0.9, -0.48, 0.3, -0.4, 0.04, -0.06); ls.closePath();
+  const lg = new THREE.ExtrudeGeometry(ls, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.1, bevelSegments: 10, curveSegments: 32 });
+  lg.translate(0, 0, -0.04);
+  const fs = new THREE.SphereGeometry(0.2, 24, 16);
+  for (const d of [-1, 1]) {
+    const l = new THREE.Mesh(lg, m); l.scale.set(d, 1, 1); l.rotation.y = d * 0.18; g.add(l);
+    const f = new THREE.Mesh(fs, md); f.position.set(d * 0.3, 0.02, 0.17); f.scale.set(1.2, 0.9, 0.35); g.add(f);
+    const ts = new THREE.Shape(); ts.moveTo(-0.12, 0); ts.lineTo(0.12, 0); ts.lineTo(0.2, -0.85); ts.lineTo(0.02, -0.7); ts.lineTo(-0.14, -0.88); ts.closePath();
+    const tgeo = new THREE.ExtrudeGeometry(ts, { depth: 0.06, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04, bevelSegments: 4 });
+    const t = new THREE.Mesh(tgeo, md); t.position.set(d * 0.08, -0.05, -0.05); t.rotation.z = d * 0.45; g.add(t);
+  }
+  const k = new THREE.Mesh(new THREE.SphereGeometry(0.22, 32, 24), m); k.scale.set(1, 1.15, 1.1); k.position.z = 0.12; g.add(k);
+  return g;
+}
+
+function cloud(scale, col = C.white) {
+  const g = new THREE.Group(), m = soft(col, { roughness: 0.95, emissive: 0x231a20 });
+  const puffs = [[0, 0, 0.6], [-0.65, -0.12, 0.46], [0.68, -0.1, 0.5], [-0.3, 0.3, 0.45], [0.32, 0.32, 0.42], [-1.1, -0.22, 0.32], [1.15, -0.2, 0.34]];
+  for (const [x, y, r] of puffs) { const s = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), m); s.position.set(x, y, (rnd() - 0.5) * 0.3); s.scale.z = 0.8; g.add(s); }
+  g.scale.setScalar(scale); return g;
+}
+
+// 満月（ふんわりクレーター・ハートのクレーター入り）
+function moon(R) {
+  const TW = 1024, TH = 512, col = mk(TW, TH), bump = mk(TW, TH), g = col.getContext('2d'), b = bump.getContext('2d');
+  g.fillStyle = '#fff1b8'; g.fillRect(0, 0, TW, TH); b.fillStyle = '#808080'; b.fillRect(0, 0, TW, TH);
+  seed = 19; const placed = [];
+  const hs = (ctx, r, heart) => { ctx.beginPath(); if (!heart) { ctx.arc(0, 0, r, 0, TAU); return; }
+    const s = r * 2.1; ctx.moveTo(0, -0.2 * s); ctx.bezierCurveTo(-0.1 * s, -0.47 * s, -0.52 * s, -0.47 * s, -0.52 * s, -0.12 * s);
+    ctx.bezierCurveTo(-0.52 * s, 0.15 * s, -0.2 * s, 0.3 * s, 0, 0.47 * s); ctx.bezierCurveTo(0.2 * s, 0.3 * s, 0.52 * s, 0.15 * s, 0.52 * s, -0.12 * s);
+    ctx.bezierCurveTo(0.52 * s, -0.47 * s, 0.1 * s, -0.47 * s, 0, -0.2 * s); };
+  for (let n = 0; placed.length < 22 && n < 2000; n++) {
+    const x = rnd() * TW, y = TH * (0.22 + rnd() * 0.56), r = 9 + Math.pow(rnd(), 2) * 34, heart = rnd() < 0.2;
+    if (placed.some(p => Math.hypot(p[0] - x, p[1] - y) < p[2] + r + 15)) continue; placed.push([x, y, r]);
+    const sx = 1 / Math.max(0.35, Math.cos((y / TH - 0.5) * Math.PI));
+    for (const ox of [-TW, 0, TW]) for (const [ctx, a, bb, cc] of [[g, '#fffbe6', '#f8dc92', '#f2cf7e'], [b, '#a8a8a8', '#5a5a5a', '#444']]) {
+      ctx.save(); ctx.translate(x + ox, y); ctx.scale(sx, 1);
+      ctx.fillStyle = a; hs(ctx, r * 1.14, heart); ctx.fill(); ctx.fillStyle = bb; hs(ctx, r, heart); ctx.fill(); ctx.fillStyle = cc; hs(ctx, r * 0.78, heart); ctx.fill(); ctx.restore();
+    }
+  }
+  const map = new THREE.CanvasTexture(col); map.colorSpace = THREE.SRGBColorSpace;
+  const sg = new THREE.SphereGeometry(R, 96, 64);
+  const grp = new THREE.Group();
+  grp.add(new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ map, bumpMap: new THREE.CanvasTexture(bump), bumpScale: 2, roughness: 0.95, emissive: 0x6a5020 })));
+  const o = new THREE.Mesh(sg, outline(0xfffbe8)); o.scale.setScalar(1.035); grp.add(o);
+  return grp;
+}
+
+// お姫さまベッド
+function bed() {
+  const g = new THREE.Group();
+  const frame = new THREE.Mesh(roundBox(2.3, 0.4, 3.2, 0.14), soft(C.pale)); frame.position.y = 0; g.add(frame);
+  for (const [x, z] of [[-1, -1.45], [1, -1.45], [-1, 1.45], [1, 1.45]]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.06, 0.45, 20), soft(C.gold, { roughness: 0.4 })); leg.position.set(x, -0.38, z); g.add(leg);
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.1, 20, 16), soft(C.gold, { roughness: 0.4 })); ball.position.set(x, -0.62, z); g.add(ball);
+  }
+  const mat = new THREE.Mesh(roundBox(2.1, 0.4, 3.0, 0.16), soft(C.white)); mat.position.y = 0.36; g.add(mat);
+  const duvet = new THREE.Mesh(roundBox(2.3, 0.22, 2.0, 0.1), soft(C.pink)); duvet.position.set(0, 0.6, 0.55); g.add(duvet);
+  // 掛け布団のフリル
+  const fr = soft(C.pale);
+  for (let i = 0; i <= 14; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 14), fr); s.position.set(-1.08 + i * 2.16 / 14, 0.47, 1.58); s.scale.set(1, 1.3, 0.6); g.add(s); }
+  for (const d of [-1, 1]) for (let i = 0; i <= 12; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.13, 20, 14), fr); s.position.set(d * 1.17, 0.47, -0.42 + i * 2.0 / 12); s.scale.set(0.6, 1.3, 1); g.add(s); }
+  // ハートのドット
+  const dm = soft(C.white);
+  for (let i = 0; i < 9; i++) { const h = new THREE.Mesh(heartGeo, dm); h.scale.setScalar(0.22); h.rotation.x = -Math.PI / 2; h.position.set(-0.7 + (i % 3) * 0.7, 0.73, 0.0 + Math.floor(i / 3) * 0.55); g.add(h); }
+  for (const x of [-0.5, 0.5]) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 24), soft(C.white)); p.scale.set(0.95, 0.38, 0.62); p.position.set(x, 0.7, -1.05); p.rotation.x = -0.3; g.add(p); }
+  const hb = withOutline(puffy(heartShape(2.6), 0.1, 0.12), soft(C.white), C.pink, 1.04); hb.position.set(0, 1.15, -1.62); g.add(hb);
+  const hb2 = new THREE.Mesh(puffy(heartShape(1.3), 0.06, 0.1), soft(C.pink)); hb2.position.set(0, 1.2, -1.45); g.add(hb2);
+  const b = bow(C.pink, C.hot); b.scale.setScalar(0.45); b.position.set(0, 2.0, -1.5); g.add(b);
+  return g;
+}
+
+// 黒猫（おすわり・しっぽゆらゆら）
+function blackCat() {
+  const g = new THREE.Group(), m = soft(C.cat, { roughness: 0.6 }), pk = soft(0xffa6c2);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.55, 40, 32), m); body.scale.set(1, 1.05, 0.92); body.position.y = 0.55; g.add(body);
+  const head = new THREE.Group(); head.position.y = 1.35; g.add(head);
+  const hm = new THREE.Mesh(new THREE.SphereGeometry(0.55, 48, 36), m); hm.scale.set(1.15, 0.95, 1); head.add(hm);
+  for (const d of [-1, 1]) {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.42, 28), m); ear.position.set(d * 0.36, 0.47, 0); ear.rotation.z = -d * 0.38; head.add(ear);
+    const inn = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.26, 24), pk); inn.position.set(d * 0.35, 0.44, 0.09); inn.rotation.set(0.15, 0, -d * 0.38); head.add(inn);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.1, 24, 18), soft(0xffd76e, { roughness: 0.25, emissive: 0x302000 })); eye.scale.set(1, 1.3, 0.5); eye.position.set(d * 0.21, 0.04, 0.49); head.add(eye);
+    const pu = new THREE.Mesh(new THREE.SphereGeometry(0.05, 16, 12), soft(0x1a1420, { roughness: 0.2 })); pu.scale.set(0.8, 1.6, 0.5); pu.position.set(d * 0.21, 0.03, 0.535); head.add(pu);
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(0.025, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); hl.position.set(d * 0.21 - 0.03, 0.09, 0.56); head.add(hl);
+    const ch = new THREE.Mesh(new THREE.SphereGeometry(0.08, 16, 12), soft(0xff9cbc)); ch.scale.set(1.3, 0.7, 0.3); ch.position.set(d * 0.36, -0.12, 0.43); head.add(ch);
+    const paw = new THREE.Mesh(new THREE.SphereGeometry(0.15, 24, 18), m); paw.scale.set(1, 0.8, 1.2); paw.position.set(d * 0.2, 0.1, 0.42); g.add(paw);
+  }
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.04, 16, 12), pk); nose.scale.set(1.3, 0.9, 0.7); nose.position.set(0, -0.08, 0.53); head.add(nose);
+  const b = bow(C.pink, C.hot); b.scale.setScalar(0.24); b.position.set(0, 0.84, 0.5); g.add(b);
+  const tailPivot = new THREE.Group(); tailPivot.position.set(0.3, 0.2, -0.4); g.add(tailPivot);
+  const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.35, 0.15, -0.1), new THREE.Vector3(0.55, 0.6, -0.1), new THREE.Vector3(0.45, 1.0, 0), new THREE.Vector3(0.25, 1.15, 0.05)]);
+  tailPivot.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.09, 16), m));
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 12), m); tip.position.copy(curve.getPoint(1)); tailPivot.add(tip);
+  g.userData = { head, tailPivot };
+  return g;
+}
+
+// へび（ころころビーズ体・ゆらゆら）
+function snake() {
+  const g = new THREE.Group(), N = 56, beads = [];
+  const ma = soft(C.lilac, { roughness: 0.5 }), mb = soft(C.pink, { roughness: 0.5 }), sg = new THREE.SphereGeometry(1, 28, 20);
+  for (let i = 0; i < N; i++) { const s = new THREE.Mesh(sg, Math.floor(i / 5) % 3 === 2 ? mb : ma); g.add(s); beads.push(s); }
+  const head = new THREE.Group(); g.add(head);
+  const hm = new THREE.Mesh(sg, ma); hm.scale.set(0.5, 0.42, 0.46); head.add(hm);
+  for (const d of [-1, 1]) {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(0.085, 18, 14), soft(0x2a2030, { roughness: 0.2 })); e.position.set(0.2, 0.12, d * 0.27); head.add(e);
+    const hl = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); hl.position.set(0.26, 0.17, d * 0.31); head.add(hl);
+    const ch = new THREE.Mesh(new THREE.SphereGeometry(0.06, 14, 10), soft(0xff9cbc)); ch.scale.set(1, 0.6, 0.4); ch.position.set(0.3, -0.05, d * 0.3); head.add(ch);
+  }
+  const b = bow(C.yel, C.gold); b.scale.setScalar(0.3); b.position.set(-0.08, 0.4, 0); b.rotation.y = Math.PI / 2; head.add(b);
+  g.userData.update = t => {
+    const pts = [];
+    for (let i = 0; i <= N; i++) { const u = i / N, x = -1.7 + u * 3.4;
+      pts.push(new THREE.Vector3(x, 0.32 * Math.sin(u * 2.4 * Math.PI - TAU * 2 * t / D), 0.35 * Math.sin(u * 1.6 * Math.PI - TAU * t / D))); }
+    for (let i = 0; i < N; i++) { const r = 0.07 + 0.25 * Math.pow(i / N, 0.5); beads[i].position.copy(pts[i]); beads[i].scale.setScalar(r); }
+    const hp = pts[N]; head.position.copy(hp).add(new THREE.Vector3(0.2, 0.05, 0));
+    const dir = pts[N].clone().sub(pts[N - 2]);
+    head.rotation.set(0, -Math.atan2(dir.z, dir.x), Math.atan2(dir.y, Math.hypot(dir.x, dir.z)) * 0.6);
+  };
+  return g;
+}
+
+// ---------- 配置 ----------
+const floaters = [];   // {obj, base, amp, per, ph, rot, sway}
+function add(obj, x, y, z, s, o = {}) {
+  obj.position.set(x, y, z); obj.scale.multiplyScalar(s); scene.add(obj);
+  floaters.push({ obj, base: new THREE.Vector3(x, y, z), amp: o.amp ?? 0.18, per: o.per ?? 5, ph: o.ph ?? rnd() * TAU,
+    rot: obj.rotation.clone(), sway: o.sway ?? 0.12, spin: o.spin ?? 0 });
+  return obj;
+}
+add(moon(2.6), -7.5, 5.2, -13, 1, { amp: 0.25, per: 10, sway: 0.05 });
+const bd = bed(); bd.rotation.set(0.32, -0.62, 0.08); add(bd, 1.0, 1.7, -5, 1.15, { amp: 0.22, per: 10, sway: 0.05 });
+const cat = blackCat(); cat.rotation.y = 0.35; add(cat, -4.6, -1.55, 1.2, 1, { amp: 0.12, per: 5, sway: 0.04, ph: 0 });
+const catCloud = cloud(1.15); add(catCloud, -4.6, -1.7, 1.15, 1, { amp: 0.12, per: 5, sway: 0.02, ph: 0 });
+const sn = snake(); sn.rotation.set(0.2, -0.2, -0.1); add(sn, 3.7, 0.1, -0.8, 1, { amp: 0.2, per: 10, sway: 0.06 });
+
+seed = 77;
+const bowCols = [[C.pink, C.hot], [C.sky, 0x6fb5ee], [C.lav, 0xa883e0], [C.pink, C.hot], [C.yel, C.gold]];
+[[5.2, 3.3, -3, 0.9], [-2.2, 3.4, -7, 1.0], [-0.3, -1.0, -10, 1.1], [-9.5, 0.8, -10, 1.0], [-1.7, -0.6, -3, 0.75]].forEach(([x, y, z, s], i) => {
+  const b = bow(...bowCols[i]); b.rotation.set(0.2, (rnd() - .5) * 1.0, (rnd() - .5) * 0.5); add(b, x, y, z, s, { sway: 0.18 });
+});
+const hCols = [C.hot, C.pink, C.lav, C.pale, C.hot, C.sky, C.pink, C.lav, C.hot, C.pink, C.yel, C.lav];
+[[-6.3, 2.2, -2], [3.2, -1.2, 0.5], [-3.4, 1.0, -1], [7.2, 1.8, -5], [-0.6, 4.6, -9], [10.5, 4.0, -14], [-11, 4.0, -15], [2.0, 5.2, -12], [-5.5, -0.2, -8], [6.4, -2.0, 1.5], [12, -1.2, -16], [-3.2, 4.4, -4]].forEach(([x, y, z], i) => {
+  const h = heart(hCols[i]); h.rotation.set((rnd() - .5) * 0.5, (rnd() - .5) * 0.8, (rnd() - .5) * 0.6); add(h, x, y, z, 0.55 + rnd() * 0.5, { sway: 0.35, amp: 0.25 });
+});
+const sCols = [C.yel, C.pink, C.lav, C.sky, C.yel, C.yel, C.pink, C.lav];
+[[-8.2, 3.4, -5], [3.2, 4.3, -1], [4.0, 5.0, -8], [-1.0, -1.8, 1.5], [9.0, 2.5, -7], [-11.5, 6.4, -10], [3.1, 1.6, 0.8], [-9.0, -1.2, -4]].forEach(([x, y, z], i) => {
+  const s = star(sCols[i]); s.rotation.set(0, (rnd() - .5) * 0.6, (rnd() - .5)); add(s, x, y, z, 0.6 + rnd() * 0.5, { sway: 0.4, amp: 0.2 });
+});
+// 雲海（手前から奥まで重ねて奥行き）
+seed = 101;
+for (let i = 0; i < 22; i++) {
+  const z = 3 - (i / 22) * 20, spread = 8 + (3 - z) * 0.75;
+  const x = -spread + rnd() * spread * 2, y = -3.7 - (3 - z) * 0.02 + rnd() * 0.5;
+  add(cloud(1.1 + rnd() * 1.1, rnd() < 0.35 ? 0xfff0f6 : C.white), x, y, z, 1, { amp: 0.08, per: rnd() < .5 ? 5 : 10, sway: 0.02 });
+}
+// 小さなキラキラ
+const tw = [];
+seed = 131;
+for (let i = 0; i < 26; i++) {
+  const m = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), new THREE.MeshBasicMaterial({ color: i % 3 ? 0xffffff : 0xfff2a8, fog: false }));
+  m.position.set((rnd() - .5) * 22, -1 + rnd() * 7, -8 + rnd() * 9); scene.add(m); tw.push({ m, ph: rnd() * TAU, n: rnd() < .5 ? 2 : 3 });
+}
+
+// ---------- アニメーション ----------
+window.render = t => {
+  const a = TAU * t / D;
+  camera.position.set(0.7 * Math.sin(a), 0.6 + 0.25 * Math.sin(2 * a), 10.5);
+  camera.lookAt(0.2 * Math.sin(a), 0.7, -3);
+  for (const f of floaters) {
+    const p = TAU * t / f.per + f.ph;
+    f.obj.position.set(f.base.x + 0.06 * Math.sin(a + f.ph), f.base.y + f.amp * Math.sin(p), f.base.z);
+    f.obj.rotation.set(f.rot.x + f.sway * 0.5 * Math.sin(a + f.ph), f.rot.y + f.sway * Math.sin(a + f.ph * 1.3), f.rot.z + f.sway * 0.6 * Math.sin(p));
+  }
+  const { head, tailPivot } = cat.userData;
+  head.rotation.z = 0.12 * Math.sin(TAU * t / 5); head.rotation.y = 0.15 * Math.sin(TAU * t / 10);
+  tailPivot.rotation.z = -0.35 * Math.sin(TAU * t / 2.5); tailPivot.rotation.y = 0.2 * Math.sin(TAU * t / 5);
+  sn.userData.update(t);
+  for (const { m, ph, n } of tw) { const v = Math.max(0, Math.sin(TAU * n * t / D + ph)); m.scale.setScalar(v * v * 1.6); m.rotation.y = TAU * t / 2; }
+  renderer.render(scene, camera);
+  return renderer.domElement.toDataURL('image/png');
+};
+window.setMaterial = () => D;
+window.render(+(opts.t || 1));
+window.materials = [['dream_float_bg', D]];
+</script>
+</body></html>
