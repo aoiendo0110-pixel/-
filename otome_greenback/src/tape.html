@@ -1,0 +1,144 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>マスキングテープ素材</title>
+<style>html,body{margin:0;background:#eee}canvas{display:block;max-width:100vw}</style>
+</head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+const TAU = Math.PI * 2, S = 2;           // S = 書き出し倍率
+const TW = 150;                            // テープ幅（等倍px）
+let seed = 1; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const mk = (w, h) => { const k = document.createElement('canvas'); k.width = w; k.height = h; return k; };
+
+// ---------- 柄 ----------
+function heartP(g, x, y, s) {
+  g.beginPath(); g.moveTo(x, y - 0.2 * s);
+  g.bezierCurveTo(x - 0.1 * s, y - 0.47 * s, x - 0.52 * s, y - 0.47 * s, x - 0.52 * s, y - 0.12 * s);
+  g.bezierCurveTo(x - 0.52 * s, y + 0.15 * s, x - 0.2 * s, y + 0.3 * s, x, y + 0.47 * s);
+  g.bezierCurveTo(x + 0.2 * s, y + 0.3 * s, x + 0.52 * s, y + 0.15 * s, x + 0.52 * s, y - 0.12 * s);
+  g.bezierCurveTo(x + 0.52 * s, y - 0.47 * s, x + 0.1 * s, y - 0.47 * s, x, y - 0.2 * s); g.fill();
+}
+function starP(g, x, y, r) { g.beginPath(); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU - Math.PI / 2, rr = i % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.fill(); }
+function bowP(g, x, y, s, col, dark) {
+  g.fillStyle = col;
+  for (const d of [-1, 1]) { g.beginPath(); g.moveTo(x, y); g.bezierCurveTo(x + d * s * 0.2, y - s * 0.45, x + d * s * 0.6, y - s * 0.4, x + d * s * 0.55, y);
+    g.bezierCurveTo(x + d * s * 0.5, y + s * 0.35, x + d * s * 0.2, y + s * 0.3, x, y); g.fill();
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + d * s * 0.3, y + s * 0.6); g.lineTo(x + d * s * 0.12, y + s * 0.5); g.closePath(); g.fill(); }
+  g.fillStyle = dark; g.beginPath(); g.arc(x, y, s * 0.11, 0, TAU); g.fill();
+}
+function flowerP(g, x, y, r, col, mid) {
+  g.fillStyle = col; for (let i = 0; i < 5; i++) { const a = i / 5 * TAU - Math.PI / 2; g.beginPath(); g.arc(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.45, 0, TAU); g.fill(); }
+  g.fillStyle = mid; g.beginPath(); g.arc(x, y, r * 0.3, 0, TAU); g.fill();
+}
+const gingham = (base, line, cross, step) => (g, L, w) => {
+  g.fillStyle = base; g.fillRect(0, 0, L, w);
+  g.fillStyle = line; for (let x = 0; x < L; x += step * 2) g.fillRect(x, 0, step, w);
+  for (let y = 0; y < w; y += step * 2) g.fillRect(0, y, L, step);
+  g.fillStyle = cross; for (let x = 0; x < L; x += step * 2) for (let y = 0; y < w; y += step * 2) g.fillRect(x, y, step, step);
+};
+const dots = (base, dot, r, step) => (g, L, w) => {
+  g.fillStyle = base; g.fillRect(0, 0, L, w); g.fillStyle = dot;
+  for (let y = step / 2, row = 0; y < w + step; y += step * 0.87, row++) for (let x = (row % 2) * step / 2; x < L + step; x += step) { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); }
+};
+const PAT = {
+  pink_gingham: gingham('#fff2f6', '#ffc4d8', '#ff9cbf', 18),
+  lilac_gingham: gingham('#f8f2ff', '#dcc8f7', '#c3a5ef', 15),
+  pink_dot: dots('#ffb3cd', '#ffffff', 7, 34),
+  sky_dot: dots('#bfe2ff', '#ffffff', 6, 30),
+  heart_cream: (g, L, w) => { g.fillStyle = '#fff6ec'; g.fillRect(0, 0, L, w);
+    const cols = ['#ff8fb8', '#ffb8d0', '#d9b8f5'];
+    for (let y = 26, row = 0; y < w + 20; y += 44, row++) for (let x = (row % 2) * 30, i = row; x < L + 30; x += 60, i++) { g.fillStyle = cols[i % 3]; heartP(g, x, y, 26); } },
+  candy_stripe: (g, L, w) => { g.fillStyle = '#ffffff'; g.fillRect(0, 0, L, w); g.fillStyle = '#ffa9c8';
+    for (let x = -w; x < L + w; x += 44) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 22, 0); g.lineTo(x + 22 - w, w); g.lineTo(x - w, w); g.fill(); } },
+  lace_print: (g, L, w) => { g.fillStyle = '#fff0f5'; g.fillRect(0, 0, L, w);
+    for (const top of [true, false]) { g.save(); if (!top) { g.translate(0, w); g.scale(1, -1); }
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, L, 22); for (let x = 0; x < L + 30; x += 30) { g.beginPath(); g.arc(x + 15, 22, 15, 0, Math.PI); g.fill(); }
+      g.fillStyle = '#ffc9dc'; for (let x = 0; x < L + 30; x += 30) { g.beginPath(); g.arc(x + 15, 26, 4.5, 0, TAU); g.fill(); }
+      for (let x = 7; x < L; x += 15) { g.beginPath(); g.arc(x, 11, 2.6, 0, TAU); g.fill(); }
+      g.restore(); }
+    g.fillStyle = '#ff9cbf'; for (let x = 50; x < L; x += 100) heartP(g, x, w / 2, 24); },
+  lavender_star: (g, L, w) => { g.fillStyle = '#d8c2f7'; g.fillRect(0, 0, L, w);
+    for (let y = 24, row = 0; y < w + 20; y += 38, row++) for (let x = (row % 2) * 32; x < L + 30; x += 64) { g.fillStyle = row % 3 === 1 ? '#ffffff' : '#fff1a8'; starP(g, x, y, row % 3 === 1 ? 7 : 12); } },
+  ribbon_print: (g, L, w) => { g.fillStyle = '#fff7f9'; g.fillRect(0, 0, L, w);
+    g.fillStyle = '#ffd8e6'; for (let x = 0; x < L; x += 12) { g.fillRect(x, 8, 6, 3); g.fillRect(x, w - 11, 6, 3); }
+    for (let y = 40, row = 0; y < w; y += 70, row++) for (let x = (row % 2) * 55 + 30; x < L + 40; x += 110) bowP(g, x, y, 42, row % 2 ? '#a9d6ff' : '#ff9cbf', row % 2 ? '#6fb3ee' : '#f2689c'); },
+  peach_flower: (g, L, w) => { g.fillStyle = '#ffd6c9'; g.fillRect(0, 0, L, w);
+    for (let y = 28, row = 0; y < w + 20; y += 48, row++) for (let x = (row % 2) * 36; x < L + 36; x += 72) flowerP(g, x, y, row % 2 ? 13 : 17, '#ffffff', '#ffd76e'); },
+  yellow_check: gingham('#fffbe8', '#ffeaa0', '#ffd96a', 14),
+  rose_stitch: (g, L, w) => { g.fillStyle = '#f590b5'; g.fillRect(0, 0, L, w);
+    g.strokeStyle = '#ffffff'; g.lineWidth = 3; g.setLineDash([12, 9]);
+    for (const y of [16, w - 16]) { g.beginPath(); g.moveTo(0, y); g.lineTo(L, y); g.stroke(); } g.setLineDash([]);
+    g.fillStyle = '#ffe1ec'; for (let x = 40; x < L; x += 80) heartP(g, x, w / 2, 30); },
+  sky_heart: (g, L, w) => { g.fillStyle = '#a9d6ff'; g.fillRect(0, 0, L, w);
+    for (let y = 24, row = 0; y < w + 20; y += 40, row++) for (let x = (row % 2) * 30; x < L + 30; x += 60) { g.fillStyle = row % 2 ? '#ffffff' : '#ffc1d6'; heartP(g, x, y, 22); } },
+};
+
+// ---------- 和紙っぽい繊維 ----------
+function fibers(g, L, w) {
+  g.save(); g.globalAlpha = 0.18; g.strokeStyle = '#ffffff'; g.lineWidth = 0.8;
+  for (let i = 0; i < L * w / 900; i++) { const x = rnd() * L, y = rnd() * w, a = (rnd() - .5) * 0.6, l = 6 + rnd() * 18;
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke(); }
+  g.globalAlpha = 0.05; g.fillStyle = '#7a5060';
+  for (let i = 0; i < L * w / 400; i++) g.fillRect(rnd() * L, rnd() * w, 1, 1);
+  g.restore();
+}
+
+// ---------- 端の形 ----------
+// torn: 手でちぎったギザギザ / zigzag: ギザギザばさみ
+function endPts(kind, w, side) {
+  const pts = [], slant = (rnd() - .5) * 18;
+  if (kind === 'zigzag') { const n = 9, a = 9;
+    for (let i = 0; i <= n * 2; i++) { const y = i / (n * 2) * w; pts.push([(i % 2 ? a : 0) * side + slant * (y / w - .5), y]); } }
+  else { let x = 0;
+    for (let y = 0; y <= w; y += 3 + rnd() * 3) { x += (rnd() - .5) * 7; x = Math.max(-9, Math.min(9, x)); pts.push([x * side + slant * (y / w - .5) + (rnd() - .5) * 3, y]); }
+    pts.push([pts[pts.length - 1][0], w]); }
+  return pts;
+}
+function tape(pat, L, kinds, sd) {
+  seed = sd;
+  const w = TW, pad = 24, k = mk((L + pad * 2) * S, (w + pad * 2) * S), g = k.getContext('2d');
+  g.scale(S, S); g.translate(pad, pad);
+  const le = endPts(kinds[0], w, -1), re = endPts(kinds[1], w, 1);
+  const path = new Path2D();
+  le.forEach(([x, y], i) => i ? path.lineTo(x, y) : path.moveTo(x, y));
+  for (let i = re.length - 1; i >= 0; i--) path.lineTo(L + re[i][0], re[i][1]);
+  path.closePath();
+  g.save(); g.clip(path); g.translate(-20, 0); PAT[pat](g, L + 40, w); g.translate(20, 0); fibers(g, L, w); g.restore();
+  return k;
+}
+
+// ---------- 書き出し ----------
+const NAMES = Object.keys(PAT);
+window.buildAll = () => {
+  const out = [];
+  NAMES.forEach((n, i) => {
+    out.push({ name: `${String(i + 1).padStart(2, '0')}_${n}_long`, c: tape(n, 620, ['torn', i % 3 === 2 ? 'zigzag' : 'torn'], 100 + i) });
+    out.push({ name: `${String(i + 1).padStart(2, '0')}_${n}_short`, c: tape(n, 300, [i % 2 ? 'zigzag' : 'torn', 'torn'], 200 + i) });
+  });
+  return out;
+};
+function onGreen(c, green) { if (!green) return c; const k = mk(c.width, c.height), g = k.getContext('2d'); g.fillStyle = '#00ff00'; g.fillRect(0, 0, k.width, k.height); g.drawImage(c, 0, 0); return k; }
+
+// 1920x1080 シート（散らし／四隅留め）
+function sheet(list, layout) {
+  const k = mk(1920 * S, 1080 * S), g = k.getContext('2d');
+  layout.forEach(([idx, x, y, rot, sc = 1]) => { const c = list[idx].c; g.save(); g.translate(x * S, y * S); g.rotate(rot); g.scale(sc, sc); g.drawImage(c, -c.width / 2, -c.height / 2); g.restore(); });
+  return k;
+}
+window.exportAll = green => {
+  const list = buildAll(), res = list.map(({ name, c }) => ({ name, url: onGreen(c, green).toDataURL('image/png') }));
+  // 四隅留め（写真やワイプの角に貼る用）
+  const corners = sheet(list, [[1, 150, 120, -0.72], [7, 1770, 120, 0.72], [13, 150, 960, 0.72], [19, 1770, 960, -0.72]]);
+  // 全柄の散らし
+  const L = []; NAMES.forEach((_, i) => { const col = i % 3, row = Math.floor(i / 3);
+    L.push([i * 2, 330 + col * 630 + (i === 12 ? 630 : 0), 118 + row * 211, (((i * 37) % 11) - 5) * 0.012, 0.92]); });
+  const all = sheet(list, L);
+  res.push({ name: 'sheet_corners', url: onGreen(corners, green).toDataURL('image/png') });
+  res.push({ name: 'sheet_all', url: onGreen(all, green).toDataURL('image/png') });
+  return res;
+};
+// プレビュー
+(() => { const c = document.getElementById('c'), g = c.getContext('2d'); g.fillStyle = '#00ff00'; g.fillRect(0, 0, 1920, 1080);
+  const list = buildAll(); list.forEach(({ c: t }, i) => { const col = i % 4, row = Math.floor(i / 4); g.drawImage(t, 20 + col * 475, 10 + row * 88, t.width / S * 0.7, t.height / S * 0.7); }); })();
+</script>
+</body></html>
