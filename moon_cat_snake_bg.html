@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Moon Cat Snake Loop</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #fde4ee; overflow: hidden; }
+  svg { display: block; width: 100vw; height: auto; }
+</style>
+</head>
+<body>
+<!-- 16:9 (1920x1080) / 12秒で継ぎ目なくループ / #t=秒 でその瞬間を静止表示 / #blue でサブ色を水色寄りに -->
+<div id="root"></div>
+<script>
+const W = 1920, H = 1080, T = 12, TAU = Math.PI * 2;
+const BLUE = location.hash.includes('blue');
+const C = {
+  bg: '#fde4ee', pink: '#f7a8c4', pinkDeep: '#ee88ab', pinkLine: '#e0739a',
+  light: '#fcd3e1', pale: '#fff0f5', white: '#fffafc',
+  yellow: '#ffe68a', yellowDeep: '#f5cd55', yellowPale: '#fff6cc',
+  blue: '#b9e3f5', blueDeep: '#86c8e6', bluePale: '#e3f4fb',
+  cat: '#2e2533', catHi: '#4a3d52',
+};
+const SUB = BLUE ? [C.blue, C.blueDeep] : [C.yellow, C.yellowDeep];
+
+let seed = 20261108;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+
+const HEART = 'M0,-22 C -10,-42 -45,-37 -45,-12 C -45,8 -20,23 0,38 C 20,23 45,8 45,-12 C 45,-37 10,-42 0,-22 Z';
+const STAR = (r = 20) => {
+  let d = '';
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .5 : r;
+    d += (i ? 'L' : 'M') + (rr * Math.cos(a)).toFixed(1) + ',' + (rr * Math.sin(a)).toFixed(1);
+  }
+  return d + 'Z';
+};
+
+// 参考画像みたいな細い線のリボン
+function lineBow(color = C.pinkDeep, sw = 3) {
+  return `<g fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M0,0 C -8,-12 -30,-14 -28,-2 C -27,6 -10,4 0,0 C 10,4 27,6 28,-2 C 30,-14 8,-12 0,0 Z"/>
+    <path d="M-2,2 C -10,10 -20,18 -30,24 M2,2 C 10,10 20,18 30,24"/>
+    <circle cx="0" cy="0" r="3.5" fill="${color}"/></g>`;
+}
+// ぷっくりリボン
+function puffyBow(fill = C.pink, line = C.pinkLine) {
+  const loopL = 'M0,0 C -10,-16 -36,-18 -34,0 C -36,16 -10,14 0,0 Z';
+  const tailL = 'M-3,3 C -8,12 -12,20 -16,27 L -9,24 L -6,31 C -3,22 -1,12 2,4 Z';
+  return `<g stroke="${line}" stroke-width="2" stroke-linejoin="round">
+    <path d="${tailL}" fill="${fill}"/><path d="${tailL}" fill="${fill}" transform="scale(-1,1)"/>
+    <path d="${loopL}" fill="${fill}"/><path d="${loopL}" fill="${fill}" transform="scale(-1,1)"/>
+    <path d="M-6,-5 C -14,-8 -22,-6 -26,0 M6,-5 C 14,-8 22,-6 26,0" fill="none" stroke-width="1.5" opacity=".6"/>
+    <ellipse cx="0" cy="0" rx="6.5" ry="7.5" fill="${fill}"/></g>
+    ${[[-22, -4], [-14, 5], [-26, 6], [22, -4], [14, 5], [26, 6]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.8" fill="#fff"/>`).join('')}`;
+}
+
+// フリルの縁どりつきハート (4種類)
+function laceHeart(kind) {
+  const fills = ['url(#solid)', 'url(#gingham)', 'url(#dots)', 'url(#stripe)'];
+  const subFill = kind === 4 ? `url(#subDots)` : fills[kind];
+  return `<g>
+    <path d="${HEART}" transform="scale(1.24)" fill="${C.pale}" stroke="${C.light}" stroke-width="9" stroke-dasharray="0 9.5" stroke-linecap="round"/>
+    <path d="${HEART}" transform="scale(1.12)" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="2 4"/>
+    <path d="${HEART}" fill="${subFill}" stroke="${kind === 4 ? SUB[1] : C.pinkDeep}" stroke-width="2"/>
+    <path d="M-28,-18 C -28,-28 -18,-32 -12,-28" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".8"/>
+  </g>`;
+}
+
+// ---------- 縦ストライプ列 ----------
+const COLA = 210, COLB = 110, TILE = 720;
+let cols = [];
+let colSvg = '';
+let ci = 0;
+for (let x = 0; x < W; ci++) {
+  const isA = ci % 2 === 1, w = isA ? COLA : COLB, cx = x + w / 2;
+  let s = '';
+  const h = H + TILE * 2;
+  if (isA) {
+    s += `<rect x="${-w / 2}" y="0" width="${w}" height="${h}" fill="${C.white}"/>`;
+    s += `<rect x="${-w / 2 + 16}" y="0" width="${w - 32}" height="${h}" fill="url(#lacePaper)"/>`;
+    for (const sx of [-1, 1]) {
+      s += `<line x1="${sx * (w / 2 - 18)}" y1="0" x2="${sx * (w / 2 - 18)}" y2="${h}" stroke="${C.light}" stroke-width="2" stroke-dasharray="6 5"/>`;
+      for (let y = 0; y < h; y += 24) {
+        s += `<circle cx="${sx * (w / 2)}" cy="${y}" r="12" fill="${C.white}"/>`;
+        s += `<circle cx="${sx * (w / 2 + 3)}" cy="${y}" r="3" fill="${C.light}"/>`;
+      }
+    }
+    const k0 = (ci * 3) % 5;
+    for (let y = 0, n = 0; y < h; y += 180, n++) {
+      const kind = (k0 + n) % 5 === 4 && n % 4 === 3 ? 4 : (k0 + n) % 4;
+      s += `<g transform="translate(0,${y})"><g class="sway" data-k="${ci * 7 + n}">${laceHeart(n % 4 === 3 ? 4 : (ci + n) % 4)}</g></g>`;
+      s += `<g transform="translate(0,${y + 92})">${lineBow(C.pinkDeep)}</g>`;
+    }
+  } else {
+    s += `<rect x="${-w / 2}" y="0" width="${w}" height="${h}" fill="${C.pink}" opacity=".55"/>`;
+    s += `<rect x="${-w / 2}" y="0" width="${w}" height="${h}" fill="url(#bDots)"/>`;
+    for (let y = 0, n = 0; y < h; y += 80, n++) {
+      if (n % 3 === 2) s += `<path d="${STAR(9)}" transform="translate(0,${y})" fill="${SUB[0]}" stroke="${SUB[1]}" stroke-width="1.5" stroke-linejoin="round"/>`;
+      else s += `<g transform="translate(0,${y}) scale(.55)">${lineBow('#fff', 4)}</g>`;
+    }
+  }
+  colSvg += `<g class="col" data-x="${cx}" data-dir="${isA ? 1 : -1}" data-off="${(ci * 97) % TILE}">${s}</g>`;
+  x += w;
+}
+
+// ---------- 上下のフリル帯 ----------
+const UNIT = 96;
+function band(top) {
+  let s = '';
+  const n = Math.ceil(W / UNIT) + 6;
+  s += `<rect x="0" y="${top ? 0 : 30}" width="${(n) * UNIT}" height="60" fill="${C.pink}"/>`;
+  s += `<rect x="0" y="${top ? 0 : 30}" width="${(n) * UNIT}" height="60" fill="url(#bandDots)"/>`;
+  const ey = top ? 60 : 30, dir = top ? 1 : -1;
+  for (let i = 0; i < n * 4; i++) {
+    const x = i * UNIT / 4 + UNIT / 8;
+    s += `<circle cx="${x}" cy="${ey}" r="14" fill="${C.pink}"/>`;
+    s += `<circle cx="${x}" cy="${ey + dir * 5}" r="7" fill="#fff" opacity=".85"/>`;
+    s += `<circle cx="${x}" cy="${ey + dir * 5}" r="3" fill="${C.light}"/>`;
+  }
+  s += `<line x1="0" y1="${top ? 48 : 42}" x2="${n * UNIT}" y2="${top ? 48 : 42}" stroke="#fff" stroke-width="3" stroke-dasharray="8 6" stroke-linecap="round"/>`;
+  for (let i = 0; i < n; i++) {
+    const x = i * UNIT + UNIT / 2;
+    s += i % 2 ? `<path d="${HEART}" transform="translate(${x},${top ? 22 : 68}) scale(.32)" fill="#fff"/>`
+               : `<path d="${STAR(10)}" transform="translate(${x},${top ? 22 : 68})" fill="${SUB[0]}"/>`;
+  }
+  return s;
+}
+
+// ---------- 満月 ----------
+const MX = 960, MY = 560, MR = 215;
+function doily() {
+  let s = `<circle r="${MR + 95}" fill="url(#glow)"/>`;
+  const R = MR + 62;
+  for (let i = 0; i < 40; i++) {
+    const a = i / 40 * TAU;
+    s += `<circle cx="${(R * Math.cos(a)).toFixed(1)}" cy="${(R * Math.sin(a)).toFixed(1)}" r="29.5" fill="${C.pink}"/>`;
+  }
+  for (let i = 0; i < 40; i++) {
+    const a = i / 40 * TAU;
+    s += `<circle cx="${(R * Math.cos(a)).toFixed(1)}" cy="${(R * Math.sin(a)).toFixed(1)}" r="26" fill="${C.white}"/>`;
+  }
+  s += `<circle r="${R + 4}" fill="${C.white}"/>`;
+  for (let i = 0; i < 40; i++) {
+    const a = (i + .5) / 40 * TAU;
+    s += `<circle cx="${((R + 18) * Math.cos(a)).toFixed(1)}" cy="${((R + 18) * Math.sin(a)).toFixed(1)}" r="4.5" fill="${C.light}"/>`;
+  }
+  for (let i = 0; i < 80; i++) {
+    const a = i / 80 * TAU;
+    s += `<circle cx="${((R - 14) * Math.cos(a)).toFixed(1)}" cy="${((R - 14) * Math.sin(a)).toFixed(1)}" r="2.6" fill="${C.pink}" opacity=".7"/>`;
+  }
+  s += `<circle r="${R - 28}" fill="none" stroke="${C.light}" stroke-width="3" pathLength="400" stroke-dasharray="14 11"/>`;
+  return s;
+}
+
+function moon() {
+  const m = BLUE ? ['#fff9e0', '#ffeaa0', '#f6d36b'] : ['#fffbe6', '#ffeb98', '#f7d266'];
+  return `
+  <circle r="${MR}" fill="url(#moonGrad)" stroke="${m[2]}" stroke-width="4"/>
+  <circle cx="-95" cy="-60" r="34" fill="${m[2]}" opacity=".28"/>
+  <circle cx="110" cy="-95" r="22" fill="${m[2]}" opacity=".25"/>
+  <circle cx="125" cy="75" r="30" fill="${m[2]}" opacity=".22"/>
+  <circle cx="-120" cy="95" r="18" fill="${m[2]}" opacity=".25"/>
+  <circle cx="-30" cy="-150" r="14" fill="${m[2]}" opacity=".22"/>
+  <path d="M-150,-90 A ${MR - 30} ${MR - 30} 0 0 1 -60,-175" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" opacity=".7"/>
+  <!-- 顔 -->
+  <g id="moonFace" transform="translate(0,25)">
+    <path d="M-78,-10 Q -58,-30 -38,-10" fill="none" stroke="#7a5a52" stroke-width="7" stroke-linecap="round"/>
+    <path d="M38,-10 Q 58,-30 78,-10" fill="none" stroke="#7a5a52" stroke-width="7" stroke-linecap="round"/>
+    <path d="M-80,-14 l-12,-6 M80,-14 l12,-6" stroke="#7a5a52" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="-88" cy="28" rx="30" ry="17" fill="${C.pink}" opacity=".7"/>
+    <ellipse cx="88" cy="28" rx="30" ry="17" fill="${C.pink}" opacity=".7"/>
+    ${[-100, -88, -76, 76, 88, 100].map(x => `<line x1="${x}" y1="22" x2="${x - 5}" y2="34" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>`).join('')}
+    <path d="M-18,18 Q -9,30 0,18 Q 9,30 18,18" fill="none" stroke="#7a5a52" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- 月のリボン -->
+  <g transform="translate(-140,-150) rotate(-28) scale(1.5)">${puffyBow(C.pink, C.pinkLine)}</g>`;
+}
+
+// ---------- 黒猫 (月のてっぺんに座る) ----------
+function cat() {
+  return `
+  <g id="catTail" transform="translate(48,40)">
+    <path d="M0,0 C 40,10 70,-10 72,-50 C 74,-80 58,-95 44,-88" fill="none" stroke="${C.cat}" stroke-width="20" stroke-linecap="round"/>
+    <g transform="translate(46,-60) rotate(20) scale(.5)">${puffyBow(C.pink, C.pinkLine)}</g>
+  </g>
+  <ellipse cx="0" cy="22" rx="58" ry="50" fill="${C.cat}"/>
+  <ellipse cx="-24" cy="66" rx="20" ry="12" fill="${C.cat}"/>
+  <ellipse cx="24" cy="66" rx="20" ry="12" fill="${C.cat}"/>
+  <ellipse cx="-24" cy="68" rx="9" ry="5" fill="${C.light}" opacity=".6"/>
+  <ellipse cx="24" cy="68" rx="9" ry="5" fill="${C.light}" opacity=".6"/>
+  <g id="catHead">
+    <path d="M-52,-48 L-58,-112 L-14,-78 Z" fill="${C.cat}" stroke="${C.cat}" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M52,-48 L58,-112 L14,-78 Z" fill="${C.cat}" stroke="${C.cat}" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M-44,-62 L-50,-98 L-24,-78 Z" fill="${C.pink}"/>
+    <path d="M44,-62 L50,-98 L24,-78 Z" fill="${C.pink}"/>
+    <ellipse cx="0" cy="-44" rx="66" ry="56" fill="${C.cat}"/>
+    <path d="M-40,-82 Q -20,-94 0,-92" fill="none" stroke="${C.catHi}" stroke-width="6" stroke-linecap="round"/>
+    <g id="catEyes">
+      <g transform="translate(-26,-46)"><ellipse rx="15" ry="18" fill="${SUB[0]}"/><ellipse rx="8" ry="13" fill="#3a2a30"/><circle cx="4" cy="-7" r="5" fill="#fff"/><circle cx="-4" cy="5" r="2.2" fill="#fff"/></g>
+      <g transform="translate(26,-46)"><ellipse rx="15" ry="18" fill="${SUB[0]}"/><ellipse rx="8" ry="13" fill="#3a2a30"/><circle cx="4" cy="-7" r="5" fill="#fff"/><circle cx="-4" cy="5" r="2.2" fill="#fff"/></g>
+    </g>
+    <g id="catBlink" opacity="0">
+      <path d="M-40,-46 Q -26,-34 -12,-46 M12,-46 Q 26,-34 40,-46" fill="none" stroke="${SUB[0]}" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <ellipse cx="-48" cy="-20" rx="14" ry="8" fill="${C.pink}" opacity=".75"/>
+    <ellipse cx="48" cy="-20" rx="14" ry="8" fill="${C.pink}" opacity=".75"/>
+    <path d="M-6,-26 L6,-26 L0,-20 Z" fill="${C.pink}" stroke="${C.pink}" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M-10,-14 Q -5,-9 0,-15 Q 5,-9 10,-14" fill="none" stroke="${C.light}" stroke-width="3" stroke-linecap="round"/>
+    <path d="M-38,-26 L-78,-32 M-38,-18 L-76,-14 M38,-26 L78,-32 M38,-18 L76,-14" stroke="${C.light}" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
+  </g>
+  <!-- 首輪 -->
+  <path d="M-46,4 Q 0,22 46,4" fill="none" stroke="${C.pink}" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="0" cy="22" r="10" fill="${SUB[0]}" stroke="${SUB[1]}" stroke-width="2.5"/>
+  <line x1="-6" y1="24" x2="6" y2="24" stroke="${SUB[1]}" stroke-width="2"/>`;
+}
+
+// ---------- へび (月の下側にくるん) ----------
+function snakeBody() {
+  // 月の下をぐるっと回る弧
+  const R = MR + 18;
+  const pt = a => [(R * Math.cos(a)).toFixed(1), (R * Math.sin(a)).toFixed(1)];
+  const a0 = Math.PI * .22, a1 = Math.PI * .92;
+  const [x0, y0] = pt(a0), [x1, y1] = pt(a1);
+  const body = `M${x0},${y0} A ${R} ${R} 0 0 1 ${x1},${y1}`;
+  const bodyColor = BLUE ? C.blue : '#c9ecf7', bodyLine = BLUE ? C.blueDeep : '#93cfe6';
+  return { body, bodyColor, bodyLine, x0, y0, x1, y1 };
+}
+function snake() {
+  const { body, bodyColor, bodyLine, x0, y0, x1, y1 } = snakeBody();
+  return `
+  <g id="snakeTail" transform="translate(${x0},${y0})">
+    <path d="M0,0 C 26,-24 48,-30 66,-22 C 78,-16 76,-4 66,-6" fill="none" stroke="${bodyLine}" stroke-width="30" stroke-linecap="round"/>
+    <path d="M0,0 C 26,-24 48,-30 66,-22 C 78,-16 76,-4 66,-6" fill="none" stroke="${bodyColor}" stroke-width="24" stroke-linecap="round"/>
+    <path d="M30,-20 C 44,-26 56,-26 66,-20" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+  </g>
+  <path d="${body}" fill="none" stroke="${bodyLine}" stroke-width="50" stroke-linecap="round"/>
+  <path d="${body}" fill="none" stroke="${bodyColor}" stroke-width="44" stroke-linecap="round"/>
+  <path d="${body}" fill="none" stroke="${C.pink}" stroke-width="12" stroke-dasharray="0 34" stroke-linecap="round"/>
+  <path d="${body}" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="14 20" stroke-dashoffset="-10" stroke-linecap="round" opacity=".75" transform="translate(0,-8) scale(1)"/>
+  <g transform="translate(${x1},${y1})">
+    <path d="M0,0 C -16,-30 -30,-60 -22,-96" fill="none" stroke="${bodyLine}" stroke-width="48" stroke-linecap="round"/>
+    <path d="M0,0 C -16,-30 -30,-60 -22,-96" fill="none" stroke="${bodyColor}" stroke-width="42" stroke-linecap="round"/>
+    <path d="M-6,-20 C -14,-40 -20,-60 -16,-84" fill="none" stroke="${C.pink}" stroke-width="12" stroke-dasharray="0 30" stroke-linecap="round"/>
+    <g id="snakeHead" transform="translate(-22,-110)">
+      <g id="tongue" transform="translate(-50,18)">
+        <path d="M0,0 L-30,0 M-30,0 l-10,-7 M-30,0 l-10,7" fill="none" stroke="${C.pinkLine}" stroke-width="5" stroke-linecap="round"/>
+      </g>
+      <ellipse cx="-6" cy="0" rx="58" ry="44" fill="${bodyColor}" stroke="${bodyLine}" stroke-width="4"/>
+      <path d="M-40,-24 Q -20,-40 4,-38" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+      <g id="snakeEyes">
+        <g transform="translate(-30,-4)"><ellipse rx="11" ry="13" fill="#3a2a30"/><circle cx="3" cy="-5" r="4.5" fill="#fff"/><circle cx="-3" cy="4" r="2" fill="#fff"/></g>
+        <g transform="translate(14,-4)"><ellipse rx="11" ry="13" fill="#3a2a30"/><circle cx="3" cy="-5" r="4.5" fill="#fff"/><circle cx="-3" cy="4" r="2" fill="#fff"/></g>
+      </g>
+      <g id="snakeBlink" opacity="0">
+        <path d="M-41,-4 Q -30,6 -19,-4 M3,-4 Q 14,6 25,-4" fill="none" stroke="#3a2a30" stroke-width="4.5" stroke-linecap="round"/>
+      </g>
+      <ellipse cx="-46" cy="14" rx="11" ry="7" fill="${C.pink}" opacity=".8"/>
+      <ellipse cx="32" cy="14" rx="11" ry="7" fill="${C.pink}" opacity=".8"/>
+      <path d="M-16,16 Q -10,22 -4,16" fill="none" stroke="#3a2a30" stroke-width="3" stroke-linecap="round"/>
+      <g transform="translate(26,-38) rotate(22) scale(.85)">${puffyBow(C.pink, C.pinkLine)}</g>
+    </g>
+  </g>`;
+}
+
+// ---------- ふわふわ浮かぶもの ----------
+const floaters = [];
+for (let i = 0; i < 30; i++) {
+  let x;
+  do { x = 60 + rnd() * (W - 120); } while (Math.abs(x - MX) < 300 && rnd() < .7);
+  floaters.push({
+    x, phase: rnd(), cycles: 1 + Math.floor(rnd() * 2), amp: 14 + rnd() * 26,
+    swayN: 1 + Math.floor(rnd() * 3), rotN: 1 + Math.floor(rnd() * 2),
+    s: .35 + rnd() * .45, type: Math.floor(rnd() * 4),
+  });
+}
+function floaterSvg(d) {
+  if (d.type === 0) return `<path d="${HEART}" fill="${C.pink}" stroke="#fff" stroke-width="4"/>`;
+  if (d.type === 1) return `<path d="${STAR(34)}" fill="${SUB[0]}" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>`;
+  if (d.type === 2) return `<path d="${HEART}" fill="${BLUE ? C.blue : C.yellowPale}" stroke="#fff" stroke-width="4"/>`;
+  return `<g transform="scale(1.3)">${puffyBow(C.light, C.pinkDeep)}</g>`;
+}
+// 月のまわりのキラキラ
+const sparkles = [];
+for (let i = 0; i < 12; i++) {
+  const a = i / 12 * TAU + .2, r = MR + 120 + (i % 3) * 30;
+  sparkles.push({ x: MX + r * Math.cos(a) * 1.25, y: MY + r * Math.sin(a) * .95, k: i });
+}
+const SPARK = 'M0,-18 C 2,-4 4,-2 18,0 C 4,2 2,4 0,18 C -2,4 -4,2 -18,0 C -4,-2 -2,-4 0,-18 Z';
+
+document.getElementById('root').innerHTML = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+  <defs>
+    <pattern id="gingham" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="${C.pale}"/>
+      <rect width="8" height="16" fill="${C.pink}" opacity=".45"/>
+      <rect width="16" height="8" fill="${C.pink}" opacity=".45"/>
+    </pattern>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="${C.pink}"/>
+      <circle cx="3.5" cy="3.5" r="2.2" fill="#fff"/><circle cx="10.5" cy="10.5" r="2.2" fill="#fff"/>
+    </pattern>
+    <pattern id="subDots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="${SUB[0]}"/>
+      <circle cx="3.5" cy="3.5" r="2.2" fill="#fff"/><circle cx="10.5" cy="10.5" r="2.2" fill="#fff"/>
+    </pattern>
+    <pattern id="stripe" width="9" height="9" patternUnits="userSpaceOnUse">
+      <rect width="9" height="9" fill="${C.pale}"/><rect width="4" height="9" fill="${C.pink}" opacity=".6"/>
+    </pattern>
+    <pattern id="solid" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="${C.pink}"/></pattern>
+    <pattern id="lacePaper" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="15" cy="15" r="2" fill="${C.light}" opacity=".55"/>
+      <circle cx="0" cy="0" r="1.4" fill="${C.light}" opacity=".4"/><circle cx="30" cy="30" r="1.4" fill="${C.light}" opacity=".4"/>
+    </pattern>
+    <pattern id="bDots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="5" cy="5" r="2" fill="#fff" opacity=".7"/><circle cx="16" cy="16" r="2" fill="#fff" opacity=".7"/>
+    </pattern>
+    <pattern id="bandDots" width="18" height="18" patternUnits="userSpaceOnUse">
+      <circle cx="9" cy="9" r="2.2" fill="#fff" opacity=".8"/>
+    </pattern>
+    <radialGradient id="moonGrad" cx=".42" cy=".38" r=".7">
+      <stop offset="0" stop-color="${BLUE ? '#fffdf0' : '#fffdf0'}"/>
+      <stop offset=".55" stop-color="${BLUE ? '#fff1b8' : '#fff0a8'}"/>
+      <stop offset="1" stop-color="${BLUE ? '#ffe18a' : '#ffdf80'}"/>
+    </radialGradient>
+    <radialGradient id="glow">
+      <stop offset=".6" stop-color="${SUB[0]}" stop-opacity=".55"/>
+      <stop offset="1" stop-color="${SUB[0]}" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="${W}" height="${H}" fill="${C.bg}"/>
+  ${colSvg}
+  <g id="floaters">${floaters.map(d => `<g class="fl">${floaterSvg(d)}</g>`).join('')}</g>
+  <g transform="translate(${MX},${MY})">
+    <g id="moonFloat">
+      <g id="doily">${doily()}</g>
+      ${moon()}
+      <g transform="translate(70,${-MR - 52})"><g id="cat">${cat()}</g></g>
+      ${snake()}
+    </g>
+  </g>
+  ${sparkles.map(s => `<g transform="translate(${s.x.toFixed(1)},${s.y.toFixed(1)})"><path class="spk" d="${SPARK}" fill="${s.k % 3 === 0 ? '#fff' : s.k % 3 === 1 ? SUB[0] : C.pink}"/></g>`).join('')}
+  <g id="topBand">${band(true)}</g>
+  <g transform="translate(0,${H - 90})"><g id="botBand">${band(false)}</g></g>
+</svg>`;
+
+const $ = id => document.getElementById(id);
+const colEls = [...document.querySelectorAll('.col')];
+const sways = [...document.querySelectorAll('.sway')];
+const fls = [...document.querySelectorAll('.fl')];
+const spks = [...document.querySelectorAll('.spk')];
+const blinkAt = (p, centers, w = .012) => centers.some(c => Math.abs(((p - c + 1.5) % 1) - .5) < w);
+
+function renderAt(t) {
+  const p = ((t % T) + T) % T / T; // 0..1 のループ位相
+  for (const c of colEls) {
+    const y = ((+c.dataset.dir * p * TILE + +c.dataset.off) % TILE + TILE) % TILE;
+    c.setAttribute('transform', `translate(${c.dataset.x},${(y - TILE).toFixed(2)})`);
+  }
+  for (const s of sways) {
+    const k = +s.dataset.k;
+    const a = 6 * Math.sin(TAU * (2 * p + k * .17));
+    const sc = 1 + .04 * Math.sin(TAU * (4 * p + k * .23));
+    s.setAttribute('transform', `rotate(${a.toFixed(2)}) scale(${sc.toFixed(3)})`);
+  }
+  fls.forEach((f, n) => {
+    const d = floaters[n];
+    const q = (d.cycles * p + d.phase) % 1;
+    const y = H + 60 - q * (H + 120);
+    const x = d.x + d.amp * Math.sin(TAU * (d.swayN * p + d.phase));
+    const rot = 18 * Math.sin(TAU * (d.rotN * p + d.phase * 2));
+    const op = Math.min(1, q * 6, (1 - q) * 6) * .85;
+    f.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${rot.toFixed(1)}) scale(${d.s.toFixed(2)})`);
+    f.setAttribute('opacity', op.toFixed(2));
+  });
+  spks.forEach((s, k) => {
+    const v = .5 + .5 * Math.sin(TAU * (3 * p + k * .29));
+    s.setAttribute('transform', `scale(${(.4 + .8 * v).toFixed(3)}) rotate(${(45 * v).toFixed(1)})`);
+    s.setAttribute('opacity', (.35 + .65 * v).toFixed(2));
+  });
+  // 月ふわふわ・レースがゆっくり回る
+  $('moonFloat').setAttribute('transform', `translate(0,${(10 * Math.sin(TAU * 2 * p)).toFixed(2)}) rotate(${(1.5 * Math.sin(TAU * p)).toFixed(2)})`);
+  $('doily').setAttribute('transform', `rotate(${(p * 360 / 4).toFixed(2)})`);
+  $('moonFace').setAttribute('transform', `translate(0,${(25 + 3 * Math.sin(TAU * 4 * p)).toFixed(2)})`);
+  // 黒猫: しっぽゆらゆら・頭かしげ・まばたき
+  $('catTail').setAttribute('transform', `translate(48,40) rotate(${(14 * Math.sin(TAU * 3 * p)).toFixed(2)})`);
+  $('catHead').setAttribute('transform', `rotate(${(6 * Math.sin(TAU * 2 * p + .6)).toFixed(2)},0,-20)`);
+  const cb = blinkAt(p, [.18, .23, .62]);
+  $('catEyes').setAttribute('opacity', cb ? 0 : 1);
+  $('catBlink').setAttribute('opacity', cb ? 1 : 0);
+  // へび: 頭ゆらゆら・舌ちょろっ・しっぽぴこぴこ・まばたき
+  $('snakeHead').setAttribute('transform', `translate(${(-22 + 6 * Math.sin(TAU * 2 * p)).toFixed(2)},${(-110 + 5 * Math.sin(TAU * 4 * p)).toFixed(2)}) rotate(${(8 * Math.sin(TAU * 2 * p + 1)).toFixed(2)})`);
+  const tq = (p * 4) % 1; // 1ループに4回
+  const tg = tq < .25 ? Math.sin(Math.PI * tq / .25) : 0;
+  $('tongue').setAttribute('transform', `translate(${(-44 + 14 * (1 - tg)).toFixed(1)},18) scale(${tg.toFixed(3)},1)`);
+  $('tongue').setAttribute('opacity', tg > .02 ? 1 : 0);
+  $('snakeTail').setAttribute('transform', `translate(${snakeBody().x0},${snakeBody().y0}) rotate(${(12 * Math.sin(TAU * 4 * p)).toFixed(2)})`);
+  const sb = blinkAt(p, [.42, .85]);
+  $('snakeEyes').setAttribute('opacity', sb ? 0 : 1);
+  $('snakeBlink').setAttribute('opacity', sb ? 1 : 0);
+  // フリル帯が左右に流れる
+  $('topBand').setAttribute('transform', `translate(${(-p * UNIT * 4).toFixed(2)},0)`);
+  $('botBand').setAttribute('transform', `translate(${(p * UNIT * 4 - UNIT * 4).toFixed(2)},0)`);
+}
+
+const m = location.hash.match(/t=([\d.]+)/);
+window.renderAt = renderAt;
+if (m) renderAt(+m[1]);
+else {
+  const t0 = performance.now();
+  const loop = now => { renderAt((now - t0) / 1000); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
