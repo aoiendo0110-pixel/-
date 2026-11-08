@@ -1,0 +1,228 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>メルト タイポ</title>
+<style>@font-face{font-family:"Mochiy Pop One";src:url(fonts/MochiyPopOne.ttf)}@font-face{font-family:"Hachi Maru Pop";src:url(fonts/HachiMaruPop.ttf)}
+html,body{margin:0;background:#00ff00;overflow:hidden}svg{display:block}</style></head><body>
+<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 -->
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <path id="heartP" d="M0 14 C-28 -6 -15 -32 0 -15 C15 -32 28 -6 0 14Z"/>
+ <path id="sparkP" d="M0 -22 Q3 -3 22 0 Q3 3 0 22 Q-3 3 -22 0 Q-3 -3 0 -22Z"/>
+ <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="3.6" fill="#fff" opacity=".55"/><circle cx="19" cy="19" r="3.6" fill="#fff" opacity=".55"/></pattern>
+ <pattern id="dotsS" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="#fff" opacity=".5"/><circle cx="12" cy="12" r="2.2" fill="#fff" opacity=".5"/></pattern>
+ <pattern id="ging" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#fff0f6"/><rect width="20" height="40" fill="#ffc2da" opacity=".5"/><rect width="40" height="20" fill="#ffc2da" opacity=".5"/></pattern>
+ <pattern id="gingB" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#eef9ff"/><rect width="12" height="24" fill="#a9dcfa" opacity=".55"/><rect width="24" height="12" fill="#a9dcfa" opacity=".55"/></pattern>
+ <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd6e7"/><stop offset=".55" stop-color="#ffa6cb"/><stop offset="1" stop-color="#ff8dbd"/></linearGradient>
+ <linearGradient id="gBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2f6ff"/><stop offset=".55" stop-color="#a9e0ff"/><stop offset="1" stop-color="#86cff9"/></linearGradient>
+</defs>
+<g id="stage"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const stage=document.getElementById('stage'), defs=document.querySelector('defs');
+const F1="Mochiy Pop One", F2="Hachi Maru Pop";
+const PAL={
+ pink:{shadow:'#d95b91',outer:'#f27aaa',inner:'#f06d9f',fill:'url(#gPink)',drip:'#ff94c1',dots:'url(#dots)'},
+ blue:{shadow:'#4c9ad3',outer:'#69b6ea',inner:'#56aee6',fill:'url(#gBlue)',drip:'#8ed2fa',dots:'url(#dots)'},
+};
+const clamp=x=>Math.max(0,Math.min(1,x));
+const back=(x,c=2.2)=>1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);
+const eOut=x=>1-Math.pow(1-x,3);
+const TAU=Math.PI*2;
+let uid=0;
+
+// ---- 字形の下端をキャンバスで測って、垂れる位置を自動で決める ----
+function findDrips(ch,font,size,n,minLen,maxLen,seed){
+ const W=Math.ceil(size*1.6),H=Math.ceil(size*1.6),cv=document.createElement('canvas');cv.width=W;cv.height=H;
+ const c=cv.getContext('2d');c.font=`${size}px "${font}"`;c.textAlign='center';c.textBaseline='alphabetic';
+ const ox=W/2,oy=H*0.8;c.fillText(ch,ox,oy);
+ const d=c.getImageData(0,0,W,H).data,a=(x,y)=>d[(y*W+x)*4+3];
+ const bottom=new Array(W).fill(-1);
+ for(let x=0;x<W;x++)for(let y=H-1;y>=0;y--)if(a(x,y)>128){bottom[x]=y;break;}
+ const maxB=Math.max(...bottom);
+ const cols=[...bottom.keys()].filter(x=>bottom[x]>=0&&bottom[x]>maxB-size*0.32).sort((p,q)=>bottom[q]-bottom[p]);
+ const picked=[];
+ for(const x of cols){if(picked.length>=n)break;if(picked.every(p=>Math.abs(p-x)>size*0.2))picked.push(x);}
+ let r=seed;const rnd=()=>{r=(r*9301+49297)%233280;return r/233280;};
+ return picked.map((x,i)=>{
+  const yb=bottom[x],yy=Math.max(0,yb-Math.round(size*0.04));
+  let l=x,rr=x;while(l>0&&a(l-1,yy)>128)l--;while(rr<W-1&&a(rr+1,yy)>128)rr++;
+  const cx=(l+rr)/2, w=Math.max(size*0.055,Math.min(size*0.12,(rr-l)*0.7));
+  return {cx:cx-ox,y0:yb-oy-w*0.7,w,L:size*(minLen+(maxLen-minLen)*rnd()),P:2.3+rnd()*1.4,ph:rnd()};
+ });
+}
+
+// ---- ぷっくり重ねフチ文字（垂れつき） ----
+function puffy(ch,font,size,pal,opt){
+ const g=el('g',{});
+ const drop=el('g',{},g);           // 落ちるしずく（後ろ）
+ const body=el('g',{},g);
+ const o=opt.o, sh=opt.shadow;
+ const base={'font-family':font,'font-size':size,'text-anchor':'middle','stroke-linejoin':'round','stroke-linecap':'round'};
+ const drips=(opt.drips||[]).map(d=>({...d,parts:[]}));
+ const layers=[
+  {paint:pal.shadow,o:o.outer,dx:sh[0],dy:sh[1]},
+  {paint:pal.outer,o:o.outer},
+  {paint:'#fff',o:o.white},
+  {paint:pal.inner,o:o.inner},
+  {paint:pal.fill,dripPaint:pal.drip,o:o.fill||0},
+  {paint:pal.dots,o:0,dots:true},
+ ];
+ for(const Ly of layers){
+  const lg=el('g',Ly.dx?{transform:`translate(${Ly.dx} ${Ly.dy})`}:{},body);
+  const t=el('text',{...base,fill:Ly.paint},lg);t.textContent=ch;
+  if(Ly.o>0){t.setAttribute('stroke',Ly.paint);t.setAttribute('stroke-width',Ly.o*2);}
+  const dp=Ly.dripPaint||Ly.paint;
+  drips.forEach(d=>{d.parts.push({o:Ly.o,rect:el('rect',{fill:dp},lg),circ:el('circle',{fill:dp},lg)});});
+ }
+ // つやハイライト（文字の形で切り抜き）
+ const id='clip'+(uid++);const cp=el('clipPath',{id},defs);const ct=el('text',base,cp);ct.textContent=ch;
+ const shine=el('g',{'clip-path':`url(#${id})`},body);
+ el('ellipse',{cx:-size*0.12,cy:-size*0.62,rx:size*0.42,ry:size*0.1,fill:'#fff',opacity:.6,transform:`rotate(-18 ${-size*0.12} ${-size*0.62})`},shine);
+ drips.forEach(d=>{d.drop=[];
+  [[pal.outer,o.outer],['#fff',o.white],[pal.inner,o.inner],[pal.drip,0]].forEach(([f,oo])=>d.drop.push({o:oo,c:el('circle',{fill:f,r:0},drop)}));
+  d.hl=el('ellipse',{fill:'#fff',opacity:.75},body);});
+ return {g,drips,size};
+}
+function updateDrips(obj,t,t0){
+ const grow=eOut(clamp((t-t0)/1.3));
+ obj.drips.forEach(d=>{
+  const u=((t-t0)/d.P+d.ph)%1, active=t>t0+0.8;
+  const swell=active&&u<0.78?u/0.78:0;
+  const rec=active&&u>=0.78?Math.sin(Math.PI*clamp((u-0.78)/0.22)):0;
+  const L=d.L*grow*(1-0.16*rec)+Math.sin(TAU*t*0.6+d.ph*6)*d.w*0.15*grow;
+  const bulb=d.w*(0.62+0.3*swell)*grow;
+  const tip=d.y0+L;
+  d.parts.forEach(p=>{const hw=d.w/2*grow+p.o;
+   p.rect.setAttribute('x',d.cx-hw);p.rect.setAttribute('y',d.y0);p.rect.setAttribute('width',Math.max(0,hw*2));p.rect.setAttribute('height',Math.max(0,L));
+   p.rect.setAttribute('rx',hw);
+   p.circ.setAttribute('cx',d.cx);p.circ.setAttribute('cy',tip);p.circ.setAttribute('r',grow>0?bulb+p.o:0);});
+  d.hl.setAttribute('cx',d.cx-bulb*0.35);d.hl.setAttribute('cy',tip-bulb*0.3);d.hl.setAttribute('rx',bulb*0.28*(grow>0));d.hl.setAttribute('ry',bulb*0.18*(grow>0));
+  // しずくがぽたっ
+  const fall=active&&u>=0.78?(u-0.78)*d.P:-1;
+  d.drop.forEach(p=>{
+   if(fall<0||fall>0.7){p.c.setAttribute('r',0);return;}
+   const y=tip+bulb*0.6+900*fall*fall+120*fall, s=1-fall/0.7;
+   p.c.setAttribute('cx',d.cx);p.c.setAttribute('cy',y);p.c.setAttribute('r',d.w*0.75*s+p.o*Math.min(1,s*2));});
+ });
+}
+
+// ---- 小物 ----
+function heart(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':3,transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-9*sc,cy:-14*sc,rx:4.5*sc,ry:2.6*sc,fill:'#fff',transform:`rotate(-35 ${-9*sc} ${-14*sc})`},g);return g;}
+function spark(fill,sc){const g=el('g',{});
+ el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':9,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#sparkP',fill,transform:`scale(${sc})`},g);return g;}
+function bow(main,line,sc,pat){const g=el('g',{transform:`scale(${sc})`});
+ const loopL='M0 0 C-30 -50 -95 -48 -92 -5 C-90 35 -35 30 0 0Z', loopR='M0 0 C30 -50 95 -48 92 -5 C90 35 35 30 0 0Z';
+ const tails='M-8 6 L-40 78 L-22 70 L-14 90 L6 10Z M8 6 L40 78 L22 70 L14 90 L-6 10Z';
+ [[tails],[loopL],[loopR]].forEach(([d])=>{el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':16,'stroke-linejoin':'round'},g);});
+ [[tails],[loopL],[loopR]].forEach(([d])=>{el('path',{d,fill:main,stroke:line,'stroke-width':4,'stroke-linejoin':'round'},g);el('path',{d,fill:pat},g);});
+ el('path',{d:'M-60 -10 C-50 -22 -30 -20 -18 -8',fill:'none',stroke:line,'stroke-width':3,'stroke-linecap':'round',opacity:.7},g);
+ el('path',{d:'M60 -10 C50 -22 30 -20 18 -8',fill:'none',stroke:line,'stroke-width':3,'stroke-linecap':'round',opacity:.7},g);
+ el('rect',{x:-17,y:-17,width:34,height:34,rx:12,fill:main,stroke:line,'stroke-width':4},g);
+ el('ellipse',{cx:-5,cy:-7,rx:6,ry:3.5,fill:'#fff'},g);
+ return g;}
+
+// ===== レース＆ギンガムのリボン帯 =====
+const BAND={l:225,r:1695,cy:826,h:168};
+const band=el('g',{},stage);
+(()=>{const T=BAND.cy-BAND.h/2,B=BAND.cy+BAND.h/2,L=BAND.l,R=BAND.r;
+ // リボンの端（水色・V字切れ込み）
+ const tailL=`M${L+40} ${T+18} L${L-110} ${T+8} L${L-70} ${BAND.cy+6} L${L-110} ${B+4} L${L+40} ${B-10}Z`;
+ const tailR=`M${R-40} ${T+18} L${R+110} ${T+8} L${R+70} ${BAND.cy+6} L${R+110} ${B+4} L${R-40} ${B-10}Z`;
+ [tailL,tailR].forEach(d=>{el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':16,'stroke-linejoin':'round'},band);
+  el('path',{d,fill:'#9fd8f8',stroke:'#58ade4','stroke-width':4,'stroke-linejoin':'round'},band);el('path',{d,fill:'url(#gingB)',opacity:.7},band);});
+ // レースのスカラップ
+ const lace=el('g',{},band);
+ const step=30;
+ for(let x=L+8;x<=R-8;x+=step){
+  el('circle',{cx:x,cy:T-2,r:21,fill:'#f48fb8'},lace);el('circle',{cx:x,cy:B+2,r:21,fill:'#f48fb8'},lace);}
+ for(let x=L+8;x<=R-8;x+=step){
+  el('circle',{cx:x,cy:T-2,r:17.5,fill:'#fff'},lace);el('circle',{cx:x,cy:B+2,r:17.5,fill:'#fff'},lace);}
+ for(let x=L+8;x<=R-8;x+=step){
+  el('circle',{cx:x,cy:T-9,r:4.2,fill:'#ffc1da'},lace);el('circle',{cx:x,cy:B+9,r:4.2,fill:'#ffc1da'},lace);
+  el('circle',{cx:x+step/2,cy:T+2,r:2.4,fill:'#ffc1da'},lace);el('circle',{cx:x+step/2,cy:B-2,r:2.4,fill:'#ffc1da'},lace);}
+ // 帯本体
+ el('rect',{x:L,y:T+6,width:R-L,height:B-T-12,fill:'url(#ging)',stroke:'#f48fb8','stroke-width':4},band);
+ el('rect',{x:L+12,y:T+16,width:R-L-24,height:B-T-32,fill:'none',stroke:'#fff','stroke-width':4,'stroke-dasharray':'14 10','stroke-linecap':'round'},band);
+})();
+const bowL=bow('#ffb3d1','#ef78a8',0.7,'url(#dotsS)'),bowR=bow('#ffb3d1','#ef78a8',0.7,'url(#dotsS)');
+stage.appendChild(bowL);stage.appendChild(bowR);
+
+// ===== 溶けてしまいそう =====
+const SUB=[...'溶けてしまいそう'];
+const subObjs=[];
+// ===== メルト =====
+const MAIN=[['メ',585,452,-7,'pink'],['ル',962,432,3,'blue'],['ト',1340,458,7,'pink']];
+const mainObjs=[];
+const bowTop=bow('#a9defb','#4fa6e0',1.05,'url(#dotsS)');
+const floaters=[];
+
+function build(){
+ MAIN.forEach(([ch,x,y,r,col],i)=>{
+  const drips=findDrips(ch,F1,340,i===1?3:2,0.28,0.62,11+i*7);
+  const o=puffy(ch,F1,340,PAL[col],{o:{outer:30,white:23,inner:7},shadow:[9,14],drips});
+  stage.appendChild(o.g);mainObjs.push({...o,x,y,r,t0:0.1+i*0.17,ph:i*1.3});});
+ const sizes=[192,160,160,166,160,166,160,166];
+ let x=384;
+ SUB.forEach((ch,i)=>{
+  const s=sizes[i],col=i%2?'blue':'pink';
+  const drips=[0,2,5,7].includes(i)?findDrips(ch,F2,s,1,0.22,0.38,5+i*3):[];
+  const o=puffy(ch,F2,s,PAL[col],{o:{outer:18,white:14,inner:6,fill:3},shadow:[6,9],drips});
+  stage.appendChild(o.g);
+  const y=BAND.cy+58+Math.sin(i*0.95)*12;
+  subObjs.push({...o,x,y,r:(i%2?5:-5),t0:1.55+i*0.11,ph:i*0.8});
+  x+=i===0?176:163;});
+ stage.appendChild(bowTop);
+ const H=[[250,240,'#ffb3d1','#ef78a8',1.3],[1690,230,'#a9defb','#4fa6e0',1.2],[1745,560,'#ffb3d1','#ef78a8',1.0],[175,600,'#a9defb','#4fa6e0',1.0],[1150,110,'#ffb3d1','#ef78a8',0.8],[760,105,'#a9defb','#4fa6e0',0.75]];
+ H.forEach(([x,y,f,l,s],i)=>{const g=heart(f,l,s);stage.appendChild(g);floaters.push({g,x,y,s:1,t0:2.0+i*0.12,ph:i*1.1,rot:i%2?14:-14,kind:'h'});});
+ const S=[[420,130,'#bfe8ff',1.2],[1500,120,'#ffd1e4',1.1],[1600,410,'#fff',0.9],[330,420,'#ffd1e4',0.9],[1830,700,'#bfe8ff',0.8],[95,780,'#ffd1e4',0.8],[1080,640,'#fff',0.7],[820,650,'#bfe8ff',0.7]];
+ S.forEach(([x,y,f,s],i)=>{const g=spark(f,s);stage.appendChild(g);floaters.push({g,x,y,s,t0:1.9+i*0.1,ph:i*0.9,kind:'s'});});
+}
+
+window.render=function(t){
+ // メルト：上からぽよんと落ちて、ゆるく溶けるようにむにゅむにゅ
+ mainObjs.forEach(o=>{const p=clamp((t-o.t0)/0.5);
+  if(p<=0){o.g.setAttribute('transform','translate(-9999 0)');return;}
+  const dy=-500*Math.pow(1-p,2);
+  const land=clamp((t-o.t0-0.5)/0.55);
+  const sq=land>0&&land<1?Math.sin(Math.PI*land)*(1-land*0.4):0;
+  const idle=clamp((t-o.t0-1.0)/0.6);
+  const m=Math.sin(TAU*t*0.45+o.ph)*idle;
+  const sx=1+0.14*sq+0.025*m, sy=1-0.16*sq-0.03*m;
+  const sk=Math.sin(TAU*t*0.3+o.ph)*2.2*idle;
+  o.g.setAttribute('transform',`translate(${o.x} ${o.y+dy}) rotate(${o.r}) skewX(${sk}) scale(${sx} ${sy})`);
+  updateDrips(o,t,o.t0+0.75);});
+ // リボン帯：すーっと開く
+ const bp=clamp((t-1.15)/0.55);
+ const bs=bp<=0?0.0001:back(bp,1.6);
+ band.style.visibility=bp>0?'visible':'hidden';
+ band.setAttribute('transform',`translate(960 ${BAND.cy}) scale(${bs} ${0.6+0.4*Math.min(1,bs)}) translate(-960 ${-BAND.cy})`);
+ [[bowL,BAND.l-12,-18],[bowR,BAND.r+12,18]].forEach(([g,x,r])=>{const p=clamp((t-1.6)/0.4);
+  g.setAttribute('transform',`translate(${x} ${BAND.cy-62+Math.sin(TAU*t*0.5)*4}) rotate(${r+Math.sin(TAU*t*0.6)*5}) scale(${p<=0?0.0001:back(p,3)*0.7})`);});
+ // 溶けてしまいそう：ぽんぽん出てきて、ゆらゆら溶けそう
+ subObjs.forEach(o=>{const p=clamp((t-o.t0)/0.4);
+  if(p<=0){o.g.setAttribute('transform','translate(-9999 0)');return;}
+  const s=back(p,2.6), idle=clamp((t-o.t0-0.4)/0.5);
+  const dy=Math.sin(TAU*t*0.55+o.ph)*7*idle;
+  const m=Math.sin(TAU*t*0.55+o.ph+1.2)*idle;
+  o.g.setAttribute('transform',`translate(${o.x} ${o.y+dy}) rotate(${o.r+(1-eOut(p))*-40+m*2}) scale(${s*(1+0.03*m)} ${s*(1-0.045*m)})`);
+  updateDrips(o,t,o.t0+0.5);});
+ // メの上のリボン
+ const rp=clamp((t-1.05)/0.45);
+ bowTop.setAttribute('transform',`translate(${470} ${205+Math.sin(TAU*t*0.45)*5}) rotate(${-22+Math.sin(TAU*t*0.6)*6}) scale(${(rp<=0?0.0001:back(rp,3))*1.05})`);
+ // ハート＆キラキラ
+ floaters.forEach(o=>{const p=clamp((t-o.t0)/0.4);const b=p<=0?0.0001:back(p,2.6);
+  if(o.kind==='h'){
+   o.g.setAttribute('transform',`translate(${o.x} ${o.y+Math.sin(TAU*t*0.5+o.ph)*12}) rotate(${o.rot+Math.sin(TAU*t*0.4+o.ph)*10}) scale(${b*(1+0.06*Math.sin(TAU*t*1.2+o.ph))})`);
+  }else{
+   const tw=0.6+0.4*Math.abs(Math.sin(TAU*t*0.6+o.ph));
+   o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${t*35+o.ph*20}) scale(${b*o.s*tw})`);}});
+};
+if(location.hash.includes('transparent')){document.body.style.background='transparent';}
+window.ready=Promise.all([document.fonts.load(`340px "${F1}"`,'メルト'),document.fonts.load(`150px "${F2}"`,'溶けてしまいそう')]).then(()=>document.fonts.ready).then(()=>{
+ build();const m=location.hash.match(/t=([\d.]+)/);render(m?parseFloat(m[1]):5);});
+</script></body></html>
