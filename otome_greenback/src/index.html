@@ -1,0 +1,412 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>乙女グリーンバック素材</title>
+<style>html,body{margin:0;background:#00ff00}canvas{display:block;width:100vw;height:auto}</style>
+</head><body>
+<!-- #m=<素材名>&t=<秒> でその瞬間を表示 / &transparent で背景なし -->
+<canvas id="c" width="1920" height="1080"></canvas>
+<script>
+const W = 1920, H = 1080;
+const GREEN = '#00ff00';
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const layer = mk(W, H), c = layer.getContext('2d');
+
+// 緑を含まない乙女パレット（キーイングで抜けないように）
+const P = {
+  pink: '#ff8fbf', hot: '#f2568e', rose: '#d63a74', pale: '#ffd1e3', baby: '#ffb8d2',
+  cream: '#fff5f9', white: '#ffffff', lav: '#d4b0f5', lavD: '#a77ad8', peach: '#ffb3a7',
+  pinkD: '#e66b9b', gold: '#ffe08a'
+};
+const TAU = Math.PI * 2;
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = {
+  out: x => 1 - Math.pow(1 - x, 3),
+  in: x => x * x * x,
+  inOut: x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2,
+  back: (x, s = 2.0) => 1 + (s + 1) * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2),
+  elastic: x => x <= 0 ? 0 : x >= 1 ? 1 : Math.pow(2, -9 * x) * Math.sin((x * 10 - 0.75) * (TAU / 3)) + 1,
+};
+function mk(w, h) { const k = document.createElement('canvas'); k.width = w; k.height = h; return k; }
+let seed = 1; const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+const pick = a => a[Math.floor(rnd() * a.length)];
+
+// ================= パーツ =================
+function heartPath(s) {
+  const p = new Path2D();
+  p.moveTo(0, -0.2 * s);
+  p.bezierCurveTo(-0.1 * s, -0.47 * s, -0.52 * s, -0.47 * s, -0.52 * s, -0.12 * s);
+  p.bezierCurveTo(-0.52 * s, 0.15 * s, -0.2 * s, 0.3 * s, 0, 0.47 * s);
+  p.bezierCurveTo(0.2 * s, 0.3 * s, 0.52 * s, 0.15 * s, 0.52 * s, -0.12 * s);
+  p.bezierCurveTo(0.52 * s, -0.47 * s, 0.1 * s, -0.47 * s, 0, -0.2 * s);
+  p.closePath();
+  return p;
+}
+function heart(g, x, y, s, rot = 0, col = P.hot, outline = P.white) {
+  if (s < 1) return;
+  g.save(); g.translate(x, y); g.rotate(rot);
+  const p = heartPath(s);
+  if (outline) { g.lineJoin = 'round'; g.lineWidth = Math.max(3, s * 0.13); g.strokeStyle = outline; g.stroke(p); }
+  g.fillStyle = col; g.fill(p);
+  if (s > 22) {
+    g.fillStyle = P.white;
+    g.beginPath(); g.ellipse(-s * 0.25, -s * 0.17, s * 0.09, s * 0.055, -0.7, 0, TAU); g.fill();
+  }
+  g.restore();
+}
+function sparkle(g, x, y, r, col = P.white, edge = P.pink) {
+  if (r < 1) return;
+  g.save(); g.translate(x, y);
+  const p = new Path2D();
+  p.moveTo(0, -r); p.quadraticCurveTo(r * .12, -r * .12, r, 0); p.quadraticCurveTo(r * .12, r * .12, 0, r);
+  p.quadraticCurveTo(-r * .12, r * .12, -r, 0); p.quadraticCurveTo(-r * .12, -r * .12, 0, -r); p.closePath();
+  if (edge) { g.lineJoin = 'round'; g.lineWidth = Math.max(2, r * 0.22); g.strokeStyle = edge; g.stroke(p); }
+  g.fillStyle = col; g.fill(p);
+  g.restore();
+}
+
+// リボン（🎀型：ふっくらした輪・結び目・V字のしっぽ）
+function bow(g, x, y, s, rot = 0, col = P.pink, dark = P.hot, dots = true) {
+  if (s < 2) return;
+  const k = s;
+  const loop = sx => { const p = new Path2D();
+    p.moveTo(sx * -0.04 * k, -0.05 * k);
+    p.bezierCurveTo(sx * -0.22 * k, -0.42 * k, sx * -0.58 * k, -0.38 * k, sx * -0.53 * k, -0.04 * k);
+    p.bezierCurveTo(sx * -0.5 * k, 0.27 * k, sx * -0.22 * k, 0.23 * k, sx * -0.04 * k, 0.06 * k);
+    p.closePath(); return p; };
+  const fold = sx => { const p = new Path2D();
+    p.moveTo(sx * -0.06 * k, -0.03 * k);
+    p.bezierCurveTo(sx * -0.17 * k, -0.2 * k, sx * -0.33 * k, -0.15 * k, sx * -0.3 * k, -0.02 * k);
+    p.bezierCurveTo(sx * -0.27 * k, 0.09 * k, sx * -0.15 * k, 0.08 * k, sx * -0.06 * k, 0.04 * k);
+    p.closePath(); return p; };
+  const tail = sx => { const p = new Path2D();
+    p.moveTo(sx * -0.06 * k, 0.03 * k);
+    p.quadraticCurveTo(sx * -0.15 * k, 0.26 * k, sx * -0.31 * k, 0.5 * k);
+    p.lineTo(sx * -0.22 * k, 0.43 * k);
+    p.lineTo(sx * -0.12 * k, 0.55 * k);
+    p.quadraticCurveTo(sx * -0.03 * k, 0.3 * k, sx * 0.03 * k, 0.06 * k);
+    p.closePath(); return p; };
+  const knot = new Path2D(); knot.roundRect(-0.09 * k, -0.11 * k, 0.18 * k, 0.21 * k, 0.065 * k);
+  const tails = [tail(1), tail(-1)], loops = [loop(1), loop(-1)];
+
+  g.save(); g.translate(x, y); g.rotate(rot);
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  // 白フチ（ステッカー風・キーがきれいに抜ける）
+  g.strokeStyle = P.white; g.lineWidth = Math.max(4, k * 0.07);
+  [...tails, ...loops, knot].forEach(p => g.stroke(p));
+  g.fillStyle = dark; tails.forEach(p => g.fill(p));
+  g.fillStyle = col; loops.forEach(p => g.fill(p));
+  if (dots) {
+    g.fillStyle = P.white;
+    loops.forEach(p => { g.save(); g.clip(p);
+      for (let yy = -0.5; yy < 0.4; yy += 0.13) for (let xx = -0.6; xx < 0.6; xx += 0.13) {
+        const ox = (Math.round(yy / 0.13) % 2) * 0.065;
+        g.beginPath(); g.arc((xx + ox) * k, yy * k, k * 0.022, 0, TAU); g.fill();
+      }
+      g.restore(); });
+  }
+  g.fillStyle = dark; [fold(1), fold(-1)].forEach(p => g.fill(p));
+  g.strokeStyle = dark; g.lineWidth = Math.max(1.5, k * 0.014); loops.forEach(p => g.stroke(p));
+  g.fillStyle = col; g.fill(knot); g.stroke(knot);
+  g.fillStyle = P.white; g.beginPath(); g.ellipse(-0.03 * k, -0.05 * k, 0.025 * k, 0.04 * k, 0, 0, TAU); g.fill();
+  g.restore();
+}
+
+// レース（白レース＋上辺にサテンリボン）横長ストリップ。scallop は下向き
+function makeLace(L, h, trim = P.pink, both = false) {
+  const pad = 8, k = mk(L, h * (both ? 2 : 1) + pad * 2), g = k.getContext('2d');
+  const p = h * 0.5, bh = h * 0.5;
+  const draw = (oy, dir) => {
+    g.save(); g.translate(0, oy); g.scale(1, dir);
+    g.fillStyle = P.white;
+    g.fillRect(0, 0, L, bh);
+    for (let x = -p / 2; x < L + p; x += p) { g.beginPath(); g.arc(x + p / 2, bh, p / 2, 0, Math.PI); g.fill(); }
+    // 穴あけ
+    g.globalCompositeOperation = 'destination-out';
+    for (let x = -p / 2; x < L + p; x += p) {
+      const cx = x + p / 2;
+      g.beginPath(); g.arc(cx, bh + p * 0.12, p * 0.14, 0, TAU); g.fill();
+      for (const a of [0.35, 0.5, 0.65]) { g.beginPath(); g.arc(cx + Math.cos(a * Math.PI) * p * 0.33, bh + Math.sin(a * Math.PI) * p * 0.33, p * 0.06, 0, TAU); g.fill(); }
+    }
+    for (let x = p / 4; x < L; x += p / 2) { g.beginPath(); g.arc(x, bh * 0.66, p * 0.08, 0, TAU); g.fill(); }
+    g.globalCompositeOperation = 'source-over';
+    if (!both) { g.fillStyle = trim; g.fillRect(0, 0, L, bh * 0.34); g.fillStyle = P.white;
+      for (let x = 8; x < L; x += 24) g.fillRect(x, bh * 0.15, 12, 3); }
+    g.restore();
+  };
+  if (both) {
+    draw(pad + h, 1); draw(pad + h, -1);
+    g.fillStyle = trim; g.fillRect(0, pad + h - bh * 0.17, L, bh * 0.34);
+    g.fillStyle = P.white; for (let x = 8; x < L; x += 24) g.fillRect(x, pad + h - 1.5, 12, 3);
+  } else draw(pad, 1);
+  k.pad = pad;
+  return k;
+}
+
+// フリル（プリーツ付き）。上辺がまっすぐ、下に波打つ
+function makeFrill(L, h, col = P.baby, dark = P.pinkD) {
+  const pad = 10, k = mk(L + pad * 2, h + pad * 2), g = k.getContext('2d');
+  const q = h * 0.62, n = Math.max(2, Math.round(L / q)); const qq = L / n;
+  g.translate(pad, pad);
+  const p = new Path2D();
+  p.moveTo(0, 0); p.lineTo(0, h * 0.55);
+  for (let i = 0; i < n; i++) p.quadraticCurveTo(i * qq + qq / 2, h * 1.12, (i + 1) * qq, h * 0.55);
+  p.lineTo(L, 0); p.closePath();
+  g.lineJoin = 'round'; g.strokeStyle = P.white; g.lineWidth = 9; g.stroke(p);
+  g.fillStyle = col; g.fill(p);
+  g.lineCap = 'round';
+  for (let i = 0; i <= n; i++) {
+    g.strokeStyle = dark; g.lineWidth = qq * 0.07;
+    if (i > 0 && i < n) { g.beginPath(); g.moveTo(i * qq, h * 0.08); g.lineTo(i * qq, h * 0.58); g.stroke(); }
+    if (i < n) { g.strokeStyle = P.white; g.lineWidth = qq * 0.08;
+      g.beginPath(); g.moveTo(i * qq + qq * 0.5, h * 0.15); g.lineTo(i * qq + qq * 0.5, h * 0.62); g.stroke(); }
+  }
+  k.pad = pad;
+  return k;
+}
+
+// 円形ドイリー（レースの丸）
+function doily(g, x, y, r, rot = 0, center = P.hot) {
+  g.save(); g.translate(x, y); g.rotate(rot);
+  const n = 12;
+  g.fillStyle = P.white; g.strokeStyle = P.pale; g.lineWidth = 3;
+  for (let i = 0; i < n; i++) { const a = i / n * TAU; g.beginPath(); g.arc(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78, r * 0.26, 0, TAU); g.fill(); }
+  g.beginPath(); g.arc(0, 0, r * 0.82, 0, TAU); g.fill();
+  g.fillStyle = P.pale;
+  for (let i = 0; i < n; i++) { const a = (i + .5) / n * TAU; g.beginPath(); g.arc(Math.cos(a) * r * 0.66, Math.sin(a) * r * 0.66, r * 0.06, 0, TAU); g.fill(); }
+  g.restore();
+  heart(g, x, y, r * 0.85, rot, center, null);
+}
+
+// ================= 素材 =================
+const M = {};
+
+// 01 ハートがふわふわ上昇（シームレスループ）
+M.heart_float = { dur: 6, setup() {
+  seed = 11; this.hs = []; this.sp = [];
+  const range = H + 320;
+  for (let i = 0; i < 44; i++) this.hs.push({ x: rnd() * W, s: 30 + Math.pow(rnd(), 2) * 100, k: rnd() < .7 ? 1 : 2, y0: rnd() * range,
+    amp: 20 + rnd() * 50, f: rnd() < .5 ? 1 : 2, ph: rnd() * TAU, col: pick([P.hot, P.pink, P.baby, P.lav, P.rose, P.peach]) });
+  this.hs.sort((a, b) => a.s - b.s);
+  for (let i = 0; i < 26; i++) this.sp.push({ x: rnd() * W, y: rnd() * H, r: 12 + rnd() * 22, n: pick([2, 3]), ph: rnd() * TAU });
+  this.range = range;
+}, render(t) {
+  const D = this.dur, R = this.range;
+  for (const s of this.sp) { const v = Math.max(0, Math.sin(TAU * s.n * t / D + s.ph)); sparkle(c, s.x, s.y, s.r * v * v); }
+  for (const h of this.hs) {
+    const y = H + 160 - ((h.y0 + h.k * R * t / D) % R);
+    const a = TAU * h.f * t / D + h.ph;
+    heart(c, h.x + Math.sin(a) * h.amp, y, h.s, Math.sin(a + 1) * 0.25, h.col);
+  }
+}};
+
+// 02 中央にリボンがポンッ
+M.ribbon_pop = { dur: 4, setup() {
+  seed = 22; this.ps = [];
+  for (let i = 0; i < 16; i++) this.ps.push({ a: i / 16 * TAU + rnd() * 0.3, R: 330 + rnd() * 220, s: 40 + rnd() * 50, col: pick([P.hot, P.pink, P.lav, P.baby]), spin: (rnd() - .5) * 3 });
+  this.sp = []; for (let i = 0; i < 8; i++) this.sp.push({ a: i / 8 * TAU + 0.3, R: 360 + rnd() * 80, r: 22 + rnd() * 16, ph: rnd() * TAU });
+}, render(t) {
+  const u = clamp((t - 0.25) / 1.0);
+  for (const p of this.ps) {
+    const s = p.s * (u < .12 ? ease.back(u / .12) : Math.pow(1 - (u - .12) / .88, 1.2));
+    const r = p.R * ease.out(u);
+    heart(c, W / 2 + Math.cos(p.a) * r, H / 2 + Math.sin(p.a) * r, s, p.spin * u, p.col);
+  }
+  for (const s of this.sp) { const v = clamp((t - 1.0) / 0.3) * Math.max(0, Math.sin(t * 4 + s.ph));
+    sparkle(c, W / 2 + Math.cos(s.a) * s.R, H / 2 + Math.sin(s.a) * s.R * 0.8, s.r * v); }
+  const sc = ease.elastic(clamp((t - 0.1) / 1.1));
+  bow(c, W / 2, H / 2, 640 * sc, 0.06 * Math.sin(TAU * t / 2) * clamp(t - 0.8));
+}};
+
+// 03 レースフレーム（四辺レース＋四隅リボン、中央は抜け）
+M.lace_frame = { dur: 5, setup() {
+  this.lh = makeLace(W, 120); this.lv = makeLace(H, 120);
+}, render(t) {
+  const pr = ease.out(clamp(t / 1.0));
+  const strip = (img, L, tx, ty, rot) => {
+    c.save(); c.translate(tx, ty); c.rotate(rot);
+    c.beginPath(); c.rect(L / 2 * (1 - pr), -20, L * pr, img.height + 40); c.clip();
+    c.drawImage(img, 0, -img.pad); c.restore();
+  };
+  strip(this.lv, H, 0, H, -Math.PI / 2);
+  strip(this.lv, H, W, 0, Math.PI / 2);
+  strip(this.lh, W, 0, 0, 0);
+  strip(this.lh, W, W, H, Math.PI);
+  // パールライン
+  const ins = 150, per = 2 * (W - 2 * ins) + 2 * (H - 2 * ins), step = 34;
+  const pp = ease.out(clamp((t - 0.4) / 1.0));
+  for (let d = 0; d < per; d += step) {
+    // 上辺中央から左右対称に伸ばす
+    const half = per / 2, dd = d < half ? d : per - d;
+    if (dd > half * pp) continue;
+    let x, y, q = d + (W - 2 * ins) / 2; q %= per;
+    const a = W - 2 * ins, b = H - 2 * ins;
+    if (q < a) { x = ins + q; y = ins; } else if (q < a + b) { x = W - ins; y = ins + q - a; }
+    else if (q < 2 * a + b) { x = W - ins - (q - a - b); y = H - ins; } else { x = ins; y = H - ins - (q - 2 * a - b); }
+    c.fillStyle = P.white; c.beginPath(); c.arc(x, y, 9, 0, TAU); c.fill();
+    c.fillStyle = P.pale; c.beginPath(); c.arc(x, y, 6.5, 0, TAU); c.fill();
+    c.fillStyle = P.white; c.beginPath(); c.arc(x - 2, y - 2, 2.2, 0, TAU); c.fill();
+  }
+  const corners = [[120, 110, -0.25], [W - 120, 110, 0.25], [120, H - 110, 0.2], [W - 120, H - 110, -0.2]];
+  corners.forEach(([x, y, r], i) => {
+    const s = ease.back(clamp((t - 0.8 - i * 0.15) / 0.5));
+    const sw = 0.05 * Math.sin(TAU * t / 2.5 + i);
+    heart(c, x + (x < W / 2 ? 150 : -150), y + (y < H / 2 ? 30 : -30), 46 * s * (1 + 0.15 * Math.sin(TAU * t * 1.2 + i)), 0, i % 2 ? P.lav : P.hot);
+    bow(c, x, y, 250 * s, r + sw);
+  });
+}};
+
+// 04 フリル付きテロップ枠（下部・中は空欄）
+M.frill_telop = { dur: 5, setup() {
+  this.bw = 1340; this.bh = 220;
+  this.fr = makeFrill(this.bw - 60, 70);
+}, render(t) {
+  const inU = clamp(t / 0.6), outU = clamp((t - (this.dur - 0.5)) / 0.5);
+  const sx = ease.back(inU) * (1 - ease.in(outU)), sy = ease.back(clamp((t - 0.06) / 0.6)) * (1 - ease.in(outU));
+  if (sx <= 0.001 || sy <= 0.001) return;
+  const cx = W / 2, cy = 860 + 5 * Math.sin(TAU * t / 2.5), bw = this.bw, bh = this.bh;
+  c.save(); c.translate(cx, cy); c.scale(sx, sy);
+  const fr = this.fr;
+  c.save(); c.translate(-fr.width / 2, -bh / 2 + 18); c.scale(1, -1); c.drawImage(fr, 0, -fr.pad); c.restore();
+  c.drawImage(fr, -fr.width / 2, bh / 2 - 18 - fr.pad);
+  const body = new Path2D(); body.roundRect(-bw / 2, -bh / 2, bw, bh, 44);
+  c.lineWidth = 18; c.strokeStyle = P.white; c.stroke(body);
+  c.fillStyle = P.cream; c.fill(body);
+  c.lineWidth = 8; c.strokeStyle = P.pink; c.stroke(body);
+  const inner = new Path2D(); inner.roundRect(-bw / 2 + 18, -bh / 2 + 18, bw - 36, bh - 36, 30);
+  c.setLineDash([16, 12]); c.lineWidth = 4; c.strokeStyle = P.baby; c.stroke(inner); c.setLineDash([]);
+  c.restore();
+  const bs = ease.back(clamp((t - 0.35) / 0.5)) * (1 - ease.in(outU));
+  bow(c, cx - bw / 2 * sx + 40, cy - bh / 2 * sy + 10, 230 * bs, -0.28 + 0.06 * Math.sin(TAU * t / 2));
+  const hs = ease.back(clamp((t - 0.5) / 0.5)) * (1 - ease.in(outU));
+  heart(c, cx + bw / 2 * sx - 70, cy - bh / 2 * sy - 10, 70 * hs * (1 + 0.08 * Math.sin(TAU * t * 1.5)), 0.25, P.hot);
+  heart(c, cx + bw / 2 * sx - 10, cy - bh / 2 * sy + 40, 42 * hs, -0.2, P.lav);
+  sparkle(c, cx + bw / 2 * sx - 130, cy - bh / 2 * sy - 40, 22 * hs * Math.max(0, Math.sin(t * 5)));
+}};
+
+// 05 ハートがパーンと弾ける（強調・トランジション）
+M.heart_burst = { dur: 2, setup() {
+  seed = 55; this.ps = [];
+  for (let i = 0; i < 22; i++) this.ps.push({ a: i / 22 * TAU + rnd() * 0.25, R: 320 + rnd() * 320, s: 45 + rnd() * 70, col: pick([P.hot, P.pink, P.lav, P.baby, P.rose]), spin: (rnd() - .5) * 4, star: rnd() < .3 });
+}, render(t) {
+  const g0 = clamp(t / 0.28);
+  if (t < 0.34) {
+    const s = 300 * ease.back(g0) * (t > 0.28 ? 1 + (t - 0.28) * 4 : 1);
+    heart(c, W / 2, H / 2, s, 0, P.hot);
+  }
+  const u = clamp((t - 0.3) / 1.4);
+  if (u <= 0) return;
+  // 衝撃リング（白い点の輪）
+  const rr = 120 + 420 * ease.out(u), rs = 12 * (1 - u);
+  for (let i = 0; i < 28; i++) { const a = i / 28 * TAU; c.fillStyle = P.white; c.beginPath(); c.arc(W / 2 + Math.cos(a) * rr, H / 2 + Math.sin(a) * rr, rs, 0, TAU); c.fill(); }
+  for (const p of this.ps) {
+    const s = p.s * (u < .1 ? ease.back(u / .1) : Math.pow(1 - (u - .1) / .9, 1.3));
+    const r = p.R * ease.out(u);
+    const x = W / 2 + Math.cos(p.a) * r, y = H / 2 + Math.sin(p.a) * r + 60 * u * u;
+    if (p.star) sparkle(c, x, y, s * 0.6); else heart(c, x, y, s, p.spin * u, p.col);
+  }
+}};
+
+// 06 レースのライン（区切り線・タイトル下に）
+M.lace_line = { dur: 3, setup() { this.ll = makeLace(1500, 64, P.pink, true); }, render(t) {
+  const pr = ease.out(clamp(t / 0.8)), img = this.ll, L = 1500;
+  c.save(); c.translate(W / 2 - L / 2, H / 2 - img.height / 2);
+  c.beginPath(); c.rect(L / 2 * (1 - pr), 0, L * pr, img.height); c.clip(); c.drawImage(img, 0, 0); c.restore();
+  const hs = ease.back(clamp((t - 0.7) / 0.4));
+  for (const d of [-1, 1]) {
+    heart(c, W / 2 + d * (L / 2 + 30), H / 2, 64 * hs * (1 + 0.08 * Math.sin(TAU * t * 1.3)), d * 0.25, P.hot);
+    sparkle(c, W / 2 + d * (L / 2 + 75), H / 2 - 55, 20 * hs * Math.max(0, Math.sin(t * 4 + d)));
+  }
+  bow(c, W / 2, H / 2 - 4, 230 * ease.elastic(clamp((t - 0.4) / 0.9)), 0.05 * Math.sin(TAU * t / 1.5));
+}};
+
+// 07 フリルのハート吹き出し（中は空欄）
+M.heart_bubble = { dur: 5, setup() {
+  const sc = 22, pts = [];
+  for (let i = 0; i <= 2000; i++) { const a = i / 2000 * TAU, s = Math.sin(a);
+    pts.push([16 * s * s * s * sc, -(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) * sc - 2.5 * sc]); }
+  let len = 0; const cum = [0];
+  for (let i = 1; i < pts.length; i++) { len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); cum.push(len); }
+  this.path = new Path2D(); pts.forEach(([x, y], i) => i ? this.path.lineTo(x, y) : this.path.moveTo(x, y)); this.path.closePath();
+  this.inner = new Path2D(); pts.forEach(([x, y], i) => i ? this.inner.lineTo(x * .88, y * .88 + 8) : this.inner.moveTo(x * .88, y * .88 + 8)); this.inner.closePath();
+  const n = Math.round(len / 44); this.sc = [];
+  for (let j = 0, i = 0; j < n; j++) { const d = j / n * len; while (cum[i] < d) i++;
+    const [x, y] = pts[i], [x2, y2] = pts[Math.min(i + 1, pts.length - 1)], dx = x2 - x, dy = y2 - y, l = Math.hypot(dx, dy) || 1;
+    this.sc.push([x + dy / l * 4, y - dx / l * 4]); }
+  this.top = [0, -5 * sc - 2.5 * sc];
+}, render(t) {
+  const outU = clamp((t - (this.dur - 0.5)) / 0.5);
+  const beat = t > 1 ? Math.pow(Math.max(0, Math.sin(TAU * (t - 1) / 1.25)), 6) * 0.03 : 0;
+  const s = ease.elastic(clamp(t / 0.9)) * (1 + beat) * (1 - ease.in(outU));
+  if (s <= 0.001) return;
+  c.save(); c.translate(W / 2, H / 2 + 10); c.scale(s, s);
+  c.fillStyle = P.white; for (const [x, y] of this.sc) { c.beginPath(); c.arc(x, y, 37, 0, TAU); c.fill(); }
+  c.fillStyle = P.pink; for (const [x, y] of this.sc) { c.beginPath(); c.arc(x, y, 30, 0, TAU); c.fill(); }
+  c.fillStyle = P.white; for (const [x, y] of this.sc) { c.beginPath(); c.arc(x, y, 7, 0, TAU); c.fill(); }
+  c.fillStyle = P.cream; c.fill(this.path);
+  c.lineWidth = 7; c.strokeStyle = P.hot; c.stroke(this.path);
+  c.setLineDash([16, 12]); c.lineWidth = 4; c.strokeStyle = P.baby; c.stroke(this.inner); c.setLineDash([]);
+  c.restore();
+  const bs = ease.back(clamp((t - 0.45) / 0.5)) * (1 - ease.in(outU));
+  bow(c, W / 2 + this.top[0] * s, H / 2 + 10 + this.top[1] * s, 260 * bs, 0.05 * Math.sin(TAU * t / 2));
+  const hs = ease.back(clamp((t - 0.6) / 0.5)) * (1 - ease.in(outU));
+  heart(c, W / 2 - 430 * s, H / 2 + 220 + 10 * Math.sin(TAU * t / 2), 70 * hs, -0.3, P.lav);
+  heart(c, W / 2 + 440 * s, H / 2 + 160 + 10 * Math.sin(TAU * t / 2 + 2), 56 * hs, 0.3, P.hot);
+  sparkle(c, W / 2 + 400 * s, H / 2 - 280 * s, 26 * hs * Math.max(0, Math.sin(t * 4)));
+  sparkle(c, W / 2 - 410 * s, H / 2 - 250 * s, 20 * hs * Math.max(0, Math.sin(t * 4 + 2)));
+}};
+
+// 08 ハート＆リボンのガーランド（画面上部・シームレスループ）
+M.garland = { dur: 4, setup() {
+  this.ropes = [[[-60, 30], [W / 2, 30]], [[W / 2, 30], [W + 60, 30]]];
+  this.items = [];
+  const kinds = ['heart', 'doily', 'bow', 'heart2', 'doily', 'heart'];
+  this.ropes.forEach(([a, b], r) => {
+    for (let i = 1; i <= 6; i++) { const u = i / 7.5 + 0.03;
+      this.items.push({ r, u, kind: kinds[(i - 1 + r * 2) % kinds.length], len: 30 + (i % 3) * 22, ph: i * 0.9 + r * 2 }); }
+  });
+}, ropeAt(r, u) { const [[x0, y0], [x1, y1]] = this.ropes[r], sag = 170;
+  const mx = (x0 + x1) / 2, my = y0 + sag * 2;
+  return [(1 - u) * (1 - u) * x0 + 2 * u * (1 - u) * mx + u * u * x1, (1 - u) * (1 - u) * y0 + 2 * u * (1 - u) * my + u * u * y1];
+}, render(t) {
+  for (let r = 0; r < 2; r++) {
+    const p = new Path2D(); for (let i = 0; i <= 60; i++) { const [x, y] = this.ropeAt(r, i / 60); i ? p.lineTo(x, y) : p.moveTo(x, y); }
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    c.strokeStyle = P.white; c.lineWidth = 16; c.stroke(p);
+    c.strokeStyle = P.pink; c.lineWidth = 8; c.stroke(p);
+    c.setLineDash([10, 14]); c.strokeStyle = P.white; c.lineWidth = 3; c.stroke(p); c.setLineDash([]);
+  }
+  for (const it of this.items) {
+    const [x, y] = this.ropeAt(it.r, it.u), th = 0.16 * Math.sin(TAU * t / 2 + it.ph);
+    c.save(); c.translate(x, y); c.rotate(th);
+    c.strokeStyle = P.white; c.lineWidth = 7; c.beginPath(); c.moveTo(0, 0); c.lineTo(0, it.len); c.stroke();
+    c.strokeStyle = P.hot; c.lineWidth = 3; c.beginPath(); c.moveTo(0, 0); c.lineTo(0, it.len); c.stroke();
+    if (it.kind === 'heart') heart(c, 0, it.len + 42, 96, 0, P.hot);
+    else if (it.kind === 'heart2') heart(c, 0, it.len + 38, 86, 0, P.lav);
+    else if (it.kind === 'doily') doily(c, 0, it.len + 48, 50, 0, P.pink);
+    else bow(c, 0, it.len + 30, 120, 0, P.baby, P.hot);
+    c.restore();
+  }
+  bow(c, W / 2, 50, 200, 0.04 * Math.sin(TAU * t / 2));
+  bow(c, 70, 50, 170, -0.2 + 0.04 * Math.sin(TAU * t / 2 + 1));
+  bow(c, W - 70, 50, 170, 0.2 + 0.04 * Math.sin(TAU * t / 2 + 2));
+}};
+
+// ================= 描画 =================
+const opts = Object.fromEntries(location.hash.slice(1).split('&').filter(Boolean).map(s => { const [k, v] = s.split('='); return [k, v ?? true]; }));
+let cur = M[opts.m] || M.heart_float;
+const transparent = !!opts.transparent;
+function setMaterial(name) { cur = M[name]; cur.setup(); return cur.dur; }
+window.render = t => {
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
+  cur.render(t);
+  ctx.clearRect(0, 0, W, H);
+  if (!transparent) { ctx.fillStyle = GREEN; ctx.fillRect(0, 0, W, H); }
+  ctx.drawImage(layer, 0, 0);
+  return cv.toDataURL('image/png');
+};
+window.setMaterial = setMaterial;
+window.materials = Object.keys(M).map(k => [k, M[k].dur]);
+cur.setup();
+window.render(+(opts.t || 1.5));
+</script>
+</body></html>
