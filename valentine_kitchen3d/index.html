@@ -43,7 +43,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 // ---------- params ----------
 const Q = new URLSearchParams(location.search);
 const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080);
-const DURATION = 18;            // seconds per loop
+const DURATION = 20;            // seconds per loop
 if (Q.has('clean')) document.body.classList.add('clean');
 
 // ---------- seeded random ----------
@@ -184,6 +184,28 @@ const pageTex = (side) => canvasTex(1024, 1280, (g, w, h) => {
     const lines = ['生チョコ & ハートの型ぬき', '・ビターチョコ 200g', '・生クリーム 100ml', '・ルビーチョコ 少し', '・いちご 6こ ♡', '・スプリンクル 🍓', '湯せん 50℃ → 型へ', 'ラッピングは赤リボン!'];
     lines.forEach((l, i) => g.fillText(l, 160, 225 + i * 72));
     g.strokeStyle = '#ef7f9f'; g.lineWidth = 6; g.beginPath(); g.ellipse(560, 727, 230, 46, 0, 0, 7); g.stroke();
+    // ♥ 最後におまじないをかける ♥ (highlighted)
+    {
+      const txt = '♥ 最後におまじないをかける ♥';
+      g.save();
+      g.font = 'bold ' + font(70).replace('70px', '70px');
+      let fs = 70; g.font = `bold ${fs}px "IPAGothic","WenQuanYi Zen Hei",sans-serif`;
+      while (g.measureText(txt).width > 800 && fs > 30) { fs -= 2; g.font = `bold ${fs}px "IPAGothic","WenQuanYi Zen Hei",sans-serif`; }
+      const tw = g.measureText(txt).width, x0 = (w - tw) / 2 + 40, y0 = 1010;
+      // marker highlight
+      g.fillStyle = 'rgba(255,170,195,0.75)';
+      g.beginPath(); g.moveTo(x0 - 26, y0 - fs * 0.45); g.lineTo(x0 + tw + 26, y0 - fs * 0.55); g.lineTo(x0 + tw + 20, y0 + fs * 0.22); g.lineTo(x0 - 20, y0 + fs * 0.28); g.closePath(); g.fill();
+      // frame of dashed hearts-line
+      g.strokeStyle = '#d63a55'; g.lineWidth = 5; g.setLineDash([14, 10]);
+      g.beginPath(); g.roundRect(x0 - 50, y0 - fs * 1.25, tw + 100, fs * 1.85, 30); g.stroke(); g.setLineDash([]);
+      g.lineJoin = 'round'; g.strokeStyle = '#ffffff'; g.lineWidth = 12; g.strokeText(txt, x0, y0);
+      g.fillStyle = '#d6203f'; g.fillText(txt, x0, y0);
+      // sparkles
+      const star = (x, y, r) => { g.beginPath(); for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4, rr2 = k % 2 ? r * 0.35 : r; g.lineTo(x + Math.cos(an) * rr2, y + Math.sin(an) * rr2); } g.closePath(); g.fill(); };
+      g.fillStyle = '#f0a020'; star(x0 - 70, y0 - fs * 1.3, 26); star(x0 + tw + 70, y0 + fs * 0.5, 22);
+      g.fillStyle = '#ef7f9f'; star(x0 + tw + 40, y0 - fs * 1.45, 16); star(x0 - 40, y0 + fs * 0.75, 14);
+      g.restore();
+    }
   } else {
     g.fillStyle = '#6b3424'; g.font = font(50);
     ['memo', '温度に気をつける', 'つや出しは 32℃ ☆', 'あとで写真とる!'].forEach((l, i) => g.fillText(l, 120, 225 + i * 72));
@@ -452,17 +474,20 @@ let dropMesh;
   const hh = mesh(heartGeo(0.12, 0.01, 0.01, 2), mat.ceramicRed, false); hh.position.set(0, 0.05, 1.7); g.add(hh);
   // chocolate on blade
   const blob = mesh(new THREE.SphereGeometry(0.3, 48, 32), mat.chocoDark); blob.scale.set(0.85, 0.16, 1.0); blob.position.set(0, 0.03, -0.32); g.add(blob);
-  g.rotation.x = -0.07;
-  place(g, 2.2, 0.06, 0.2, -0.9);
-  // puddle under the spatula tip
-  const pud = mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.02, 64), mat.chocoDark, false);
-  pud.scale.set(1.2, 1, 0.8); place(pud, 1.62, 0.01, -0.05);
+  place(g, 1.9, 0.06, -0.15, -1.37);
+  g.updateMatrixWorld(true);
+  // blade tip (local z = -0.62), the chocolate pools there and drips
+  const tipW = new THREE.Vector3(0, 0.0, -0.6); g.localToWorld(tipW);
+  const pud = mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.015, 64), mat.chocoDark, false);
+  pud.scale.set(1.25, 1, 0.85); place(pud, tipW.x + 0.05, 0.008, tipW.z - 0.05);
   dropMesh = mesh(new THREE.SphereGeometry(0.05, 32, 24), mat.chocoDark); scene.add(dropMesh);
-  const tipW = new THREE.Vector3(1.66, 0.08, -0.02);
   anim.push(t => {
-    const ph = (t % 2.4) / 2.4;
-    if (ph < 0.7) { const s = ph / 0.7; dropMesh.position.set(tipW.x, tipW.y - 0.03 * s, tipW.z); dropMesh.scale.set(0.5 + 0.5 * s, 0.6 + 1.0 * s, 0.5 + 0.5 * s); }
-    else { const s = (ph - 0.7) / 0.3; dropMesh.position.set(tipW.x, Math.max(0.01, tipW.y - 0.03 - 0.1 * s * s), tipW.z); dropMesh.scale.set(1 + s * 0.6, 1.6 * (1 - s) + 0.15, 1 + s * 0.6); }
+    // a glossy bead slowly swelling and sliding off the blade edge
+    const ph = (t % 3.0) / 3.0;
+    const s1 = Math.min(1, ph / 0.75), s2 = Math.max(0, (ph - 0.75) / 0.25);
+    dropMesh.position.set(tipW.x + 0.04 * s1 + 0.06 * s2, Math.max(0.02, 0.07 - 0.05 * s2), tipW.z - 0.02 * s1 - 0.03 * s2);
+    const sc = 0.6 + 0.6 * s1;
+    dropMesh.scale.set(sc * (1 + s2 * 0.8), sc * (1 - s2 * 0.6) * 0.7, sc * (1 + s2 * 0.8));
   });
 }
 
@@ -552,19 +577,40 @@ let pipingLine, pipingTip, pipingCount, pipingCurve;
   });
   place(grp, 2.7, 0, 1.6, 0);
 
-  // piping bag resting beside the plate, nozzle pointing at the heart
+  // piping bag lying on the table beside the plate, nozzle toward the chocolates
   const bag = new THREE.Group();
-  const bagProf = smoothProfile([[0.0, 0], [0.06, 0.05], [0.2, 0.5], [0.33, 1.1], [0.38, 1.4], [0.3, 1.55], [0.12, 1.62]], 60);
-  const bagM = new THREE.MeshPhysicalMaterial({ color: '#fff4f7', roughness: 0.3, transparent: true, opacity: 0.55, clearcoat: 1, side: THREE.DoubleSide, depthWrite: false });
-  bag.add(mesh(lathe(bagProf, 64), bagM, false));
-  const fillProf = smoothProfile([[0.0, 0.05], [0.05, 0.1], [0.17, 0.5], [0.28, 1.0], [0, 1.02]], 40);
-  bag.add(mesh(lathe(fillProf, 48), mat.icing));
-  const nz = mesh(new THREE.CylinderGeometry(0.06, 0.02, 0.22, 8), mat.metal); nz.position.y = -0.05; bag.add(nz);
-  const tw = mesh(new THREE.TorusGeometry(0.11, 0.03, 12, 32), mat.ribbonRed); tw.rotation.x = Math.PI / 2; tw.position.y = 1.55; bag.add(tw);
-  bag.rotation.set(0, 0, Math.PI / 2 + 0.12);
-  bag.rotation.order = 'YXZ';
-  bag.rotation.y = 0.5;
-  place(bag, 4.75, 0.38, 1.0, 0.5);
+  const bagProf = smoothProfile([[0.075, 0.0], [0.14, 0.12], [0.26, 0.55], [0.35, 1.0], [0.37, 1.25], [0.28, 1.45], [0.1, 1.6], [0.07, 1.68], [0.12, 1.8], [0.0, 1.84]], 90);
+  const bg = lathe(bagProf, 96);
+  { // soft wrinkles on the bag
+    const a = bg.attributes.position;
+    for (let k = 0; k < a.count; k++) { const x = a.getX(k), y = a.getY(k), z = a.getZ(k), an = Math.atan2(z, x); const f = 1 + 0.035 * Math.sin(an * 7 + y * 4) * Math.min(1, y); a.setX(k, x * f); a.setZ(k, z * f); }
+    bg.computeVertexNormals();
+  }
+  const bagM = new THREE.MeshPhysicalMaterial({ color: '#fff3f7', roughness: 0.45, transparent: true, opacity: 0.42, clearcoat: 0.6, sheen: 0.8, sheenColor: new THREE.Color('#ffd6e2'), side: THREE.DoubleSide, depthWrite: false });
+  const bagMesh = mesh(bg, bagM, false); bagMesh.renderOrder = 2; bag.add(bagMesh);
+  const fillProf = smoothProfile([[0.0, 0.0], [0.06, 0.02], [0.13, 0.14], [0.24, 0.55], [0.32, 1.0], [0.3, 1.15], [0.0, 1.18]], 60);
+  bag.add(mesh(lathe(fillProf, 64), mat.icing, false));
+  // hearts printed on the bag
+  for (let k = 0; k < 6; k++) {
+    const hh = mesh(new THREE.ExtrudeGeometry(heartShape(0.07), { depth: 0.004, bevelEnabled: false, curveSegments: 32 }), mat.ceramicRed, false);
+    const yy = 0.55 + (k % 3) * 0.25, an = k * 1.05 + 0.3, r = 0.27 + (yy - 0.55) * 0.17 + 0.02;
+    hh.position.set(Math.cos(an) * r, yy, Math.sin(an) * r); hh.lookAt(Math.cos(an) * 3, yy - 0.5, Math.sin(an) * 3); bag.add(hh);
+  }
+  // star nozzle with ridges
+  const ng = new THREE.CylinderGeometry(0.085, 0.032, 0.28, 64, 6);
+  { const a = ng.attributes.position; for (let k = 0; k < a.count; k++) { const x = a.getX(k), z = a.getZ(k), an = Math.atan2(z, x); const f = 1 + 0.13 * Math.cos(an * 8); a.setX(k, x * f); a.setZ(k, z * f); } ng.computeVertexNormals(); }
+  const nz = mesh(ng, mat.metal); nz.position.y = -0.1; bag.add(nz);
+  // a little star swirl of icing peeking out of the nozzle
+  const sg2 = new THREE.SphereGeometry(0.045, 48, 24);
+  { const a = sg2.attributes.position; for (let k = 0; k < a.count; k++) { const x = a.getX(k), z = a.getZ(k), an = Math.atan2(z, x); const f = 1 + 0.18 * Math.cos(an * 8); a.setX(k, x * f); a.setZ(k, z * f); } sg2.computeVertexNormals(); }
+  const swirlTip = mesh(sg2, mat.icing, false); swirlTip.position.y = -0.27; swirlTip.scale.y = 1.3; bag.add(swirlTip);
+  // twisted end tied with a ribbon bow
+  const tie = mesh(new THREE.TorusGeometry(0.085, 0.025, 12, 40), mat.ribbonRed); tie.rotation.x = Math.PI / 2; tie.position.y = 1.64; bag.add(tie);
+  const tieBow = makeBow(0.22, mat.ribbonRed); tieBow.position.set(0, 1.64, 0.1); tieBow.rotation.set(0, 0, Math.PI / 2); bag.add(tieBow);
+  bag.rotation.z = -(Math.PI / 2 - 0.2);           // lying down, nozzle end touching the table
+  const bagHolder = new THREE.Group(); bagHolder.add(bag);
+  bag.position.y = 0.11;
+  place(bagHolder, 4.55, 0, 1.85, -0.25);
 }
 
 // ---------- hot chocolate mug with marshmallow hearts + steam ----------
@@ -694,10 +740,10 @@ const steam = [];
   for (const side of [0, 1]) {
     const pg = new THREE.PlaneGeometry(1.42, 1.9, 40, 10); pg.rotateX(-Math.PI / 2);
     const pa = pg.attributes.position;
-    for (let i = 0; i < pa.count; i++) { const x = pa.getX(i) + 0.71; pa.setY(i, 0.075 + 0.09 * Math.sin(Math.min(1, x / 1.0) * Math.PI / 2) - 0.02 * x); }
+    for (let i = 0; i < pa.count; i++) { const x = side ? pa.getX(i) + 0.71 : 0.71 - pa.getX(i); pa.setY(i, 0.075 + 0.09 * Math.sin(Math.min(1, x / 1.0) * Math.PI / 2) - 0.02 * x); }
     pg.computeVertexNormals();
     const page = mesh(pg, new THREE.MeshStandardMaterial({ map: pageTex(side), roughness: 0.85, side: THREE.DoubleSide }), false);
-    if (side === 0) { page.rotation.y = Math.PI; page.position.x = -0.73; } else page.position.x = 0.73;
+    page.position.x = side === 0 ? -0.73 : 0.73;
     grp.add(page);
   }
   // spiral rings
@@ -892,6 +938,7 @@ let sparkles;
 const camKeys = [
   // [pos, lookAt]
   [[-7.2, 4.6, 6.8], [-3.2, 0.2, 0.6]],   // arriving: the notebook & the heart mold
+  [[-5.6, 2.9, 4.3], [-5.0, 0.1, 2.1]],   // peeking at the recipe: ♥ 最後におまじないをかける ♥
   [[-4.6, 3.2, 4.6], [-2.4, 0.15, 1.2]],  // leaning in on the mold & strawberries
   [[-1.6, 3.4, 4.4], [-1.2, 0.3, 1.8]],   // strawberries
   [[0.6, 4.2, 3.0], [0.4, 0.8, -0.9]],    // over the bowl of chocolate
@@ -959,6 +1006,7 @@ function update(t) {
   tmpP.z += 0.04 * Math.sin(t * 0.7 + 2.0);
   tmpT.x += 0.04 * Math.sin(t * 0.8 + 0.5);
   tmpT.y += 0.03 * Math.sin(t * 1.1);
+  if (window.camOverride) { tmpP.set(...window.camOverride[0]); tmpT.set(...window.camOverride[1]); }
   camera.position.copy(tmpP); camera.lookAt(tmpT);
   camera.rotateZ(0.012 * Math.sin(t * 0.6));
   bokeh.uniforms.focus.value = tmpP.distanceTo(tmpT);
