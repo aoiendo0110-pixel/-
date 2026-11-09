@@ -320,11 +320,11 @@ const anim = []; // functions (t) => void
 }
 
 // ---------- bow helper ----------
-function ribbonStrip(curve, width, segs = 120, twist = 0, upVec = new THREE.Vector3(0, 1, 0)) {
+function ribbonStrip(curve, width, segs = 120, twist = 0, upVec = new THREE.Vector3(0, 1, 0), fixedSide = null) {
   const pos = [], idx = [], uv = [];
   for (let i = 0; i <= segs; i++) {
     const u = i / segs, p = curve.getPointAt(u), tg = curve.getTangentAt(u);
-    let side = new THREE.Vector3().crossVectors(tg, upVec).normalize();
+    let side = fixedSide ? fixedSide.clone() : new THREE.Vector3().crossVectors(tg, upVec).normalize();
     if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
     side.applyAxisAngle(tg, twist * Math.sin(u * Math.PI));
     const a = p.clone().addScaledVector(side, width / 2), b = p.clone().addScaledVector(side, -width / 2);
@@ -343,15 +343,16 @@ function makeBow(s, m) {
     const pts = [];
     for (let i = 0; i <= 40; i++) {
       const a = i / 40 * Math.PI * 2;
-      pts.push(new THREE.Vector3(sgn * (Math.sin(a / 2) ** 1.2) * 1.0 * s, Math.sin(a) * 0.45 * s, 0));
+      pts.push(new THREE.Vector3(sgn * (Math.sin(a / 2) ** 1.2) * 1.0 * s, (Math.sin(a) * 0.42 + 0.18 * Math.sin(a / 2) ** 2) * s, 0.06 * s * Math.sin(a)));
     }
-    const loop = mesh(ribbonStrip(new THREE.CatmullRomCurve3(pts, true), 0.32 * s, 80, 0, new THREE.Vector3(0, 0, 1)), m);
-    loop.geometry = ribbonStrip(new THREE.CatmullRomCurve3(pts, true), 0.32 * s, 80, 0.0, new THREE.Vector3(0, 0, 1));
+    const loop = mesh(ribbonStrip(new THREE.CatmullRomCurve3(pts, true), 0.5 * s, 120, 0, undefined, new THREE.Vector3(0, 0, 1)), m);
     // turn the strip so it faces forward (width along z)
     const lg = new THREE.Group(); lg.add(loop); g.add(lg);
     // tail
     const tail = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0), new THREE.Vector3(sgn * 0.25 * s, -0.5 * s, 0.05 * s), new THREE.Vector3(sgn * 0.45 * s, -0.95 * s, 0)]);
-    const tm = mesh(ribbonStrip(tail, 0.3 * s, 40, 0.5, new THREE.Vector3(0, 0, 1)), m);
+    const tm = mesh(ribbonStrip(tail, 0.4 * s, 40, 0, undefined, new THREE.Vector3(0.15 * sgn, 0, 1).normalize()), m);
+    // V-cut tail end
+    tm.geometry.attributes.position.setY(80, tm.geometry.attributes.position.getY(80) + 0.08 * s); tm.geometry.attributes.position.needsUpdate = true;
     g.add(tm);
   }
   const knot = mesh(new THREE.SphereGeometry(0.17 * s, 32, 24), m); knot.scale.set(1, 1.1, 0.8); g.add(knot);
@@ -383,12 +384,15 @@ let swirlDisk, whisk, swirlBase;
   // gold-ish rim line
   const rim = mesh(new THREE.TorusGeometry(1.39, 0.028, 16, 200), mat.metalPink); rim.rotation.x = Math.PI / 2; rim.position.y = 1.11; grp.add(rim);
   // heart decals around bowl
-  const hgeo = heartGeo(0.16, 0.01, 0.012, 3);
-  for (let i = 0; i < 10; i++) {
-    const a = i / 10 * Math.PI * 2, r = 1.18, y = 0.62;
+  const hgeo = new THREE.ExtrudeGeometry(heartShape(0.13), { depth: 0.008, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 3, curveSegments: 64 });
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * Math.PI * 2, y = 0.66;
+    // find outer radius of the bowl profile at y
+    let r = 1.0; for (let k = 1; k < outer.length; k++) { if (outer[k][1] >= y) { const [x0, y0] = outer[k - 1], [x1, y1] = outer[k]; r = x0 + (x1 - x0) * (y - y0) / (y1 - y0); break; } }
+    r += 0.012;
     const h = mesh(hgeo, mat.ceramicWhite, false);
     h.position.set(Math.cos(a) * r, y, Math.sin(a) * r);
-    h.lookAt(Math.cos(a) * 3, y + 0.9, Math.sin(a) * 3); h.rotateX(Math.PI / 2);
+    h.lookAt(Math.cos(a) * (r + 1), y - 0.55, Math.sin(a) * (r + 1));
     grp.add(h);
   }
   // swirling chocolate surface (lathe disk with rings so it can ripple)
