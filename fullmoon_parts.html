@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Full Moon Parts</title>
+<style>
+  html, body { margin: 0; padding: 0; overflow: hidden; background: #f3d3df; }
+  body.alpha, html.alpha { background: transparent; }
+  svg { display: block; width: 100vw; height: auto; }
+</style>
+</head>
+<body>
+<!--
+  満月×リボン×フリルの汎用素材集 (1920x1080 透過)。#part=名前 で切りかえ、#alpha で背景透過、#t=秒 で静止表示。
+    frame   … 画面のふち飾り (上フリル+リボン / 下フリル / 四隅の満月) 6秒ループ
+    fall    … ハート・星・メッセージハートがふわふわ降る 6秒ループ
+    kira    … キラキラのまたたき 4秒ループ
+    moon    … レースの満月バッジ (キャラの後ろや見出しに) 6秒ループ
+    wipe    … フリルのカーテンで画面を覆って開くトランジション 1.6秒
+    plate   … 名前・テロップ用のプレート (ぽんっと出て、ゆらゆら) 4秒
+-->
+<div id="root"></div>
+<script>
+const W = 1920, H = 1080, TAU = Math.PI * 2;
+const hp = new URLSearchParams(location.hash.slice(1));
+const PART = hp.get('part') || 'frame';
+if (hp.has('alpha')) { document.documentElement.classList.add('alpha'); document.body.classList.add('alpha'); }
+const C = {
+  pink: '#f7a8c4', pinkDeep: '#ee88ab', pinkLine: '#df7299', light: '#fcd3e1', pale: '#fff2f7',
+  blue: '#bfe3f5', blueDeep: '#94cbe8', blueLine: '#7db8db',
+  yellow: '#fff3b8', yellowDeep: '#ffe38a', yellowLine: '#eec66a', gold: '#f3d58e',
+};
+let seed = 1109;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const f = n => n.toFixed(2);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const easeOutBack = x => { const c = 2; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+// ---------- 共通の部品 ----------
+const HEART = 'M0,-22 C -10,-42 -45,-37 -45,-12 C -45,8 -20,23 0,38 C 20,23 45,8 45,-12 C 45,-37 10,-42 0,-22 Z';
+const heart = (fill, stroke, sw = 3) =>
+  `<path d="${HEART}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>
+   <path d="M-30,-18 C -30,-26 -24,-30 -18,-28" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".8"/>`;
+function starPath(R, r, n = 5) {
+  let d = '';
+  for (let i = 0; i < n * 2; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / n, rad = i % 2 ? r : R;
+    d += (i ? 'L' : 'M') + f(Math.cos(a) * rad) + ',' + f(Math.sin(a) * rad);
+  }
+  return d + 'Z';
+}
+const star = (fill, stroke, s = 1) =>
+  `<path d="${starPath(30 * s, 14 * s)}" fill="${fill}" stroke="${stroke}" stroke-width="${6 * s}" stroke-linejoin="round" paint-order="stroke"/>
+   <path d="${starPath(30 * s, 14 * s)}" fill="${fill}"/><circle cx="${-7 * s}" cy="${-8 * s}" r="${3.2 * s}" fill="#fff" opacity=".85"/>`;
+const sparkle = (fill, s = 1) =>
+  `<path d="M0,${-24 * s} C ${3 * s},${-5 * s} ${5 * s},${-3 * s} ${24 * s},0 C ${5 * s},${3 * s} ${3 * s},${5 * s} 0,${24 * s} C ${-3 * s},${5 * s} ${-5 * s},${3 * s} ${-24 * s},0 C ${-5 * s},${-3 * s} ${-3 * s},${-5 * s} 0,${-24 * s} Z" fill="${fill}"/>`;
+function bow(fill = C.pink, line = C.pinkLine, dot = '#fff') {
+  const loopL = 'M0,0 C -12,-22 -48,-26 -46,0 C -48,22 -12,20 0,0 Z';
+  const tailL = 'M-4,4 C -10,16 -16,28 -22,38 L -12,34 L -8,44 C -4,30 -1,16 3,5 Z';
+  let s = `<g stroke="${line}" stroke-width="2.5" stroke-linejoin="round">`;
+  s += `<path d="${tailL}" fill="${fill}"/><path d="${tailL}" fill="${fill}" transform="scale(-1,1)"/>`;
+  s += `<path d="${loopL}" fill="${fill}"/><path d="${loopL}" fill="${fill}" transform="scale(-1,1)"/>`;
+  s += `<path d="M-8,-7 C -18,-11 -30,-8 -35,0 M8,-7 C 18,-11 30,-8 35,0" fill="none" stroke-width="2" opacity=".55"/>`;
+  s += `<ellipse cx="0" cy="0" rx="8.5" ry="10" fill="${fill}"/></g>`;
+  for (const [x, y] of [[-30, -6], [-20, 6], [-36, 8], [-24, -14], [30, -6], [20, 6], [36, 8], [24, -14], [-13, 26], [13, 26]])
+    s += `<circle cx="${x}" cy="${y}" r="2.3" fill="${dot}"/>`;
+  return s + `<ellipse cx="-2.5" cy="-4" rx="2.5" ry="3.2" fill="#fff" opacity=".7"/>`;
+}
+function scallopRing(rx, ry, n, bump, fill, extra = '') {
+  let d = '';
+  for (let i = 0; i <= n; i++) {
+    const a = i / n * TAU, x = Math.cos(a) * rx, y = Math.sin(a) * ry;
+    d += i ? `A ${bump} ${bump} 0 0 1 ${f(x)} ${f(y)} ` : `M ${f(x)} ${f(y)} `;
+  }
+  return `<path d="${d}Z" fill="${fill}" ${extra}/>`;
+}
+function moonBody(r, withBow = true) {
+  return `<circle r="${r + 6}" fill="#fff"/><circle r="${r}" fill="url(#moonG)" stroke="${C.yellowLine}" stroke-width="2.5" stroke-opacity=".6"/>
+    <circle cx="${-r * .35}" cy="${-r * .3}" r="${r * .18}" fill="#fde3a2" opacity=".55"/>
+    <circle cx="${r * .35}" cy="${r * .25}" r="${r * .24}" fill="#fde3a2" opacity=".45"/>
+    <circle cx="${-r * .2}" cy="${r * .5}" r="${r * .1}" fill="#fde3a2" opacity=".5"/>
+    <ellipse cx="${-r * .45}" cy="${-r * .55}" rx="${r * .22}" ry="${r * .09}" fill="#fff" opacity=".7" transform="rotate(-40 ${-r * .45} ${-r * .55})"/>
+    ${withBow ? `<g transform="translate(${r * .62},${-r * .66}) rotate(20) scale(${r / 90})">${bow()}</g>` : ''}`;
+}
+// 横方向のスカラップ帯 (dir=1 で下向きのふくらみ)
+function scallopBand(yBase, yEdge, w, depth, dir = 1, x0 = -10, x1 = W + 10) {
+  let d = `M ${x0} ${yBase} L ${x0} ${yEdge} `;
+  for (let x = x0; x < x1; x += w) d += `Q ${x + w / 2} ${yEdge + dir * depth * 2} ${x + w} ${yEdge} `;
+  return d + `L ${x1 + w} ${yBase} Z`;
+}
+const DEFS = `<defs>
+  <radialGradient id="moonG" cx=".4" cy=".36" r=".72"><stop offset="0" stop-color="#fffef4"/><stop offset=".65" stop-color="#fff5c8"/><stop offset="1" stop-color="#ffe7a0"/></radialGradient>
+  <radialGradient id="glow"><stop offset=".45" stop-color="#fffbe6" stop-opacity=".9"/><stop offset="1" stop-color="#fff8e0" stop-opacity="0"/></radialGradient>
+  <pattern id="dots" width="36" height="36" patternUnits="userSpaceOnUse"><circle cx="9" cy="9" r="3" fill="#fff"/><circle cx="27" cy="27" r="3" fill="#fff"/></pattern>
+  <pattern id="stripe" width="40" height="10" patternUnits="userSpaceOnUse"><rect width="20" height="10" fill="#fff" opacity=".45"/></pattern>
+</defs>`;
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+
+// ================= 各パーツ =================
+const PARTS = {};
+
+// ---- frame: 画面のふち飾り ----
+PARTS.frame = () => {
+  const T = 6;
+  let s = '';
+  // 上フリル
+  s += `<path d="${scallopBand(-10, 92, 160, 26)}" fill="${C.pinkDeep}"/>
+    <path d="${scallopBand(-10, 92, 160, 26)}" fill="none" stroke="#fff" stroke-width="3" opacity=".75" transform="translate(0,-8)" stroke-dasharray="2 8" stroke-linecap="round"/>
+    <path d="${scallopBand(-10, 58, 80, 18)}" fill="${C.pink}"/><path d="${scallopBand(-10, 58, 80, 18)}" fill="url(#dots)" opacity=".55"/>
+    <path d="${scallopBand(-10, 20, 40, 8)}" fill="#fff"/>`;
+  for (let x = 80; x < W; x += 160) s += `<circle cx="${x}" cy="${120}" r="5" fill="#fff"/>`;
+  // 水色リボンのドレープ
+  const SW = 480;
+  for (let k = 0; k < W / SW; k++) {
+    s += `<path class="swag" data-a="${k * SW}" data-b="${(k + 1) * SW}" fill="none" stroke="${C.blue}" stroke-width="16" stroke-linecap="round"/>`;
+    s += `<path class="swagL" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 8" stroke-linecap="round"/>`;
+    s += `<g class="pearls">` + Array.from({ length: 13 }, (_, j) => `<circle r="${j % 3 ? 5 : 7}" fill="#fff" stroke="${C.blueLine}" stroke-width="1.2"/>`).join('') + `</g>`;
+  }
+  // 下フリル
+  s += `<path d="${scallopBand(H + 10, H - 70, 120, 18, -1)}" fill="${C.blue}" stroke="${C.blueLine}" stroke-width="3"/>
+    <path d="${scallopBand(H + 10, H - 44, 80, 14, -1)}" fill="${C.pink}" stroke="${C.pinkLine}" stroke-width="3"/>
+    <path d="${scallopBand(H + 10, H - 44, 80, 14, -1)}" fill="url(#dots)" opacity=".55"/>
+    <path d="${scallopBand(H + 10, H - 14, 40, 6, -1)}" fill="#fff"/>`;
+  for (let x = 40; x < W; x += 80) s += `<circle cx="${x}" cy="${H - 44}" r="5" fill="#fff"/>`;
+  // 左右の細いレース
+  for (const side of [0, 1]) {
+    const x = side ? W - 16 : 16;
+    s += `<rect x="${x - 16}" y="0" width="32" height="${H}" fill="#fff" opacity=".95"/>`;
+    for (let y = 0; y < H; y += 32) s += `<circle cx="${side ? x - 16 : x + 16}" cy="${y + 16}" r="16" fill="#fff" opacity=".95"/><circle cx="${side ? x - 22 : x + 22}" cy="${y + 16}" r="4" fill="${C.light}"/>`;
+  }
+  // 四隅の満月とリボン
+  const corners = [[120, 230, 70, 0], [W - 120, 230, 70, 1], [140, H - 190, 56, 2], [W - 140, H - 190, 56, 3]];
+  corners.forEach(([x, y, r, k]) => {
+    s += `<g class="cm" data-x="${x}" data-y="${y}" data-k="${k}"><circle r="${r * 1.7}" fill="url(#glow)"/>${scallopRing(r + 20, r + 20, 20, 12, '#fff')}${moonBody(r, k < 2)}</g>`;
+  });
+  for (let k = 0; k <= W / SW; k++) s += `<g class="tb" data-x="${k * SW}" data-k="${k}"><g transform="scale(1.4)">${k % 2 ? bow(C.blue, C.blueLine) : bow()}</g></g>`;
+  // 吊り星
+  const hangs = [[330, 150, 'star'], [600, 110, 'heart'], [1320, 110, 'heart'], [1590, 150, 'star']];
+  hangs.forEach(([x, len, kind], k) => {
+    const body = kind === 'star' ? star(k % 2 ? C.blue : C.yellow, k % 2 ? C.blueLine : C.yellowLine, 1) : `<g transform="scale(.6)">${heart(C.pink, C.pinkLine)}</g>`;
+    s += `<g class="hang" data-x="${x}" data-k="${k}"><line x1="0" y1="0" x2="0" y2="${len - 26}" stroke="#fff" stroke-width="2.5" stroke-dasharray="1 6" stroke-linecap="round"/><g transform="translate(0,${len})">${body}</g></g>`;
+  });
+  return {
+    T, svg: s, render(t) {
+      const p = t / T;
+      $$('.swag').forEach((el, i) => {
+        const a = +el.dataset.a, b = +el.dataset.b, m = (a + b) / 2;
+        const sag = 40 + 6 * Math.sin(TAU * (p + i * .3));
+        const d = `M ${a} 112 Q ${m} ${f(112 + sag * 2)} ${b} 112`;
+        el.setAttribute('d', d); $$('.swagL')[i].setAttribute('d', d);
+        [...$$('.pearls')[i].children].forEach((pe, j) => {
+          const u = (j + 1) / 14;
+          pe.setAttribute('cx', f((1 - u) * (1 - u) * a + 2 * (1 - u) * u * m + u * u * b));
+          pe.setAttribute('cy', f(112 + 2 * (1 - u) * u * sag * 2 + 16));
+        });
+      });
+      $$('.tb').forEach(el => el.setAttribute('transform', `translate(${el.dataset.x},112) rotate(${f(7 * Math.sin(TAU * (p + +el.dataset.k * .25)))})`));
+      $$('.cm').forEach(el => {
+        const k = +el.dataset.k;
+        el.setAttribute('transform', `translate(${el.dataset.x},${f(+el.dataset.y + 8 * Math.sin(TAU * (p + k * .25)))}) rotate(${f(4 * Math.sin(TAU * (p + k * .4)))})`);
+      });
+      $$('.hang').forEach(el => el.setAttribute('transform', `translate(${el.dataset.x},100) rotate(${f(7 * Math.sin(TAU * (p + +el.dataset.k * .23)))})`));
+    }
+  };
+};
+
+// ---- fall: ふわふわ降るハート・星 ----
+PARTS.fall = () => {
+  const T = 6, words = ['MOON', 'LOVE', 'DREAM', 'LUNA', 'KISS', '♡'];
+  const items = [];
+  let s = '';
+  for (let i = 0; i < 30; i++) {
+    const ci = i % 3;
+    items.push({ x: 30 + i / 30 * (W - 60) + (rnd() - .5) * 60, s: .35 + rnd() * .35, ph: rnd(), cyc: 1 + (i % 2), amp: 20 + rnd() * 40, sw: 1 + Math.floor(rnd() * 2) });
+    const fc = [C.pink, C.yellow, C.blue][ci], lc = [C.pinkLine, C.yellowLine, C.blueLine][ci];
+    let body;
+    if (i % 5 === 2) body = `<g transform="scale(1.5)"><path d="${HEART}" fill="${fc}" stroke="#fff" stroke-width="5"/><path d="${HEART}" fill="none" stroke="${lc}" stroke-width="1.5"/></g>
+      <text x="0" y="0" font-family="'M PLUS Rounded 1c', 'Arial Rounded MT Bold', sans-serif" font-weight="900" font-size="20" fill="${lc}" text-anchor="middle" dominant-baseline="central">${words[i % words.length]}</text>`;
+    else if (i % 7 === 3) body = `<g transform="scale(1.1)">${bow(fc, lc)}</g>`;
+    else if (i % 4 === 1) body = star(fc, lc, 1.2);
+    else body = heart(fc, lc);
+    s += `<g class="fl">${body}</g>`;
+  }
+  return {
+    T, svg: s, render(t) {
+      const p = t / T;
+      $$('.fl').forEach((el, n) => {
+        const d = items[n], q = (d.cyc * p + d.ph) % 1;
+        const y = -80 + q * (H + 160);
+        const x = d.x + d.amp * Math.sin(TAU * (d.sw * p + d.ph));
+        el.setAttribute('transform', `translate(${f(x)},${f(y)}) rotate(${f(20 * Math.sin(TAU * (p * d.cyc + d.ph)))}) scale(${f(d.s)})`);
+      });
+    }
+  };
+};
+
+// ---- kira: キラキラのまたたき ----
+PARTS.kira = () => {
+  const T = 4, items = [];
+  let s = '';
+  for (let i = 0; i < 70; i++) {
+    items.push({ x: rnd() * W, y: rnd() * H, s: .7 + rnd() * 1.1, n: 1 + Math.floor(rnd() * 2), ph: rnd() });
+    const col = ['#fff', C.yellowDeep, C.blueDeep, C.pink][i % 4];
+    s += `<g class="tw">${i % 3 === 2 ? `<circle r="7" fill="${col}"/>` : sparkle(col)}</g>`;
+  }
+  return {
+    T, svg: s, render(t) {
+      const p = t / T;
+      $$('.tw').forEach((el, i) => {
+        const d = items[i], v = Math.max(0, Math.sin(TAU * (d.n * p + d.ph)));
+        el.setAttribute('transform', `translate(${f(d.x)},${f(d.y)}) scale(${f(d.s * v)}) rotate(${f(90 * p * d.n)})`);
+        el.setAttribute('opacity', f(v));
+      });
+    }
+  };
+};
+
+// ---- moon: レースの満月バッジ ----
+PARTS.moon = () => {
+  const T = 6, R = 300, NS = 32;
+  let lace = scallopRing(R + 52, R + 52, NS, 27, '#fff');
+  for (let i = 0; i < NS; i++) {
+    const a = (i + .5) / NS * TAU, a2 = i / NS * TAU;
+    lace += `<circle cx="${f(Math.cos(a) * (R + 58))}" cy="${f(Math.sin(a) * (R + 58))}" r="7" fill="${C.light}"/>`;
+    lace += `<circle cx="${f(Math.cos(a2) * (R + 30))}" cy="${f(Math.sin(a2) * (R + 30))}" r="${i % 2 ? 5 : 7}" fill="#fff" stroke="${i % 2 ? C.blueLine : C.pinkLine}" stroke-width="1.5"/>`;
+  }
+  let orbit = '';
+  for (let i = 0; i < 6; i++) orbit += `<g class="orb">${i % 2 ? star(i % 4 === 1 ? C.yellow : C.blue, i % 4 === 1 ? C.yellowLine : C.blueLine, .8) : `<g transform="scale(.55)">${heart(C.pink, C.pinkLine)}</g>`}</g>`;
+  const s = `<g id="mb" transform="translate(${W / 2},${H / 2})">
+    <circle id="halo" r="${R * 1.6}" fill="url(#glow)"/>
+    <g id="lace">${lace}</g>
+    ${moonBody(R, false)}
+    <path d="${HEART}" fill="#ffd9a0" opacity=".35" transform="translate(-70,40) scale(1.3)"/>
+    <g transform="translate(${R * .62},${-R * .7}) rotate(18)"><g id="mbow"><g transform="scale(2.2)">${bow()}</g></g></g>
+    <g transform="translate(${-R * .7},${R * .72}) rotate(-20)"><g id="mbow2"><g transform="scale(1.5)">${bow(C.blue, C.blueLine)}</g></g></g>
+    ${orbit}
+  </g>`;
+  return {
+    T, svg: s, render(t) {
+      const p = t / T;
+      $('#mb').setAttribute('transform', `translate(${W / 2},${f(H / 2 + 12 * Math.sin(TAU * p))})`);
+      $('#lace').setAttribute('transform', `rotate(${f(p * 360 / NS * 2)})`);
+      $('#halo').setAttribute('r', f(R * (1.55 + .08 * Math.sin(TAU * 2 * p))));
+      $('#mbow').setAttribute('transform', `rotate(${f(6 * Math.sin(TAU * 2 * p))})`);
+      $('#mbow2').setAttribute('transform', `rotate(${f(-6 * Math.sin(TAU * 2 * p + 1))})`);
+      $$('.orb').forEach((el, i) => {
+        const a = TAU * (p + i / 6);
+        const x = Math.cos(a) * (R + 140), y = Math.sin(a) * (R + 90);
+        el.setAttribute('transform', `translate(${f(x)},${f(y)}) rotate(${f(30 * Math.sin(TAU * 2 * p + i))}) scale(${f(1 + .15 * Math.sin(TAU * 2 * p + i))})`);
+      });
+    }
+  };
+};
+
+// ---- wipe: フリルのカーテンで覆って開くトランジション ----
+PARTS.wipe = () => {
+  const T = 1.6;
+  // 3 色のフリル層が上から降りて画面を覆い、下へ抜けていく
+  const layers = [
+    { fill: C.blue, line: C.blueLine, delay: 0, w: 160, dep: 34 },
+    { fill: '#fff', line: C.pink, delay: .06, w: 120, dep: 28 },
+    { fill: C.pink, line: C.pinkLine, delay: .12, w: 160, dep: 34, dots: true },
+  ];
+  let s = '';
+  layers.forEach((L, i) => {
+    // 縦に長いシート (上端も下端もスカラップ)
+    const top = scallopBand(H + 400, 0, L.w, L.dep, -1).replace(`M -10 ${H + 400}`, `M -10 ${H + 400}`);
+    let d = `M -10 0 `;
+    for (let x = -10; x < W + 10; x += L.w) d += `Q ${x + L.w / 2} ${-L.dep * 2} ${x + L.w} 0 `;
+    d += `L ${W + L.w} ${H} `;
+    for (let x = W + L.w - 10 - ((W + L.w) % L.w); x > -10 - L.w; x -= L.w) d += `Q ${x - L.w / 2 + L.w / 2} ${H + L.dep * 2} ${x - L.w / 2} ${H} `;
+    d = `M -10 0 `;
+    for (let x = -10; x < W + 10; x += L.w) d += `Q ${x + L.w / 2} ${-L.dep * 2} ${x + L.w} 0 `;
+    const xEnd = -10 + Math.ceil((W + 20) / L.w) * L.w;
+    d += `L ${xEnd} ${H} `;
+    for (let x = xEnd; x > -10; x -= L.w) d += `Q ${x - L.w / 2} ${H + L.dep * 2} ${x - L.w} ${H} `;
+    d += 'Z';
+    s += `<g class="wl" data-i="${i}"><path d="${d}" fill="${L.fill}" stroke="${L.line}" stroke-width="4"/>${L.dots ? `<path d="${d}" fill="url(#dots)" opacity=".6"/>` : ''}
+      ${i === 2 ? Array.from({ length: Math.ceil(W / L.w) }, (_, k) => `<circle cx="${-10 + k * L.w + L.w / 2}" cy="${H + 34}" r="7" fill="#fff"/>`).join('') : ''}</g>`;
+  });
+  // 真ん中の満月とリボン
+  s += `<g id="wm">${scallopRing(220, 220, 26, 16, '#fff')}${moonBody(180, false)}<g transform="translate(0,-205)"><g transform="scale(2.2)">${bow(C.blue, C.blueLine)}</g></g></g>`;
+  let bursts = '';
+  for (let i = 0; i < 10; i++) bursts += `<g class="wb" data-a="${i / 10 * TAU}">${i % 2 ? `<g transform="scale(.55)">${heart(C.pink, C.pinkLine)}</g>` : star(i % 4 ? C.yellow : C.blue, i % 4 ? C.yellowLine : C.blueLine, .8)}</g>`;
+  s += bursts;
+  return {
+    T, svg: s, render(t) {
+      $$('.wl').forEach(el => {
+        const L = layers[+el.dataset.i];
+        // 0→0.55: 上から降りて覆う / 1.0→1.5: 下へ抜ける
+        const a = easeInOut(clamp((t - L.delay) / .55));
+        const b = easeInOut(clamp((t - 1.0 + L.delay) / .55));
+        const y = -H - 100 + a * (H + 100) + b * (H + 120);
+        el.setAttribute('transform', `translate(0,${f(y)})`);
+      });
+      const mIn = easeOutBack(clamp((t - .45) / .3)), mOut = clamp((t - .95) / .2);
+      const ms = mIn * (1 - easeInOut(mOut));
+      $('#wm').setAttribute('transform', `translate(${W / 2},${H / 2}) scale(${f(ms)}) rotate(${f((1 - mIn) * -30)})`);
+      $('#wm').setAttribute('opacity', f(ms > 0.01 ? 1 : 0));
+      $$('.wb').forEach((el, i) => {
+        const u = clamp((t - .6) / .5);
+        const a = +el.dataset.a, d = 260 + u * 260;
+        el.setAttribute('transform', `translate(${f(W / 2 + Math.cos(a) * d)},${f(H / 2 + Math.sin(a) * d * .8)}) scale(${f(Math.sin(Math.PI * u))})`);
+        el.setAttribute('opacity', f(u > 0 && u < 1 ? 1 : 0));
+      });
+    }
+  };
+};
+
+// ---- plate: 名前・テロップ用プレート ----
+PARTS.plate = () => {
+  const T = 4, PW = 1100, PH = 210, X = W / 2, Y = H - 230;
+  const rr = PH / 2;
+  // ふちのスカラップ (角丸長方形に沿って)
+  let sc = '';
+  const per = 2 * (PW - PH) + Math.PI * PH, N = Math.round(per / 38);
+  const ptOn = u => {
+    let L = u * per;
+    const straight = PW - PH;
+    if (L < straight) return [-straight / 2 + L, -rr - 10, -Math.PI / 2];
+    L -= straight;
+    if (L < Math.PI * rr) { const a = -Math.PI / 2 + L / rr; return [straight / 2 + Math.cos(a) * (rr + 10), Math.sin(a) * (rr + 10), a]; }
+    L -= Math.PI * rr;
+    if (L < straight) return [straight / 2 - L, rr + 10, Math.PI / 2];
+    L -= straight;
+    const a = Math.PI / 2 + L / rr; return [-straight / 2 + Math.cos(a) * (rr + 10), Math.sin(a) * (rr + 10), a];
+  };
+  for (let i = 0; i < N; i++) {
+    const [x, y] = ptOn(i / N);
+    sc += `<circle cx="${f(x)}" cy="${f(y)}" r="19" fill="#fff"/>`;
+  }
+  for (let i = 0; i < N; i++) {
+    const [x, y, a] = ptOn((i + .5) / N);
+    sc += `<circle cx="${f(x + Math.cos(a) * 6)}" cy="${f(y + Math.sin(a) * 6)}" r="4.5" fill="${C.light}"/>`;
+  }
+  const s = `<g id="plate">
+    <rect x="${-PW / 2 + 8}" y="${-PH / 2 + 14}" width="${PW}" height="${PH}" rx="${rr}" fill="${C.pinkLine}" opacity=".25"/>
+    ${sc}
+    <rect x="${-PW / 2}" y="${-PH / 2}" width="${PW}" height="${PH}" rx="${rr}" fill="${C.pale}" stroke="${C.pink}" stroke-width="6"/>
+    <rect x="${-PW / 2 + 20}" y="${-PH / 2 + 20}" width="${PW - 40}" height="${PH - 40}" rx="${rr - 20}" fill="none" stroke="${C.blueDeep}" stroke-width="3" stroke-dasharray="3 10" stroke-linecap="round"/>
+    <g transform="translate(${-PW / 2 + 40},${-PH / 2 + 10})"><g id="pm">${scallopRing(86, 86, 18, 13, '#fff')}${moonBody(70, false)}</g></g>
+    <g transform="translate(${PW / 2 - 30},${-PH / 2 + 10}) rotate(18)"><g id="pb"><g transform="scale(1.6)">${bow()}</g></g></g>
+    <g transform="translate(${PW / 2 - 110},${PH / 2 - 10})"><g class="ps">${star(C.yellow, C.yellowLine, .8)}</g></g>
+    <g transform="translate(${PW / 2 - 50},${PH / 2 - 40})"><g class="ps"><g transform="scale(.45)">${heart(C.blue, C.blueLine)}</g></g></g>
+    <g transform="translate(${-PW / 2 + 140},${PH / 2 - 5})"><g class="ps"><g transform="scale(.4)">${heart(C.pink, C.pinkLine)}</g></g></g>
+  </g>`;
+  return {
+    T, svg: s, render(t) {
+      const u = clamp(t / .5), sIn = easeOutBack(u);
+      const sq = Math.sin(clamp((t - .4) / .25) * Math.PI) * .06;
+      const bob = 6 * Math.sin(TAU * t / 2);
+      $('#plate').setAttribute('transform', `translate(${X},${f(Y + bob + (1 - u) * 60)}) scale(${f(sIn * (1 + sq))},${f(sIn * (1 - sq))})`);
+      $('#plate').setAttribute('opacity', f(clamp(u * 3)));
+      $('#pm').setAttribute('transform', `rotate(${f(8 * Math.sin(TAU * t / 2))})`);
+      $('#pb').setAttribute('transform', `rotate(${f(7 * Math.sin(TAU * t / 2 + 1))})`);
+      $$('.ps').forEach((el, i) => el.setAttribute('transform', `scale(${f(1 + .2 * Math.sin(TAU * t + i * 2))}) rotate(${f(15 * Math.sin(TAU * t / 2 + i))})`));
+    }
+  };
+};
+
+// ---------- 起動 ----------
+const part = PARTS[PART]();
+document.getElementById('root').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${DEFS}${part.svg}</svg>`;
+window.T = part.T;
+window.renderAt = t => part.render(((t % part.T) + part.T) % part.T);
+if (PART === 'wipe' || PART === 'plate') window.renderAt = t => part.render(clamp(t, 0, part.T));
+window.ready = document.fonts.ready;
+if (hp.has('t')) window.renderAt(+hp.get('t'));
+else {
+  const t0 = performance.now();
+  const loop = now => { const s = (now - t0) / 1000; window.renderAt(PART === 'wipe' || PART === 'plate' ? s % (part.T + .6) : s); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>
