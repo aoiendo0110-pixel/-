@@ -1,0 +1,979 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valentine Kitchen</title>
+<style>
+  html,body{margin:0;height:100%;background:#2a1418;overflow:hidden}
+  #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+  #wrap{position:relative;width:min(100vw,calc(100vh*16/9));aspect-ratio:16/9}
+  canvas{display:block;width:100%;height:100%}
+  .scallop{position:absolute;left:0;right:0;height:3.2%;pointer-events:none;
+    background:radial-gradient(circle at 50% 0%, #fff7f9 62%, transparent 64%) 0 0/2.2% 100% repeat-x;
+    filter:drop-shadow(0 2px 3px rgba(190,80,110,.25))}
+  .scallop.top{top:0}
+  .scallop.bottom{bottom:0;transform:scaleY(-1)}
+  .lace-line{position:absolute;left:0;right:0;height:1.1%;pointer-events:none;
+    background:radial-gradient(circle, rgba(255,247,249,.95) 34%, transparent 38%) 0 50%/1.1% 100% repeat-x}
+  .lace-line.top{top:3.4%}
+  .lace-line.bottom{bottom:3.4%}
+  body.clean .scallop, body.clean .lace-line{display:none}
+</style>
+<script type="importmap">
+{ "imports": { "three": "./lib/three.module.min.js", "three/addons/": "./lib/addons/" } }
+</script>
+</head>
+<body>
+<div id="stage"><div id="wrap">
+  <div class="scallop top"></div><div class="lace-line top"></div>
+  <div class="scallop bottom"></div><div class="lace-line bottom"></div>
+</div></div>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+// ---------- params ----------
+const Q = new URLSearchParams(location.search);
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080);
+const DURATION = 18;            // seconds per loop
+if (Q.has('clean')) document.body.classList.add('clean');
+
+// ---------- seeded random ----------
+let seed = 20260214;
+const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+const rr = (a, b) => a + (b - a) * rnd();
+
+// ---------- renderer ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.78;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.getElementById('wrap').prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#f6cfd8');
+scene.fog = new THREE.Fog('#f8d6de', 14, 30);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(36, W / H, 0.1, 80);
+
+// ---------- palette ----------
+const C = {
+  pink: '#f6b6c8', pinkLight: '#fde2ea', pinkDeep: '#ef7f9f', red: '#d63a55', redDeep: '#b5243f',
+  cream: '#fff6f0', choco: '#4b2418', milk: '#7b4428', ruby: '#e48aa0', white: '#fff3e6',
+};
+
+// ---------- materials ----------
+const mat = {
+  chocoDark: new THREE.MeshPhysicalMaterial({ color: C.choco, roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.25 }),
+  chocoMilk: new THREE.MeshPhysicalMaterial({ color: C.milk, roughness: 0.35, clearcoat: 0.7, clearcoatRoughness: 0.3 }),
+  chocoRuby: new THREE.MeshPhysicalMaterial({ color: C.ruby, roughness: 0.38, clearcoat: 0.6, clearcoatRoughness: 0.3 }),
+  chocoWhite: new THREE.MeshPhysicalMaterial({ color: C.white, roughness: 0.4, clearcoat: 0.5 }),
+  ceramicPink: new THREE.MeshPhysicalMaterial({ color: C.pink, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.08 }),
+  ceramicWhite: new THREE.MeshPhysicalMaterial({ color: '#fffafa', roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.08 }),
+  ceramicRed: new THREE.MeshPhysicalMaterial({ color: C.red, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.1 }),
+  silicone: new THREE.MeshPhysicalMaterial({ color: '#e24d6a', roughness: 0.55, sheen: 0.6, sheenColor: new THREE.Color('#ffc0cc') }),
+  siliconeIn: new THREE.MeshPhysicalMaterial({ color: '#a8203c', roughness: 0.6 }),
+  metalPink: new THREE.MeshPhysicalMaterial({ color: '#f2c2cc', metalness: 1, roughness: 0.22 }),
+  metal: new THREE.MeshPhysicalMaterial({ color: '#e8e2e4', metalness: 1, roughness: 0.18 }),
+  plasticPink: new THREE.MeshPhysicalMaterial({ color: C.pinkDeep, roughness: 0.35, clearcoat: 0.6 }),
+  plasticLight: new THREE.MeshPhysicalMaterial({ color: '#ffd3df', roughness: 0.35, clearcoat: 0.6 }),
+  wood: new THREE.MeshStandardMaterial({ color: '#d9a07a', roughness: 0.6 }),
+  icing: new THREE.MeshPhysicalMaterial({ color: '#ff9fbb', roughness: 0.45, clearcoat: 0.4 }),
+  icingWhite: new THREE.MeshPhysicalMaterial({ color: '#fffaf5', roughness: 0.5, clearcoat: 0.3 }),
+  ribbon: new THREE.MeshPhysicalMaterial({ color: '#f58fab', roughness: 0.3, sheen: 1, sheenColor: new THREE.Color('#ffffff'), sheenRoughness: 0.3, side: THREE.DoubleSide }),
+  ribbonRed: new THREE.MeshPhysicalMaterial({ color: '#d8304f', roughness: 0.3, sheen: 1, sheenColor: new THREE.Color('#ffd0da'), sheenRoughness: 0.3, side: THREE.DoubleSide }),
+  paper: new THREE.MeshStandardMaterial({ color: '#fffaf3', roughness: 0.9, side: THREE.DoubleSide }),
+  boxRed: new THREE.MeshPhysicalMaterial({ color: '#c92f4c', roughness: 0.45, clearcoat: 0.3 }),
+  boxPink: new THREE.MeshPhysicalMaterial({ color: '#f9c3d2', roughness: 0.5, clearcoat: 0.2 }),
+};
+
+// ---------- canvas textures ----------
+function canvasTex(w, h, draw, opts = {}) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); draw(g, w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  if (opts.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...opts.repeat); }
+  return t;
+}
+function heartPath(g, x, y, s) {
+  g.beginPath();
+  for (let i = 0; i <= 60; i++) {
+    const t = i / 60 * Math.PI * 2;
+    const hx = 16 * Math.sin(t) ** 3, hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    const px = x + hx * s / 17, py = y - hy * s / 17;
+    i ? g.lineTo(px, py) : g.moveTo(px, py);
+  }
+  g.closePath();
+}
+
+// gingham tablecloth with tiny hearts
+const ginghamTex = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#fff4f6'; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(244,150,175,0.38)';
+  for (let i = 0; i < 4; i++) { g.fillRect(i * 128, 0, 64, h); g.fillRect(0, i * 128, w, 64); }
+  g.fillStyle = 'rgba(232,110,145,0.25)';
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) g.fillRect(i * 128, j * 128, 64, 64);
+  g.fillStyle = 'rgba(255,255,255,0.85)';
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { heartPath(g, i * 128 + 96, j * 128 + 98, 14); g.fill(); }
+  // woven noise
+  const id = g.getImageData(0, 0, w, h);
+  for (let i = 0; i < id.data.length; i += 4) { const n = (Math.random() - 0.5) * 10; id.data[i] += n; id.data[i + 1] += n; id.data[i + 2] += n; }
+  g.putImageData(id, 0, 0);
+}, { repeat: [7, 5] });
+
+// lace doily (alpha)
+function laceTexture(size = 1024, scallops = 28) {
+  return canvasTex(size, size, (g, w) => {
+    const cx = w / 2, R = w * 0.49;
+    g.fillStyle = '#ffffff';
+    g.beginPath();
+    for (let i = 0; i <= 720; i++) {
+      const a = i / 720 * Math.PI * 2;
+      const r = R * (0.93 + 0.07 * Math.abs(Math.cos(a * scallops / 2)));
+      i ? g.lineTo(cx + Math.cos(a) * r, cx + Math.sin(a) * r) : g.moveTo(cx + r, cx);
+    }
+    g.fill();
+    g.globalCompositeOperation = 'destination-out';
+    const ring = (rad, n, size) => { for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; g.beginPath(); g.arc(cx + Math.cos(a) * rad, cx + Math.sin(a) * rad, size, 0, 7); g.fill(); } };
+    ring(R * 0.9, scallops, R * 0.035);
+    ring(R * 0.82, scallops * 2, R * 0.018);
+    // petal holes
+    for (let i = 0; i < scallops; i++) {
+      const a = (i + 0.5) / scallops * Math.PI * 2;
+      g.save(); g.translate(cx + Math.cos(a) * R * 0.7, cx + Math.sin(a) * R * 0.7); g.rotate(a);
+      g.beginPath(); g.ellipse(0, 0, R * 0.07, R * 0.025, 0, 0, 7); g.fill(); g.restore();
+    }
+    ring(R * 0.58, scallops, R * 0.022);
+    for (let i = 0; i < 12; i++) {
+      const a = i / 12 * Math.PI * 2;
+      g.save(); g.translate(cx + Math.cos(a) * R * 0.46, cx + Math.sin(a) * R * 0.46); g.rotate(a + Math.PI / 2);
+      heartPath(g, 0, 0, R * 0.05); g.fill(); g.restore();
+    }
+    ring(R * 0.36, 24, R * 0.012);
+  });
+}
+const laceTex = laceTexture();
+
+// notebook page
+const pageTex = (side) => canvasTex(1024, 1280, (g, w, h) => {
+  g.fillStyle = '#fffaf4'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(240,150,175,0.55)'; g.lineWidth = 3;
+  for (let y = 170; y < h - 60; y += 72) { g.beginPath(); g.moveTo(60, y); g.lineTo(w - 60, y); g.stroke(); }
+  g.strokeStyle = 'rgba(230,90,120,0.5)'; g.beginPath(); g.moveTo(side ? 130 : w - 130, 0); g.lineTo(side ? 130 : w - 130, h); g.stroke();
+  g.fillStyle = '#7a3a3a';
+  const font = (s) => `${s}px "IPAGothic","WenQuanYi Zen Hei",sans-serif`;
+  if (side === 0) {
+    g.fillStyle = '#d63a55'; g.font = font(68); g.fillText('♡ Valentine', 120, 120);
+    g.fillStyle = '#6b3424'; g.font = font(52);
+    const lines = ['生チョコ & ハートの型ぬき', '・ビターチョコ 200g', '・生クリーム 100ml', '・ルビーチョコ 少し', '・いちご 6こ ♡', '・スプリンクル 🍓', '湯せん 50℃ → 型へ', 'ラッピングは赤リボン!'];
+    lines.forEach((l, i) => g.fillText(l, 160, 225 + i * 72));
+    g.strokeStyle = '#ef7f9f'; g.lineWidth = 6; g.beginPath(); g.ellipse(560, 727, 230, 46, 0, 0, 7); g.stroke();
+  } else {
+    g.fillStyle = '#6b3424'; g.font = font(50);
+    ['memo', '温度に気をつける', 'つや出しは 32℃ ☆', 'あとで写真とる!'].forEach((l, i) => g.fillText(l, 120, 225 + i * 72));
+    // doodles: hearts + a chocolate sketch
+    g.strokeStyle = '#e0607f'; g.lineWidth = 7;
+    for (let i = 0; i < 5; i++) { heartPath(g, 200 + i * 150, 620 + (i % 2) * 40, 46); g.stroke(); }
+    g.fillStyle = 'rgba(244,150,175,0.55)'; heartPath(g, 600, 960, 160); g.fill();
+    g.strokeStyle = '#8a4a34'; g.lineWidth = 6; heartPath(g, 600, 960, 160); g.stroke();
+    g.fillStyle = '#d63a55'; g.font = font(64); g.fillText('to you ♡', 480, 1200);
+  }
+});
+
+// box label
+const labelTex = canvasTex(512, 256, (g, w, h) => {
+  g.fillStyle = '#fbd3dd'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#ffffff'; g.lineWidth = 10; g.setLineDash([18, 12]); g.strokeRect(16, 16, w - 32, h - 32);
+  g.fillStyle = '#b5243f'; g.font = 'italic bold 84px serif'; g.textAlign = 'center'; g.fillText('Chocolat', w / 2, 150);
+  g.font = '40px serif'; g.fillText('♡ cacao 70% ♡', w / 2, 210);
+});
+
+// wallpaper
+const wallTex = canvasTex(512, 512, (g, w, h) => {
+  g.fillStyle = '#fbd9e1'; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,0.55)';
+  for (let i = 0; i < 8; i++) g.fillRect(i * 64, 0, 26, h);
+  g.fillStyle = 'rgba(232,110,145,0.35)';
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { heartPath(g, i * 128 + 45 + (j % 2) * 64, j * 128 + 64, 16); g.fill(); }
+}, { repeat: [6, 3] });
+
+// soft blob (steam / glow)
+const softTex = canvasTex(256, 256, (g, w) => {
+  const gr = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+  gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(0.4, 'rgba(255,255,255,0.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, w, w);
+});
+
+// ---------- geometry helpers ----------
+function heartPoints(n = 96, s = 1) {
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const t = i / n * Math.PI * 2;
+    pts.push(new THREE.Vector2(16 * Math.sin(t) ** 3 / 17 * s, (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) / 17 * s + 0.12 * s));
+  }
+  return pts;
+}
+const heartShape = (s = 1) => new THREE.Shape(heartPoints(128, s));
+function heartGeo(s, depth, bevel = 0.06, segs = 10) {
+  const g = new THREE.ExtrudeGeometry(heartShape(s), { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.9, bevelSegments: segs, curveSegments: 128 });
+  g.rotateX(-Math.PI / 2);
+  g.computeBoundingBox(); const bb = g.boundingBox;
+  g.translate(0, -bb.min.y, 0);
+  g.computeVertexNormals();
+  return g;
+}
+function mesh(geo, m, shadow = true) {
+  const o = new THREE.Mesh(geo, m);
+  o.castShadow = shadow; o.receiveShadow = true;
+  return o;
+}
+function lathe(profile, segs = 128) {
+  const g = new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)), segs);
+  g.computeVertexNormals(); return g;
+}
+// smooth a profile with catmull-rom
+function smoothProfile(pts, n = 80) {
+  const curve = new THREE.SplineCurve(pts.map(([x, y]) => new THREE.Vector2(x, y)));
+  return curve.getPoints(n).map(p => [Math.max(0, p.x), p.y]);
+}
+function place(o, x, y, z, ry = 0) { o.position.set(x, y, z); o.rotation.y = ry; scene.add(o); return o; }
+
+const anim = []; // functions (t) => void
+
+// ---------- room ----------
+{
+  const table = mesh(new THREE.PlaneGeometry(26, 18), new THREE.MeshStandardMaterial({ map: ginghamTex, roughness: 0.85 }), false);
+  table.rotation.x = -Math.PI / 2; table.position.set(0, 0, 2); scene.add(table);
+
+  const wall = mesh(new THREE.PlaneGeometry(30, 12), new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.9 }), false);
+  wall.position.set(0, 5, -5.2); scene.add(wall);
+  // skirting
+  const skirt = mesh(new RoundedBoxGeometry(30, 0.4, 0.3, 4, 0.1), mat.ceramicWhite, false);
+  skirt.position.set(0, 0.2, -5.1); scene.add(skirt);
+
+  // wavy shelf (like the reference desk shelf)
+  const s = new THREE.Shape();
+  const sw = 9, sd = 0.9;
+  s.moveTo(-sw / 2, 0);
+  for (let i = 0; i <= 120; i++) { const x = -sw / 2 + sw * i / 120; s.lineTo(x, sd + 0.18 * Math.sin(x * 2.2)); }
+  s.lineTo(sw / 2, 0); s.lineTo(-sw / 2, 0);
+  const shelfGeo = new THREE.ExtrudeGeometry(s, { depth: 0.16, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.06, bevelSegments: 6, curveSegments: 64 });
+  shelfGeo.rotateX(Math.PI / 2);
+  const shelf = mesh(shelfGeo, new THREE.MeshPhysicalMaterial({ color: '#fde4ea', roughness: 0.35, clearcoat: 0.6 }));
+  shelf.position.set(0.5, 2.6, -5.2); scene.add(shelf);
+  for (const x of [-3.2, 3.6]) {
+    const leg = mesh(new THREE.CylinderGeometry(0.12, 0.16, 2.5, 32), mat.ceramicWhite);
+    leg.position.set(x, 1.3, -4.75); scene.add(leg);
+  }
+  // jars on shelf
+  const glass = new THREE.MeshPhysicalMaterial({ color: '#ffffff', roughness: 0.05, transparent: true, opacity: 0.28, clearcoat: 1, side: THREE.DoubleSide, depthWrite: false });
+  const candyCols = ['#ff8fae', '#ffffff', '#d63a55', '#7b4428', '#ffc2d1'];
+  [[-2.4, 0.55, 0.8], [-1.2, 0.45, 1.05], [2.0, 0.5, 0.7], [3.0, 0.42, 0.95]].forEach(([x, r, hgt], k) => {
+    const jar = new THREE.Group();
+    jar.add(mesh(new THREE.CylinderGeometry(r, r, hgt, 64, 1, true), glass, false));
+    const fill = mesh(new THREE.CylinderGeometry(r * 0.9, r * 0.9, hgt * 0.6, 64), new THREE.MeshPhysicalMaterial({ color: candyCols[k], roughness: 0.4, clearcoat: 0.5 }), false);
+    fill.position.y = -hgt * 0.18; jar.add(fill);
+    const lid = mesh(new RoundedBoxGeometry(r * 2.1, 0.16, r * 2.1, 4, 0.07), k % 2 ? mat.wood : mat.plasticPink, false);
+    lid.geometry = new THREE.CylinderGeometry(r * 1.04, r * 1.04, 0.16, 64); lid.position.y = hgt / 2 + 0.08; jar.add(lid);
+    const bow = makeBow(0.22, k % 2 ? mat.ribbonRed : mat.ribbon); bow.position.set(0, hgt / 2 + 0.17, r * 0.8); bow.rotation.x = -0.3; jar.add(bow);
+    jar.position.set(x + 0.5, 2.6 + hgt / 2 + 0.06, -4.75); scene.add(jar);
+  });
+
+  // glowing heart neon on the wall
+  const hp = heartPoints(200, 1.0).map(p => new THREE.Vector3(p.x, p.y, 0));
+  const neonCurve = new THREE.CatmullRomCurve3(hp, true);
+  const neon = new THREE.Mesh(new THREE.TubeGeometry(neonCurve, 400, 0.045, 16, true), new THREE.MeshBasicMaterial({ color: '#ffd6e2' }));
+  neon.material.color.multiplyScalar(2.4);
+  neon.position.set(0.6, 4.5, -5.12); scene.add(neon);
+  const neonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: softTex, color: '#ff8fb0', transparent: true, opacity: 0.55, depthWrite: false }));
+  neonGlow.scale.set(4.5, 4.5, 1); neonGlow.position.set(0.6, 4.5, -5.0); scene.add(neonGlow);
+  anim.push(t => { neon.material.color.setRGB(1, 0.84, 0.89).multiplyScalar(2.2 + 0.25 * Math.sin(t * 2.1)); });
+
+  // heart garland bunting
+  const garland = new THREE.CatmullRomCurve3([new THREE.Vector3(-8, 5.6, -5.0), new THREE.Vector3(-4, 4.6, -4.95), new THREE.Vector3(0, 5.3, -4.95), new THREE.Vector3(4, 4.7, -4.95), new THREE.Vector3(8, 5.6, -5.0)]);
+  scene.add(mesh(new THREE.TubeGeometry(garland, 200, 0.015, 8), mat.icingWhite, false));
+  const hg = heartGeo(0.22, 0.03, 0.02, 4);
+  for (let i = 0; i < 22; i++) {
+    const p = garland.getPointAt(i / 21);
+    const h = mesh(hg, i % 3 === 0 ? mat.ceramicRed : i % 3 === 1 ? mat.ceramicPink : mat.ceramicWhite, false);
+    h.rotation.x = Math.PI / 2; h.position.copy(p).add(new THREE.Vector3(0, -0.02, 0.04));
+    scene.add(h);
+    const ph = i * 1.3;
+    anim.push(t => { h.rotation.z = 0.12 * Math.sin(t * 1.4 + ph); });
+  }
+}
+
+// ---------- bow helper ----------
+function ribbonStrip(curve, width, segs = 120, twist = 0, upVec = new THREE.Vector3(0, 1, 0)) {
+  const pos = [], idx = [], uv = [];
+  for (let i = 0; i <= segs; i++) {
+    const u = i / segs, p = curve.getPointAt(u), tg = curve.getTangentAt(u);
+    let side = new THREE.Vector3().crossVectors(tg, upVec).normalize();
+    if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
+    side.applyAxisAngle(tg, twist * Math.sin(u * Math.PI));
+    const a = p.clone().addScaledVector(side, width / 2), b = p.clone().addScaledVector(side, -width / 2);
+    pos.push(a.x, a.y, a.z, b.x, b.y, b.z); uv.push(u, 0, u, 1);
+    if (i < segs) { const k = i * 2; idx.push(k, k + 1, k + 2, k + 1, k + 3, k + 2); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+function makeBow(s, m) {
+  const g = new THREE.Group();
+  for (const sgn of [-1, 1]) {
+    // loop
+    const pts = [];
+    for (let i = 0; i <= 40; i++) {
+      const a = i / 40 * Math.PI * 2;
+      pts.push(new THREE.Vector3(sgn * (Math.sin(a / 2) ** 1.2) * 1.0 * s, Math.sin(a) * 0.45 * s, 0));
+    }
+    const loop = mesh(ribbonStrip(new THREE.CatmullRomCurve3(pts, true), 0.32 * s, 80, 0, new THREE.Vector3(0, 0, 1)), m);
+    loop.geometry = ribbonStrip(new THREE.CatmullRomCurve3(pts, true), 0.32 * s, 80, 0.0, new THREE.Vector3(0, 0, 1));
+    // turn the strip so it faces forward (width along z)
+    const lg = new THREE.Group(); lg.add(loop); g.add(lg);
+    // tail
+    const tail = new THREE.CatmullRomCurve3([new THREE.Vector3(0, 0, 0), new THREE.Vector3(sgn * 0.25 * s, -0.5 * s, 0.05 * s), new THREE.Vector3(sgn * 0.45 * s, -0.95 * s, 0)]);
+    const tm = mesh(ribbonStrip(tail, 0.3 * s, 40, 0.5, new THREE.Vector3(0, 0, 1)), m);
+    g.add(tm);
+  }
+  const knot = mesh(new THREE.SphereGeometry(0.17 * s, 32, 24), m); knot.scale.set(1, 1.1, 0.8); g.add(knot);
+  // the ribbon strips are built with width along z via upVec trick; rotate so width is depth
+  g.children.forEach(c => { if (c.isGroup) c.children[0].rotation.set(0, 0, 0); });
+  return g;
+}
+
+// ---------- parchment paper ----------
+{
+  const g = new THREE.PlaneGeometry(4.2, 3.0, 80, 60); g.rotateX(-Math.PI / 2);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i);
+    p.setY(i, 0.012 + 0.012 * Math.sin(x * 3.1 + z * 2.3) * Math.sin(z * 4.2 - x) + 0.03 * Math.max(0, Math.abs(x) - 1.7));
+  }
+  g.computeVertexNormals();
+  const paper = mesh(g, new THREE.MeshStandardMaterial({ color: '#fbf1e6', roughness: 0.75, transparent: true, opacity: 0.96, side: THREE.DoubleSide }), false);
+  place(paper, -1.6, 0, 1.9, 0.12);
+}
+
+// ---------- mixing bowl with melting chocolate + whisk ----------
+let swirlDisk, whisk, swirlBase;
+{
+  const grp = new THREE.Group();
+  const outer = smoothProfile([[0.0, 0.02], [0.55, 0.0], [0.62, 0.05], [1.0, 0.35], [1.32, 0.95], [1.42, 1.08]], 90);
+  const inner = smoothProfile([[1.36, 1.1], [1.25, 0.95], [0.95, 0.42], [0.55, 0.14], [0.0, 0.1]], 90);
+  grp.add(mesh(lathe([...outer, [1.40, 1.12], ...inner], 160), mat.ceramicPink));
+  // gold-ish rim line
+  const rim = mesh(new THREE.TorusGeometry(1.39, 0.028, 16, 200), mat.metalPink); rim.rotation.x = Math.PI / 2; rim.position.y = 1.11; grp.add(rim);
+  // heart decals around bowl
+  const hgeo = heartGeo(0.16, 0.01, 0.012, 3);
+  for (let i = 0; i < 10; i++) {
+    const a = i / 10 * Math.PI * 2, r = 1.18, y = 0.62;
+    const h = mesh(hgeo, mat.ceramicWhite, false);
+    h.position.set(Math.cos(a) * r, y, Math.sin(a) * r);
+    h.lookAt(Math.cos(a) * 3, y + 0.9, Math.sin(a) * 3); h.rotateX(Math.PI / 2);
+    grp.add(h);
+  }
+  // swirling chocolate surface (lathe disk with rings so it can ripple)
+  const R = 1.24, rings = 48, segs = 160;
+  const dg = new THREE.LatheGeometry(Array.from({ length: rings + 1 }, (_, i) => new THREE.Vector2(R * i / rings, 0)).reverse(), segs);
+  const cols = [], pp = dg.attributes.position;
+  const dark = new THREE.Color(C.choco), milk = new THREE.Color('#8a4c2c'), pk = new THREE.Color('#f3a3b8');
+  for (let i = 0; i < pp.count; i++) {
+    const x = pp.getX(i), z = pp.getZ(i), r = Math.hypot(x, z), a = Math.atan2(z, x);
+    const sw = Math.sin(a * 2 + r * 7.5);           // spiral swirl
+    const c = dark.clone().lerp(milk, 0.5 + 0.5 * Math.sin(a * 3 - r * 5));
+    if (sw > 0.82 && r > 0.15) c.lerp(pk, Math.min(1, (sw - 0.82) * 6) * 0.9);
+    cols.push(c.r, c.g, c.b);
+  }
+  dg.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  swirlBase = Float32Array.from(pp.array);
+  swirlDisk = mesh(dg, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.22, clearcoat: 1, clearcoatRoughness: 0.12 }), false);
+  swirlDisk.position.y = 0.78; grp.add(swirlDisk);
+
+  // whisk
+  whisk = new THREE.Group();
+  const handle = mesh(lathe(smoothProfile([[0, 0], [0.07, 0.02], [0.085, 0.4], [0.075, 0.9], [0.09, 1.2], [0.06, 1.28], [0, 1.3]], 60), 48), mat.plasticPink);
+  handle.position.y = 0.05; whisk.add(handle);
+  const ring = mesh(new THREE.TorusGeometry(0.08, 0.025, 12, 48), mat.metal); ring.rotation.x = Math.PI / 2; ring.position.y = 1.3; whisk.add(ring);
+  const collar = mesh(new THREE.CylinderGeometry(0.075, 0.06, 0.18, 48), mat.metal); collar.position.y = 0.0; whisk.add(collar);
+  const L = 1.25, Wd = 0.42;
+  for (let k = 0; k < 8; k++) {
+    const pts = [];
+    for (let i = 0; i <= 60; i++) {
+      const th = i / 60 * Math.PI * 2;
+      pts.push(new THREE.Vector3(Wd * Math.sin(th) * Math.sqrt((1 - Math.cos(th)) / 2), -L * (1 - Math.cos(th)) / 2, 0));
+    }
+    const wire = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, 0.011, 8), mat.metal);
+    wire.rotation.y = k / 8 * Math.PI; wire.position.y = -0.06; whisk.add(wire);
+  }
+  // chocolate coat on whisk tip
+  const coat = mesh(new THREE.SphereGeometry(0.33, 48, 32, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.55), mat.chocoDark, false);
+  coat.position.y = -1.0; coat.scale.set(1, 0.9, 1); whisk.add(coat);
+  grp.add(whisk);
+  whisk.position.set(0.35, 1.25, 0.1);
+  whisk.rotation.set(0.15, 0, -0.6);
+
+  // drip down the outer bowl side
+  const drip = mesh(new THREE.CapsuleGeometry(0.06, 0.3, 12, 24), mat.chocoDark);
+  drip.position.set(1.33, 0.92, 0.42); drip.rotation.z = 0.5; grp.add(drip);
+  const dripTop = mesh(new THREE.TorusGeometry(1.39, 0.05, 16, 60, 0.5), mat.chocoDark); dripTop.rotation.set(Math.PI / 2, 0, 0.12); dripTop.position.y = 1.12; grp.add(dripTop);
+
+  place(grp, 0.4, 0, -0.9);
+}
+
+// ---------- spatula with dripping chocolate ----------
+let dropMesh;
+{
+  const g = new THREE.Group();
+  const handle = mesh(new RoundedBoxGeometry(0.16, 0.1, 1.9, 6, 0.045), mat.wood); handle.position.z = 1.05; g.add(handle);
+  const blade = mesh(new RoundedBoxGeometry(0.55, 0.05, 0.75, 8, 0.024), mat.plasticLight); blade.position.z = -0.25; g.add(blade);
+  const hh = mesh(heartGeo(0.12, 0.01, 0.01, 2), mat.ceramicRed, false); hh.position.set(0, 0.05, 1.7); g.add(hh);
+  // chocolate on blade
+  const blob = mesh(new THREE.SphereGeometry(0.3, 48, 32), mat.chocoDark); blob.scale.set(0.85, 0.16, 1.0); blob.position.set(0, 0.03, -0.32); g.add(blob);
+  g.rotation.x = -0.07;
+  place(g, 2.2, 0.06, 0.2, -0.9);
+  // puddle under the spatula tip
+  const pud = mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.02, 64), mat.chocoDark, false);
+  pud.scale.set(1.2, 1, 0.8); place(pud, 1.62, 0.01, -0.05);
+  dropMesh = mesh(new THREE.SphereGeometry(0.05, 32, 24), mat.chocoDark); scene.add(dropMesh);
+  const tipW = new THREE.Vector3(1.66, 0.08, -0.02);
+  anim.push(t => {
+    const ph = (t % 2.4) / 2.4;
+    if (ph < 0.7) { const s = ph / 0.7; dropMesh.position.set(tipW.x, tipW.y - 0.03 * s, tipW.z); dropMesh.scale.set(0.5 + 0.5 * s, 0.6 + 1.0 * s, 0.5 + 0.5 * s); }
+    else { const s = (ph - 0.7) / 0.3; dropMesh.position.set(tipW.x, Math.max(0.01, tipW.y - 0.03 - 0.1 * s * s), tipW.z); dropMesh.scale.set(1 + s * 0.6, 1.6 * (1 - s) + 0.15, 1 + s * 0.6); }
+  });
+}
+
+// ---------- heart silicone mold ----------
+{
+  const grp = new THREE.Group();
+  const w = 3.0, d = 2.0, r = 0.3;
+  const s = new THREE.Shape();
+  s.moveTo(-w / 2 + r, -d / 2); s.lineTo(w / 2 - r, -d / 2); s.quadraticCurveTo(w / 2, -d / 2, w / 2, -d / 2 + r);
+  s.lineTo(w / 2, d / 2 - r); s.quadraticCurveTo(w / 2, d / 2, w / 2 - r, d / 2); s.lineTo(-w / 2 + r, d / 2);
+  s.quadraticCurveTo(-w / 2, d / 2, -w / 2, d / 2 - r); s.lineTo(-w / 2, -d / 2 + r); s.quadraticCurveTo(-w / 2, -d / 2, -w / 2 + r, -d / 2);
+  const cells = [];
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 2; j++) cells.push([-0.95 + i * 0.95, -0.47 + j * 0.94]);
+  for (const [cx, cy] of cells) {
+    const hp = heartPoints(96, 0.36).map(p => new THREE.Vector2(p.x + cx, p.y + cy)).reverse();
+    s.holes.push(new THREE.Path(hp));
+  }
+  const g = new THREE.ExtrudeGeometry(s, { depth: 0.12, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 6, curveSegments: 48 });
+  g.rotateX(-Math.PI / 2); g.translate(0, 0.17, 0);
+  grp.add(mesh(g, mat.silicone));
+  const base = mesh(new RoundedBoxGeometry(w - 0.1, 0.12, d - 0.1, 4, 0.05), mat.silicone); base.position.y = 0.06; grp.add(base);
+  const fills = [mat.chocoDark, null, mat.chocoRuby, mat.chocoMilk, null, mat.chocoDark];
+  cells.forEach(([cx, cy], k) => {
+    const cup = mesh(heartGeo(0.36, 0.02, 0.01, 2), mat.siliconeIn, false);
+    cup.position.set(cx, 0.13, -cy); grp.add(cup);
+    if (fills[k]) {
+      const f = mesh(heartGeo(0.355, 0.02, 0.02, 4), fills[k], false);
+      f.position.set(cx, 0.24, -cy); grp.add(f);
+    }
+  });
+  // half-filled cell: glossy pool
+  const pool = mesh(heartGeo(0.3, 0.005, 0.01, 2), mat.chocoMilk, false); pool.position.set(cells[4][0], 0.17, -cells[4][1]); grp.add(pool);
+  place(grp, -2.8, 0, 0.3, 0.18);
+}
+
+// ---------- plate with doily + finished chocolates (one being decorated) ----------
+let pipingLine, pipingTip, pipingCount, pipingCurve;
+{
+  const grp = new THREE.Group();
+  const prof = smoothProfile([[0, 0.02], [1.0, 0.02], [1.15, 0.05], [1.45, 0.16], [1.6, 0.2], [1.62, 0.17], [1.45, 0.1], [1.15, 0.0], [0, 0.0]], 90);
+  const pg = lathe(prof, 200);
+  const pa = pg.attributes.position;
+  for (let i = 0; i < pa.count; i++) { const x = pa.getX(i), z = pa.getZ(i), rr2 = Math.hypot(x, z); if (rr2 > 1.2) { const a = Math.atan2(z, x), f = 1 + 0.035 * Math.cos(a * 20) * (rr2 - 1.2) / 0.4; pa.setX(i, x * f); pa.setZ(i, z * f); } }
+  pg.computeVertexNormals();
+  grp.add(mesh(pg, mat.ceramicWhite));
+  const rimLine = mesh(new THREE.TorusGeometry(1.5, 0.012, 8, 200), mat.metalPink, false); rimLine.rotation.x = Math.PI / 2; rimLine.position.y = 0.18; grp.add(rimLine);
+  const doily = mesh(new THREE.CircleGeometry(1.25, 96), new THREE.MeshStandardMaterial({ map: laceTex, alphaTest: 0.5, roughness: 0.9, side: THREE.DoubleSide }), false);
+  doily.rotation.x = -Math.PI / 2; doily.position.y = 0.05; grp.add(doily);
+
+  const choc = [
+    [mat.chocoDark, -0.45, 0.35, 0.3], [mat.chocoRuby, 0.45, 0.4, -0.4], [mat.chocoMilk, 0.05, -0.45, 0.15],
+    [mat.chocoWhite, -0.6, -0.35, -0.6], [mat.chocoDark, 0.65, -0.3, 0.7],
+  ];
+  const sprinkleCols = ['#ff8fae', '#ffffff', '#d63a55', '#ffd1dc'];
+  choc.forEach(([m, x, z, ry], k) => {
+    const h = mesh(heartGeo(0.32, 0.1, 0.06, 8), m);
+    h.position.set(x, 0.06, z); h.rotation.y = ry; grp.add(h);
+    if (k !== 2) {
+      // drizzle
+      const pts = []; for (let i = 0; i <= 8; i++) pts.push(new THREE.Vector3(-0.28 + i * 0.07, 0.24, (i % 2 ? 0.16 : -0.14) + 0.05));
+      const dz = mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 100, 0.016, 8), k === 3 ? mat.chocoDark : k === 1 ? mat.icingWhite : mat.icing, false);
+      dz.position.copy(h.position); dz.rotation.y = ry; grp.add(dz);
+      for (let s2 = 0; s2 < 7; s2++) {
+        const sp = mesh(new THREE.CapsuleGeometry(0.012, 0.04, 4, 8), new THREE.MeshStandardMaterial({ color: sprinkleCols[(s2 + k) % 4], roughness: 0.4 }), false);
+        const a = rnd() * 6.28, rad = rnd() * 0.2;
+        sp.position.set(x + Math.cos(a) * rad, 0.245, z + Math.sin(a) * rad + 0.04); sp.rotation.set(Math.PI / 2, 0, rnd() * 6); grp.add(sp);
+      }
+    }
+  });
+  // the one being decorated: icing line drawing a heart outline over time
+  const target = new THREE.Vector3(0.05, 0.06, -0.45);
+  const hp = heartPoints(120, 0.25).map(p => new THREE.Vector3(p.x, 0.245, -p.y + 0.03));
+  pipingCurve = new THREE.CatmullRomCurve3(hp, true);
+  const tg = new THREE.TubeGeometry(pipingCurve, 240, 0.022, 10, true);
+  pipingCount = tg.index.count;
+  pipingLine = mesh(tg, mat.icing, false);
+  pipingLine.position.copy(target).setY(0); pipingLine.position.y = 0.06; pipingLine.rotation.y = 0.15; grp.add(pipingLine);
+  pipingTip = mesh(new THREE.SphereGeometry(0.035, 24, 16), mat.icing, false); grp.add(pipingTip);
+  const tipTmp = new THREE.Vector3();
+  anim.push(t => {
+    const prog = 0.15 + 0.85 * Math.min(1, ((t / DURATION) % 1) * 1.15);
+    pipingLine.geometry.setDrawRange(0, Math.floor(pipingCount * prog / 60) * 60);
+    pipingCurve.getPointAt(Math.min(0.999, prog), tipTmp);
+    pipingLine.localToWorld(tipTmp.clone()); // ensure matrices
+    tipTmp.applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.15).add(pipingLine.position);
+    pipingTip.position.copy(tipTmp);
+  });
+  place(grp, 2.7, 0, 1.6, 0);
+
+  // piping bag resting beside the plate, nozzle pointing at the heart
+  const bag = new THREE.Group();
+  const bagProf = smoothProfile([[0.0, 0], [0.06, 0.05], [0.2, 0.5], [0.33, 1.1], [0.38, 1.4], [0.3, 1.55], [0.12, 1.62]], 60);
+  const bagM = new THREE.MeshPhysicalMaterial({ color: '#fff4f7', roughness: 0.3, transparent: true, opacity: 0.55, clearcoat: 1, side: THREE.DoubleSide, depthWrite: false });
+  bag.add(mesh(lathe(bagProf, 64), bagM, false));
+  const fillProf = smoothProfile([[0.0, 0.05], [0.05, 0.1], [0.17, 0.5], [0.28, 1.0], [0, 1.02]], 40);
+  bag.add(mesh(lathe(fillProf, 48), mat.icing));
+  const nz = mesh(new THREE.CylinderGeometry(0.06, 0.02, 0.22, 8), mat.metal); nz.position.y = -0.05; bag.add(nz);
+  const tw = mesh(new THREE.TorusGeometry(0.11, 0.03, 12, 32), mat.ribbonRed); tw.rotation.x = Math.PI / 2; tw.position.y = 1.55; bag.add(tw);
+  bag.rotation.set(0, 0, Math.PI / 2 + 0.12);
+  bag.rotation.order = 'YXZ';
+  bag.rotation.y = 0.5;
+  place(bag, 4.75, 0.38, 1.0, 0.5);
+}
+
+// ---------- hot chocolate mug with marshmallow hearts + steam ----------
+const steam = [];
+{
+  const grp = new THREE.Group();
+  const outer = smoothProfile([[0, 0.0], [0.5, 0.0], [0.56, 0.08], [0.6, 0.6], [0.62, 1.1]], 50);
+  const inner = smoothProfile([[0.57, 1.12], [0.55, 0.6], [0.5, 0.15], [0, 0.12]], 50);
+  grp.add(mesh(lathe([...outer, [0.6, 1.13], ...inner], 128), mat.ceramicRed));
+  const handle = mesh(new THREE.TorusGeometry(0.3, 0.07, 24, 64, Math.PI * 1.25), mat.ceramicRed); handle.position.set(0.62, 0.58, 0); handle.rotation.z = -Math.PI * 0.62; grp.add(handle);
+  // white dots on mug
+  for (let i = 0; i < 26; i++) { const a = i * 2.39996, y = 0.25 + (i % 5) * 0.17; const d = mesh(heartGeo(0.06, 0.005, 0.006, 2), mat.ceramicWhite, false); d.position.set(Math.cos(a) * 0.605, y, Math.sin(a) * 0.605); d.lookAt(Math.cos(a) * 2, y, Math.sin(a) * 2); d.rotateX(Math.PI / 2); grp.add(d); }
+  const cocoa = mesh(new THREE.CircleGeometry(0.56, 96), new THREE.MeshPhysicalMaterial({ color: '#6b3a22', roughness: 0.3, clearcoat: 0.8 }), false);
+  cocoa.rotation.x = -Math.PI / 2; cocoa.position.y = 0.98; grp.add(cocoa);
+  const mm = [mat.chocoWhite, mat.icing, mat.chocoWhite, new THREE.MeshPhysicalMaterial({ color: '#ffc6d4', roughness: 0.6 })];
+  const mhs = [];
+  for (let i = 0; i < 4; i++) {
+    const h = mesh(heartGeo(0.12, 0.06, 0.05, 6), mm[i]); const a = i * 1.6;
+    h.position.set(Math.cos(a) * 0.25, 0.97, Math.sin(a) * 0.25); h.rotation.y = a; grp.add(h); mhs.push([h, a]);
+  }
+  anim.push(t => mhs.forEach(([h, a], i) => { h.position.y = 0.96 + 0.012 * Math.sin(t * 1.8 + i); h.rotation.y = a + 0.15 * Math.sin(t * 0.5 + i); }));
+  place(grp, -1.0, 0, -2.6, 0.4);
+  // saucer
+  const sau = mesh(lathe(smoothProfile([[0, 0.02], [0.7, 0.02], [0.95, 0.09], [0.98, 0.07], [0.7, 0.0], [0, 0]], 40), 128), mat.ceramicWhite);
+  place(sau, -1.0, 0, -2.6);
+  grp.position.y = 0.04;
+  for (let i = 0; i < 9; i++) {
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: softTex, color: '#ffffff', transparent: true, opacity: 0, depthWrite: false }));
+    scene.add(s); steam.push([s, i / 9]);
+  }
+  anim.push(t => steam.forEach(([s, off], i) => {
+    const ph = ((t * 0.28 + off) % 1);
+    s.position.set(-1.0 + 0.18 * Math.sin(ph * 6 + i), 1.2 + ph * 1.8, -2.6 + 0.12 * Math.cos(ph * 5 + i * 2));
+    const sc = 0.35 + ph * 0.9; s.scale.set(sc, sc * 1.4, 1);
+    s.material.opacity = 0.32 * Math.sin(ph * Math.PI);
+  }));
+}
+
+// ---------- chocolate-dipped strawberries on parchment ----------
+{
+  function strawberry() {
+    const g = new THREE.SphereGeometry(0.26, 72, 56);
+    const p = g.attributes.position, cols = [];
+    const red = new THREE.Color('#e0304a'), redL = new THREE.Color('#ff6b7d'), ch = new THREE.Color(C.choco);
+    for (let i = 0; i < p.count; i++) {
+      let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      const ny = y / 0.26;
+      const taper = ny < 0 ? 1 + ny * 0.55 : 1 - ny * ny * 0.12;
+      x *= taper; z *= taper; y *= 1.3;
+      p.setXYZ(i, x, y, z);
+      const a = Math.atan2(z, x);
+      const dipLine = -0.02 + 0.03 * Math.sin(a * 3);
+      const c = (ny * 0.26 < dipLine) ? ch : red.clone().lerp(redL, Math.max(0, ny) * 0.6);
+      cols.push(c.r, c.g, c.b);
+    }
+    g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3)); g.computeVertexNormals();
+    const grp = new THREE.Group();
+    grp.add(mesh(g, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.3, clearcoat: 0.9, clearcoatRoughness: 0.2 })));
+    // seeds on red part
+    const seedG = new THREE.ConeGeometry(0.008, 0.02, 6); const seedM = new THREE.MeshStandardMaterial({ color: '#ffe08a', roughness: 0.5 });
+    const seeds = new THREE.InstancedMesh(seedG, seedM, 60); const m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
+    for (let i = 0; i < 60; i++) {
+      const yy = rr(0.05, 0.85), a = rr(0, 6.28);
+      const ny = yy; const taper = 1 - ny * ny * 0.12; const rad = 0.26 * Math.sqrt(1 - ny * ny) * taper;
+      const v = new THREE.Vector3(Math.cos(a) * rad, ny * 0.26 * 1.3, Math.sin(a) * rad);
+      q.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v.clone().setY(v.y * 0.3).normalize());
+      m4.compose(v, q, new THREE.Vector3(1, 1, 1)); seeds.setMatrixAt(i, m4);
+    }
+    grp.add(seeds);
+    // leaves
+    const leafM = new THREE.MeshStandardMaterial({ color: '#4fa35a', roughness: 0.5, side: THREE.DoubleSide });
+    for (let i = 0; i < 6; i++) {
+      const l = mesh(new THREE.SphereGeometry(0.1, 16, 8), leafM); l.scale.set(1, 0.15, 0.4);
+      const a = i / 6 * Math.PI * 2; l.position.set(Math.cos(a) * 0.08, 0.34, Math.sin(a) * 0.08); l.rotation.y = -a; l.rotation.z = 0.35; grp.add(l);
+    }
+    const stem = mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.1, 8), leafM); stem.position.y = 0.4; grp.add(stem);
+    return grp;
+  }
+  [[-2.6, 2.4, 0.3], [-2.0, 2.9, 1.4], [-1.3, 2.5, 2.5], [-0.7, 3.0, -0.7]].forEach(([x, z, ry], i) => {
+    const s = strawberry(); s.rotation.set(0, ry, Math.PI / 2 - 0.15); s.position.set(x, 0.24, z); scene.add(s);
+  });
+  // chocolate splotches & zigzag drizzle on parchment
+  for (let i = 0; i < 9; i++) {
+    const b = mesh(new THREE.SphereGeometry(rr(0.05, 0.13), 32, 16), mat.chocoDark, false); b.scale.y = 0.18;
+    b.position.set(rr(-3.2, -0.2), 0.025, rr(1.0, 3.2)); scene.add(b);
+  }
+  const zz = []; for (let i = 0; i <= 14; i++) zz.push(new THREE.Vector3(-3.1 + i * 0.2, 0.03, 1.15 + (i % 2) * 0.35 + i * 0.02));
+  scene.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(zz), 300, 0.022, 8), mat.chocoDark, false));
+}
+
+// ---------- chocolate bar, broken pieces & wrapper ----------
+{
+  const grp = new THREE.Group();
+  const wrap = mesh(new RoundedBoxGeometry(2.0, 0.03, 1.1, 2, 0.012), new THREE.MeshStandardMaterial({ map: labelTex, roughness: 0.7 }), false);
+  wrap.position.set(0.15, 0.015, 0.2); wrap.rotation.y = 0.12; grp.add(wrap);
+  // crumpled foil
+  const fg = new THREE.PlaneGeometry(1.4, 1.0, 40, 30); fg.rotateX(-Math.PI / 2);
+  const fp = fg.attributes.position; for (let i = 0; i < fp.count; i++) { const x = fp.getX(i), z = fp.getZ(i); fp.setY(i, 0.03 + 0.03 * Math.abs(Math.sin(x * 9 + z * 5)) + 0.02 * Math.sin(z * 13 - x * 4)); }
+  fg.computeVertexNormals();
+  const foil = mesh(fg, new THREE.MeshPhysicalMaterial({ color: '#f6c6d2', metalness: 1, roughness: 0.28, side: THREE.DoubleSide }), false);
+  foil.position.set(-0.5, 0, -0.3); foil.rotation.y = -0.3; grp.add(foil);
+  const piece = (nx, nz) => {
+    const g2 = new THREE.Group();
+    const base = mesh(new RoundedBoxGeometry(nx * 0.38 + 0.04, 0.06, nz * 0.38 + 0.04, 3, 0.02), mat.chocoDark); base.position.y = 0.03; g2.add(base);
+    for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) {
+      const c = mesh(new RoundedBoxGeometry(0.33, 0.08, 0.33, 4, 0.035), mat.chocoDark);
+      c.position.set((i - (nx - 1) / 2) * 0.38, 0.09, (j - (nz - 1) / 2) * 0.38); g2.add(c);
+    }
+    return g2;
+  };
+  const big = piece(3, 2); big.position.set(-0.3, 0.06, -0.25); big.rotation.y = -0.3; grp.add(big);
+  const p2 = piece(1, 2); p2.position.set(0.75, 0.03, 0.15); p2.rotation.y = 0.4; grp.add(p2);
+  const p3 = piece(1, 1); p3.position.set(0.45, 0.03, 0.85); p3.rotation.set(0.18, 1.1, 0.1); grp.add(p3);
+  // shavings
+  for (let i = 0; i < 14; i++) {
+    const sh = mesh(new THREE.TorusGeometry(0.05, 0.015, 8, 24, Math.PI * 1.4), i % 3 ? mat.chocoDark : mat.chocoMilk, false);
+    sh.position.set(rr(-0.2, 1.2), 0.03, rr(0.4, 1.3)); sh.rotation.set(Math.PI / 2 + rr(-0.4, 0.4), rr(0, 6), rr(0, 6)); grp.add(sh);
+  }
+  place(grp, -4.6, 0, -1.2, 0.2);
+}
+
+// ---------- recipe notebook + pencil ----------
+{
+  const grp = new THREE.Group();
+  const cover = mesh(new RoundedBoxGeometry(3.0, 0.06, 2.0, 3, 0.025), new THREE.MeshPhysicalMaterial({ color: '#f39bb4', roughness: 0.5, sheen: 0.5 }), true);
+  cover.position.y = 0.03; grp.add(cover);
+  for (const side of [0, 1]) {
+    const pg = new THREE.PlaneGeometry(1.42, 1.9, 40, 10); pg.rotateX(-Math.PI / 2);
+    const pa = pg.attributes.position;
+    for (let i = 0; i < pa.count; i++) { const x = pa.getX(i) + 0.71; pa.setY(i, 0.075 + 0.09 * Math.sin(Math.min(1, x / 1.0) * Math.PI / 2) - 0.02 * x); }
+    pg.computeVertexNormals();
+    const page = mesh(pg, new THREE.MeshStandardMaterial({ map: pageTex(side), roughness: 0.85, side: THREE.DoubleSide }), false);
+    if (side === 0) { page.rotation.y = Math.PI; page.position.x = -0.73; } else page.position.x = 0.73;
+    grp.add(page);
+  }
+  // spiral rings
+  for (let i = 0; i < 9; i++) { const r = mesh(new THREE.TorusGeometry(0.07, 0.012, 8, 24), mat.metalPink, false); r.position.set(0, 0.11, -0.8 + i * 0.2); r.rotation.y = Math.PI / 2; grp.add(r); }
+  // pencil
+  const pen = new THREE.Group();
+  const body = mesh(new THREE.CylinderGeometry(0.045, 0.045, 1.3, 6), mat.plasticPink); pen.add(body);
+  const woodTip = mesh(new THREE.ConeGeometry(0.045, 0.14, 6), mat.wood); woodTip.position.y = -0.72; woodTip.rotation.x = Math.PI; pen.add(woodTip);
+  const lead = mesh(new THREE.ConeGeometry(0.014, 0.045, 12), new THREE.MeshStandardMaterial({ color: '#6b3424' })); lead.position.y = -0.8; lead.rotation.x = Math.PI; pen.add(lead);
+  const fer = mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.08, 24), mat.metal); fer.position.y = 0.69; pen.add(fer);
+  const er = mesh(new THREE.CylinderGeometry(0.046, 0.046, 0.08, 24), new THREE.MeshStandardMaterial({ color: '#ffd6e0' })); er.position.y = 0.77; pen.add(er);
+  const ph = mesh(heartGeo(0.08, 0.02, 0.02, 3), mat.ceramicRed); ph.rotation.x = 0; ph.position.y = 0.82; pen.add(ph);
+  pen.rotation.set(Math.PI / 2, 0, 0.9); pen.position.set(0.8, 0.22, 0.2); grp.add(pen);
+  place(grp, -4.7, 0, 2.0, -0.25);
+}
+
+// ---------- measuring spoons ----------
+{
+  const grp = new THREE.Group();
+  const sizes = [0.22, 0.18, 0.15, 0.12];
+  sizes.forEach((r, i) => {
+    const sp = new THREE.Group();
+    const bowl = mesh(new THREE.SphereGeometry(r, 48, 24, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: ['#f58fab', '#f7b2c4', '#d63a55', '#ffd3df'][i], roughness: 0.3, clearcoat: 0.8, side: THREE.DoubleSide }));
+    bowl.position.y = r; sp.add(bowl);
+    const handle = mesh(new RoundedBoxGeometry(0.1, 0.03, 0.9, 3, 0.012), bowl.material); handle.position.set(0, r, r + 0.42); sp.add(handle);
+    if (i === 0) { const sug = mesh(new THREE.SphereGeometry(r * 0.92, 32, 16, 0, 6.3, 0, 1.2), mat.icingWhite, false); sug.scale.y = 0.35; sug.position.y = r * 0.95; sp.add(sug); }
+    sp.position.set(0, -0.0, 0); sp.rotation.y = -0.5 + i * 0.32;
+    sp.children.forEach(c => c.position.z -= 0.0);
+    const holder = new THREE.Group(); holder.add(sp); holder.position.set(0, 0, 0);
+    sp.translateZ(-0.9); grp.add(holder);
+  });
+  const ring = mesh(new THREE.TorusGeometry(0.1, 0.018, 12, 40), mat.metal); ring.rotation.x = Math.PI / 2; ring.position.y = 0.2; grp.add(ring);
+  place(grp, 0.6, 0, 2.9, 2.6);
+}
+
+// ---------- small bowl of sprinkles + sieve with cocoa ----------
+{
+  const b = new THREE.Group();
+  b.add(mesh(lathe(smoothProfile([[0, 0.0], [0.4, 0.0], [0.6, 0.25], [0.66, 0.45], [0.6, 0.44], [0.52, 0.25], [0, 0.06]], 40), 96), mat.ceramicWhite));
+  const cols = ['#ff8fae', '#ffffff', '#d63a55', '#ffd1dc', '#7b4428'];
+  const sg = new THREE.CapsuleGeometry(0.018, 0.06, 4, 8);
+  const inst = new THREE.InstancedMesh(sg, new THREE.MeshStandardMaterial({ roughness: 0.4 }), 260);
+  const m4 = new THREE.Matrix4(), e = new THREE.Euler(), q = new THREE.Quaternion();
+  for (let i = 0; i < 260; i++) {
+    const a = rr(0, 6.28), r = Math.sqrt(rnd()) * 0.5;
+    e.set(rr(0, 6), rr(0, 6), rr(0, 6)); q.setFromEuler(e);
+    m4.compose(new THREE.Vector3(Math.cos(a) * r, 0.3 + rr(0, 0.08) - r * 0.1, Math.sin(a) * r), q, new THREE.Vector3(1, 1, 1));
+    inst.setMatrixAt(i, m4); inst.setColorAt(i, new THREE.Color(cols[i % 5]));
+  }
+  b.add(inst);
+  place(b, 2.3, 0, -2.5);
+  // sieve
+  const sv = new THREE.Group();
+  const meshM = new THREE.MeshStandardMaterial({ color: '#d8cfd2', metalness: 0.9, roughness: 0.35, wireframe: true });
+  const net = new THREE.Mesh(new THREE.SphereGeometry(0.5, 40, 20, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), meshM); net.position.y = 0.5; sv.add(net);
+  const cocoaIn = mesh(new THREE.SphereGeometry(0.47, 40, 16, 0, Math.PI * 2, Math.PI * 0.62, Math.PI * 0.38), new THREE.MeshStandardMaterial({ color: '#6d3a24', roughness: 1 }), false); cocoaIn.position.y = 0.5; sv.add(cocoaIn);
+  const rim = mesh(new THREE.TorusGeometry(0.5, 0.025, 12, 80), mat.metalPink); rim.rotation.x = Math.PI / 2; rim.position.y = 0.5; sv.add(rim);
+  const hd = mesh(new RoundedBoxGeometry(0.1, 0.05, 1.1, 3, 0.02), mat.plasticPink); hd.position.set(0, 0.5, 1.0); sv.add(hd);
+  sv.rotation.x = 0.0; place(sv, -3.6, 0, -2.6, -0.7);
+  // cocoa dusting under sieve
+  const dust = new THREE.Mesh(new THREE.CircleGeometry(0.9, 64), new THREE.MeshStandardMaterial({ color: '#7a4a33', transparent: true, opacity: 0.35, roughness: 1, alphaMap: softTex, depthWrite: false }));
+  dust.rotation.x = -Math.PI / 2; dust.position.set(-3.4, 0.004, -2.3); scene.add(dust);
+}
+
+// ---------- gift boxes (one wrapped, one in progress) + ribbon spool ----------
+{
+  // wrapped box
+  const g = new THREE.Group();
+  g.add(mesh(new RoundedBoxGeometry(1.3, 0.85, 1.3, 6, 0.06), mat.boxRed));
+  const lid = mesh(new RoundedBoxGeometry(1.38, 0.22, 1.38, 6, 0.06), mat.boxRed); lid.position.y = 0.38; g.add(lid);
+  const b1 = mesh(new THREE.BoxGeometry(1.4, 0.9, 0.22), mat.ribbon); b1.position.y = 0.06; g.add(b1);
+  const b2 = mesh(new THREE.BoxGeometry(0.22, 0.9, 1.4), mat.ribbon); b2.position.y = 0.06; g.add(b2);
+  const bow = makeBow(0.55, mat.ribbon); bow.position.set(0, 0.6, 0); bow.rotation.x = -0.25; g.add(bow);
+  // lace trim around the lid
+  const lt = mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.1, 4, 1, true), new THREE.MeshStandardMaterial({ color: '#fff', side: THREE.DoubleSide, map: laceTex, alphaTest: 0.5 }), false);
+  lt.rotation.y = Math.PI / 4; lt.scale.set(0.98, 1, 0.98); lt.position.y = 0.3; g.add(lt);
+  g.position.set(4.6, 0.425, -2.2); g.rotation.y = -0.35; scene.add(g);
+
+  // open box in progress with tissue + chocolates
+  const o = new THREE.Group();
+  const shell = new THREE.Group();
+  const bw = 1.4, bd = 1.0, bh = 0.4, th = 0.04;
+  [[0, bh / 2, bd / 2, bw, bh, th], [0, bh / 2, -bd / 2, bw, bh, th], [bw / 2, bh / 2, 0, th, bh, bd], [-bw / 2, bh / 2, 0, th, bh, bd], [0, th / 2, 0, bw, th, bd]].forEach(([x, y, z, a, b2_, c]) => {
+    const p = mesh(new RoundedBoxGeometry(a, b2_, c, 2, 0.015), mat.boxPink); p.position.set(x, y, z); shell.add(p);
+  });
+  o.add(shell);
+  // tissue paper (ruffled)
+  const tg = new THREE.PlaneGeometry(1.7, 1.3, 60, 40); tg.rotateX(-Math.PI / 2);
+  const tp = tg.attributes.position;
+  for (let i = 0; i < tp.count; i++) { const x = tp.getX(i), z = tp.getZ(i); const edge = Math.max(Math.abs(x) - 0.62, Math.abs(z) - 0.42, 0); tp.setY(i, 0.12 + edge * 1.4 + 0.04 * Math.sin(x * 18) * Math.sin(z * 15) * (edge > 0 ? 2 : 0.4)); }
+  tg.computeVertexNormals();
+  o.add(mesh(tg, new THREE.MeshPhysicalMaterial({ color: '#fff0f4', roughness: 0.8, transparent: true, opacity: 0.92, side: THREE.DoubleSide, sheen: 1, sheenColor: new THREE.Color('#ffd6e0') }), false));
+  [[mat.chocoDark, -0.35, -0.12], [mat.chocoRuby, 0.0, -0.12], [mat.chocoMilk, 0.35, -0.12], [mat.chocoDark, -0.18, 0.2]].forEach(([m, x, z]) => {
+    const cup = mesh(lathe(smoothProfile([[0, 0], [0.13, 0], [0.16, 0.08], [0.15, 0.08], [0.12, 0.01], [0, 0.01]], 20), 24).scale(1, 1, 1), mat.icingWhite, false);
+    cup.position.set(x, 0.14, z); o.add(cup);
+    const h = mesh(heartGeo(0.14, 0.05, 0.04, 6), m); h.position.set(x, 0.16, z); h.rotation.y = rr(-0.3, 0.3); o.add(h);
+  });
+  o.position.set(3.0, 0, -1.0); o.rotation.y = 0.25; scene.add(o);
+  const olid = mesh(new RoundedBoxGeometry(1.48, 0.14, 1.08, 4, 0.04), mat.boxPink);
+  olid.position.set(4.4, 0.32, -0.55); olid.rotation.set(0.15, -0.5, 0.45); scene.add(olid);
+  const lh = mesh(heartGeo(0.25, 0.02, 0.02, 3), mat.ceramicRed, false); lh.position.set(0, 0.07, 0); olid.add(lh);
+
+  // ribbon spool with loose ribbon curling across the table
+  const spool = new THREE.Group();
+  const core = mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.22, 64), mat.ribbonRed); spool.add(core);
+  for (const y of [-0.13, 0.13]) { const d = mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.03, 64), mat.ceramicWhite); d.position.y = y; spool.add(d); }
+  spool.position.set(5.4, 0.15, 0.4); scene.add(spool);
+  const rc = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(5.2, 0.12, 0.72), new THREE.Vector3(4.6, 0.02, 1.4), new THREE.Vector3(5.0, 0.02, 2.4),
+    new THREE.Vector3(4.2, 0.05, 2.9), new THREE.Vector3(3.5, 0.02, 3.4), new THREE.Vector3(4.1, 0.15, 3.7), new THREE.Vector3(4.6, 0.02, 3.4)]);
+  const lr = mesh(ribbonStrip(rc, 0.16, 300, 1.2), mat.ribbonRed); scene.add(lr);
+  // scissors
+  const sc = new THREE.Group();
+  for (const s of [-1, 1]) {
+    const blade = mesh(new RoundedBoxGeometry(0.08, 0.02, 0.8, 2, 0.008), mat.metal); blade.position.z = -0.35; blade.rotation.y = s * 0.12; sc.add(blade);
+    const loop = mesh(new THREE.TorusGeometry(0.13, 0.04, 16, 40), mat.plasticPink); loop.rotation.x = Math.PI / 2; loop.position.set(s * 0.13, 0, 0.22); sc.add(loop);
+  }
+  sc.position.set(3.4, 0.04, 2.95); sc.rotation.y = 2.2; scene.add(sc);
+}
+
+// ---------- scattered sprinkles & heart sprinkles ----------
+{
+  const avoid = [[0.4, -0.9, 1.6], [-2.8, 0.3, 1.9], [2.7, 1.6, 1.8], [-1.0, -2.6, 1.0], [-4.6, -1.2, 1.3], [-4.7, 2.0, 1.8], [4.6, -2.2, 1.0], [3.0, -1.0, 0.9], [2.3, -2.5, 0.7]];
+  const ok = (x, z) => avoid.every(([ax, az, r]) => Math.hypot(x - ax, z - az) > r);
+  const cols = ['#ff8fae', '#ffffff', '#d63a55', '#ffd1dc', '#7b4428', '#f6b6c8'];
+  const sg = new THREE.CapsuleGeometry(0.018, 0.06, 4, 8);
+  const N = 420; const inst = new THREE.InstancedMesh(sg, new THREE.MeshStandardMaterial({ roughness: 0.35 }), N);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+  let n = 0, tries = 0;
+  while (n < N && tries++ < 20000) {
+    // clustered around spill points
+    const cl = [[1.2, 1.0], [-0.5, 0.9], [0.0, 3.4], [3.7, 0.0], [-3.3, -0.4], [1.4, -2.6]][tries % 6];
+    const x = cl[0] + (rnd() - 0.5) * 2.4 * rnd(), z = cl[1] + (rnd() - 0.5) * 2.0 * rnd();
+    if (!ok(x, z)) continue;
+    e.set(Math.PI / 2, rr(0, 6.28), 0); q.setFromEuler(e);
+    m4.compose(new THREE.Vector3(x, 0.02, z), q, new THREE.Vector3(1, 1, 1));
+    inst.setMatrixAt(n, m4); inst.setColorAt(n, new THREE.Color(cols[n % cols.length])); n++;
+  }
+  inst.count = n; inst.receiveShadow = true; scene.add(inst);
+  const hg = heartGeo(0.07, 0.025, 0.015, 3);
+  const M = 70; const hi = new THREE.InstancedMesh(hg, new THREE.MeshPhysicalMaterial({ roughness: 0.35, clearcoat: 0.6 }), M);
+  n = 0; tries = 0; const hcols = ['#d63a55', '#ff8fae', '#ffffff', '#f6b6c8'];
+  while (n < M && tries++ < 20000) {
+    const x = rr(-5.5, 5.8), z = rr(-1.0, 4.5);
+    if (!ok(x, z)) continue;
+    e.set(0, rr(0, 6.28), 0); q.setFromEuler(e);
+    m4.compose(new THREE.Vector3(x, 0.005, z), q, new THREE.Vector3(1, 1, 1));
+    hi.setMatrixAt(n, m4); hi.setColorAt(n, new THREE.Color(hcols[n % 4])); n++;
+  }
+  hi.count = n; hi.castShadow = true; scene.add(hi);
+}
+
+// ---------- floating sparkles ----------
+let sparkles;
+{
+  const N = 160, pos = new Float32Array(N * 3), ph = new Float32Array(N), sz = new Float32Array(N);
+  for (let i = 0; i < N; i++) { pos[i * 3] = rr(-7, 7); pos[i * 3 + 1] = rr(0.3, 5); pos[i * 3 + 2] = rr(-4.5, 5); ph[i] = rr(0, 6.28); sz[i] = rr(0.6, 1.6); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('phase', new THREE.BufferAttribute(ph, 1));
+  g.setAttribute('size', new THREE.BufferAttribute(sz, 1));
+  const m = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uTime: { value: 0 }, uScale: { value: H / 1080 } },
+    vertexShader: `attribute float phase; attribute float size; uniform float uTime; uniform float uScale; varying float vA;
+      void main(){ vec3 p = position; p.y += sin(uTime*0.6+phase)*0.15; p.x += cos(uTime*0.4+phase*1.3)*0.1;
+        vec4 mv = modelViewMatrix*vec4(p,1.0); gl_Position = projectionMatrix*mv;
+        vA = 0.5+0.5*sin(uTime*2.2+phase*3.0); vA = pow(vA,3.0);
+        gl_PointSize = size*uScale*(60.0/-mv.z)*(0.6+vA); }`,
+    fragmentShader: `varying float vA; void main(){ vec2 d = gl_PointCoord-0.5; float r=length(d);
+        float star = max(0.0, 1.0-abs(d.x)*12.0)*max(0.0,1.0-abs(d.y)*2.2) + max(0.0,1.0-abs(d.y)*12.0)*max(0.0,1.0-abs(d.x)*2.2);
+        float core = smoothstep(0.18,0.0,r);
+        float a = (star*0.8+core)*vA; gl_FragColor = vec4(vec3(1.0,0.88,0.93)*a, a); }`,
+  });
+  sparkles = new THREE.Points(g, m); scene.add(sparkles);
+  anim.push(t => { m.uniforms.uTime.value = t; });
+}
+
+// ---------- lights ----------
+{
+  scene.add(new THREE.HemisphereLight('#fff0f4', '#e7a1b0', 0.35));
+  const key = new THREE.DirectionalLight('#fff4ea', 1.9);
+  key.position.set(-6, 10, 5); key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02; key.shadow.radius = 6;
+  Object.assign(key.shadow.camera, { left: -9, right: 9, top: 8, bottom: -8, near: 1, far: 30 });
+  scene.add(key);
+  const rim = new THREE.DirectionalLight('#ffc2d4', 1.0); rim.position.set(6, 5, -6); scene.add(rim);
+  const fill = new THREE.PointLight('#ff9fbf', 6, 14, 1.6); fill.position.set(0.6, 4, -3.5); scene.add(fill);
+}
+
+// ---------- camera path: the viewer peeking at the work-in-progress ----------
+const camKeys = [
+  // [pos, lookAt]
+  [[-7.2, 4.6, 6.8], [-3.2, 0.2, 0.6]],   // arriving: the notebook & the heart mold
+  [[-4.6, 3.2, 4.6], [-2.4, 0.15, 1.2]],  // leaning in on the mold & strawberries
+  [[-1.6, 3.4, 4.4], [-1.2, 0.3, 1.8]],   // strawberries
+  [[0.6, 4.2, 3.0], [0.4, 0.8, -0.9]],    // over the bowl of chocolate
+  [[2.4, 3.0, 4.6], [2.75, 0.25, 1.25]],  // icing being piped on the plate
+  [[4.8, 2.8, 3.6], [3.8, 0.4, -1.2]],    // gift boxes being wrapped
+  [[6.6, 4.8, 4.6], [1.2, 0.4, -0.6]],    // glance across the whole table
+  [[2.0, 6.4, 7.4], [-0.6, 0.0, 0.2]],    // pull back
+  [[-7.2, 4.6, 6.8], [-3.2, 0.2, 0.6]],
+];
+const posCurve = new THREE.CatmullRomCurve3(camKeys.map(k => new THREE.Vector3(...k[0])), false, 'centripetal');
+const tgtCurve = new THREE.CatmullRomCurve3(camKeys.map(k => new THREE.Vector3(...k[1])), false, 'centripetal');
+const ease = u => u - Math.sin(u * Math.PI * 2 * (camKeys.length - 1)) / (Math.PI * 2 * (camKeys.length - 1)) * 0.55; // linger at each key
+
+// ---------- post processing ----------
+const composer = new EffectComposer(renderer);
+composer.setPixelRatio(1); composer.setSize(W, H);
+composer.addPass(new RenderPass(scene, camera));
+const bokeh = new BokehPass(scene, camera, { focus: 6, aperture: 0.0035, maxblur: 0.009 });
+composer.addPass(bokeh);
+const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.22, 0.5, 0.97);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+const grade = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uRes: { value: new THREE.Vector2(W, H) } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime; uniform vec2 uRes; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453); }
+    void main(){
+      vec3 c = texture2D(tDiffuse, vUv).rgb;
+      // soft pastel lift + pink tint
+      c = mix(c, vec3(1.0,0.86,0.9), 0.04);
+      c = c*0.97 + vec3(0.025,0.01,0.02);
+      // gentle soft glow (cheap halation)
+      vec3 b = vec3(0.0);
+      for(int i=0;i<8;i++){ float a=float(i)*0.785; b += texture2D(tDiffuse, vUv+vec2(cos(a),sin(a))*3.0/uRes).rgb; }
+      c = mix(c, max(c, b/8.0), 0.15);
+      // pink vignette
+      float v = smoothstep(0.95, 0.35, length((vUv-0.5)*vec2(1.0,0.8)));
+      c = mix(vec3(0.95,0.7,0.78)*c, c, v);
+      // film grain
+      c += (h(vUv*uRes+uTime*60.0)-0.5)*0.025;
+      gl_FragColor = vec4(c,1.0);
+    }`,
+});
+composer.addPass(grade);
+
+scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if ('envMapIntensity' in m) m.envMapIntensity = 0.45; }); });
+
+// ---------- frame update ----------
+const tmpP = new THREE.Vector3(), tmpT = new THREE.Vector3();
+function update(t) {
+  const u = ease((t % DURATION) / DURATION);
+  posCurve.getPoint(u, tmpP); tgtCurve.getPoint(u, tmpT);
+  // hand-held breathing sway (the person watching)
+  tmpP.x += 0.06 * Math.sin(t * 0.9) + 0.02 * Math.sin(t * 2.3);
+  tmpP.y += 0.05 * Math.sin(t * 1.3 + 1.0) + 0.015 * Math.sin(t * 3.1);
+  tmpP.z += 0.04 * Math.sin(t * 0.7 + 2.0);
+  tmpT.x += 0.04 * Math.sin(t * 0.8 + 0.5);
+  tmpT.y += 0.03 * Math.sin(t * 1.1);
+  camera.position.copy(tmpP); camera.lookAt(tmpT);
+  camera.rotateZ(0.012 * Math.sin(t * 0.6));
+  bokeh.uniforms.focus.value = tmpP.distanceTo(tmpT);
+
+  // swirl chocolate: rotate + ripple
+  swirlDisk.rotation.y = -t * 0.35;
+  const pp = swirlDisk.geometry.attributes.position;
+  for (let i = 0; i < pp.count; i++) {
+    const x = swirlBase[i * 3], z = swirlBase[i * 3 + 2], r = Math.hypot(x, z);
+    pp.setY(i, 0.018 * Math.sin(r * 14 - t * 3.2) * Math.exp(-r * 0.8) + 0.025 * (r / 1.24) ** 6);
+  }
+  pp.needsUpdate = true; swirlDisk.geometry.computeVertexNormals();
+  // whisk gently settling / sway (just let go)
+  whisk.rotation.set(0.15 + 0.03 * Math.sin(t * 1.1), t * 0.15, -0.6 + 0.04 * Math.sin(t * 1.6));
+  for (const f of anim) f(t);
+  grade.uniforms.uTime.value = t;
+  composer.render();
+}
+
+window.renderAt = (t) => { update(t); return true; };
+window.DURATION = DURATION;
+window.ready = true; console.log('ready');
+if (!Q.has('capture')) {
+  const start = performance.now();
+  const loop = () => { update((performance.now() - start) / 1000); requestAnimationFrame(loop); };
+  loop();
+}
+</script>
+</body>
+</html>
