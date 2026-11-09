@@ -911,6 +911,14 @@ composer.setPixelRatio(1); composer.setSize(W, H);
 composer.addPass(new RenderPass(scene, camera));
 const bokeh = new BokehPass(scene, camera, { focus: 6, aperture: 0.0035, maxblur: 0.009 });
 composer.addPass(bokeh);
+// sanitize: kill NaN/Inf pixels (software GL can emit a few) before bloom spreads them
+composer.addPass(new ShaderPass({
+  uniforms: { tDiffuse: { value: null } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+  fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
+    bool ok(vec4 c){ return c.r>=0.0 && c.r<1e4 && c.g>=0.0 && c.g<1e4 && c.b>=0.0 && c.b<1e4; }
+    void main(){ vec4 c = texture2D(tDiffuse, vUv); gl_FragColor = ok(c) ? vec4(c.rgb,1.0) : vec4(0.95,0.8,0.84,1.0); }`,
+}));
 const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.22, 0.5, 0.97);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
