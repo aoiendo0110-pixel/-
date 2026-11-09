@@ -20,6 +20,7 @@
   .lace-line.bottom{bottom:3.4%}
   body.clean .scallop, body.clean .lace-line{display:none}
 </style>
+<link rel="stylesheet" href="lib/fonts/fonts.css">
 <script type="importmap">
 { "imports": { "three": "./lib/three.module.min.js", "three/addons/": "./lib/addons/" } }
 </script>
@@ -40,10 +41,13 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
+// handwriting fonts must be ready before the notebook texture is drawn
+try { await Promise.all([document.fonts.load('48px "Yomogi"', 'メモ温度あ'), document.fonts.load('48px "Hachi Maru Pop"', '最後におまじないをかける')]); } catch (e) {}
+
 // ---------- params ----------
 const Q = new URLSearchParams(location.search);
 const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080);
-const DURATION = 20;            // seconds per loop
+const DURATION = 18;            // seconds per loop
 if (Q.has('clean')) document.body.classList.add('clean');
 
 // ---------- seeded random ----------
@@ -170,51 +174,86 @@ function laceTexture(size = 1024, scallops = 28) {
 }
 const laceTex = laceTexture();
 
-// notebook page
+// notebook page (handwritten)
+let hseed = 4242; const hr = () => ((hseed = (hseed * 1664525 + 1013904223) >>> 0) / 4294967296);
+const HAND = '"Yomogi","IPAGothic",sans-serif', POP = '"Hachi Maru Pop","Yomogi",sans-serif';
+// draw text one character at a time with tiny wobbles, like real handwriting
+function handText(g, text, x, y, size, color, family = HAND, wob = 1) {
+  g.save(); g.font = `${size}px ${family}`; g.fillStyle = color; g.textBaseline = 'alphabetic';
+  let cx = x;
+  for (const ch of text) {
+    const dy = (hr() - 0.5) * size * 0.06 * wob, rot = (hr() - 0.5) * 0.08 * wob;
+    g.save(); g.translate(cx, y + dy); g.rotate(rot); g.fillText(ch, 0, 0); g.restore();
+    cx += g.measureText(ch).width * (0.96 + hr() * 0.06);
+  }
+  g.restore(); return cx;
+}
+function handHeart(g, x, y, s, color, fill = false, lw = 5) {
+  g.save(); g.translate(x, y); g.rotate((hr() - 0.5) * 0.3);
+  g.beginPath();
+  for (let i = 0; i <= 64; i++) { const t = i / 64 * Math.PI * 2 + 0.05; const j = 1 + (hr() - 0.5) * 0.04;
+    const hx = 16 * Math.sin(t) ** 3 * j, hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+    i ? g.lineTo(hx * s / 17, -hy * s / 17) : g.moveTo(hx * s / 17, -hy * s / 17); }
+  g.lineWidth = lw; g.lineCap = g.lineJoin = 'round';
+  if (fill) { g.fillStyle = color; g.fill(); } else { g.strokeStyle = color; g.stroke(); }
+  g.restore();
+}
+function handSparkle(g, x, y, r, color) {
+  g.save(); g.strokeStyle = color; g.lineWidth = 4; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(x - r, y); g.quadraticCurveTo(x, y, x, y - r); g.quadraticCurveTo(x, y, x + r, y); g.quadraticCurveTo(x, y, x, y + r); g.quadraticCurveTo(x, y, x - r, y); g.stroke();
+  g.restore();
+}
 const pageTex = (side) => canvasTex(1024, 1280, (g, w, h) => {
   g.fillStyle = '#fffaf4'; g.fillRect(0, 0, w, h);
-  g.strokeStyle = 'rgba(240,150,175,0.55)'; g.lineWidth = 3;
+  g.strokeStyle = 'rgba(240,150,175,0.5)'; g.lineWidth = 3;
   for (let y = 170; y < h - 60; y += 72) { g.beginPath(); g.moveTo(60, y); g.lineTo(w - 60, y); g.stroke(); }
-  g.strokeStyle = 'rgba(230,90,120,0.5)'; g.beginPath(); g.moveTo(side ? 130 : w - 130, 0); g.lineTo(side ? 130 : w - 130, h); g.stroke();
-  g.fillStyle = '#7a3a3a';
-  const font = (s) => `${s}px "IPAGothic","WenQuanYi Zen Hei",sans-serif`;
+  g.strokeStyle = 'rgba(230,90,120,0.45)'; g.beginPath(); g.moveTo(side ? 130 : w - 130, 0); g.lineTo(side ? 130 : w - 130, h); g.stroke();
+  const ink = '#6b3424';
   if (side === 0) {
-    g.fillStyle = '#d63a55'; g.font = font(68); g.fillText('♡ Valentine', 120, 120);
-    g.fillStyle = '#6b3424'; g.font = font(52);
-    const lines = ['生チョコ & ハートの型ぬき', '・ビターチョコ 200g', '・生クリーム 100ml', '・ルビーチョコ 少し', '・いちご 6こ ♡', '・スプリンクル 🍓', '湯せん 50℃ → 型へ', 'ラッピングは赤リボン!'];
-    lines.forEach((l, i) => g.fillText(l, 160, 225 + i * 72));
-    g.strokeStyle = '#ef7f9f'; g.lineWidth = 6; g.beginPath(); g.ellipse(560, 727, 230, 46, 0, 0, 7); g.stroke();
-    // ♥ 最後におまじないをかける ♥ (highlighted)
-    {
-      const txt = '♥ 最後におまじないをかける ♥';
-      g.save();
-      g.font = 'bold ' + font(70).replace('70px', '70px');
-      let fs = 70; g.font = `bold ${fs}px "IPAGothic","WenQuanYi Zen Hei",sans-serif`;
-      while (g.measureText(txt).width > 800 && fs > 30) { fs -= 2; g.font = `bold ${fs}px "IPAGothic","WenQuanYi Zen Hei",sans-serif`; }
-      const tw = g.measureText(txt).width, x0 = (w - tw) / 2 + 40, y0 = 1010;
-      // marker highlight
-      g.fillStyle = 'rgba(255,170,195,0.75)';
-      g.beginPath(); g.moveTo(x0 - 26, y0 - fs * 0.45); g.lineTo(x0 + tw + 26, y0 - fs * 0.55); g.lineTo(x0 + tw + 20, y0 + fs * 0.22); g.lineTo(x0 - 20, y0 + fs * 0.28); g.closePath(); g.fill();
-      // frame of dashed hearts-line
-      g.strokeStyle = '#d63a55'; g.lineWidth = 5; g.setLineDash([14, 10]);
-      g.beginPath(); g.roundRect(x0 - 50, y0 - fs * 1.25, tw + 100, fs * 1.85, 30); g.stroke(); g.setLineDash([]);
-      g.lineJoin = 'round'; g.strokeStyle = '#ffffff'; g.lineWidth = 12; g.strokeText(txt, x0, y0);
-      g.fillStyle = '#d6203f'; g.fillText(txt, x0, y0);
-      // sparkles
-      const star = (x, y, r) => { g.beginPath(); for (let k = 0; k < 8; k++) { const an = k * Math.PI / 4, rr2 = k % 2 ? r * 0.35 : r; g.lineTo(x + Math.cos(an) * rr2, y + Math.sin(an) * rr2); } g.closePath(); g.fill(); };
-      g.fillStyle = '#f0a020'; star(x0 - 70, y0 - fs * 1.3, 26); star(x0 + tw + 70, y0 + fs * 0.5, 22);
-      g.fillStyle = '#ef7f9f'; star(x0 + tw + 40, y0 - fs * 1.45, 16); star(x0 - 40, y0 + fs * 0.75, 14);
-      g.restore();
-    }
+    handText(g, 'Valentine', 150, 125, 72, '#d63a55', POP);
+    handHeart(g, 520, 100, 26, '#ef7f9f', true);
+    const lines = ['生チョコ & ハートの型ぬき', '・ビターチョコ 200g', '・生クリーム 100ml', '・ルビーチョコ 少し', '・いちご 6こ', '・スプリンクル', '湯せん 50℃ → 型へ', 'ラッピングは赤リボン!'];
+    lines.forEach((l, i) => handText(g, l, 160, 222 + i * 72, 50, ink));
+    handHeart(g, 330, 485, 15, '#e0607f', false, 4);
+    // ♡ 最後に おまじないを かける ♡  — the important line, written cute & big
+    const y0 = 1035;
+    g.save(); g.translate(0, 0);
+    g.translate(512, y0); g.rotate(-0.045); g.translate(-512, -y0);
+    g.font = `66px ${POP}`;
+    const txt = '最後におまじないをかける';
+    let tw = 0; for (const ch of txt) tw += g.measureText(ch).width;
+    const x0 = 512 - tw / 2;
+    // soft watercolor-ish pink highlight behind (a few overlapping loose strokes)
+    g.lineCap = 'round';
+    for (let k = 0; k < 3; k++) { g.strokeStyle = 'rgba(255,175,198,0.32)'; g.lineWidth = 38 - k * 6; g.beginPath(); g.moveTo(x0 - 6, y0 - 14 + k * 3); g.bezierCurveTo(x0 + tw * 0.3, y0 - 22 + k * 4, x0 + tw * 0.7, y0 - 8 - k * 2, x0 + tw + 8, y0 - 18 + k * 3); g.stroke(); }
+    handText(g, txt, x0 + 2, y0 + 2, 66, 'rgba(160,30,60,0.25)', POP, 1);   // ink bleed
+    hseed = 777; handText(g, txt, x0, y0, 66, '#d6203f', POP, 1.2);
+    // hand-drawn hearts on both sides
+    handHeart(g, x0 - 52, y0 - 26, 30, '#ef5a7f', true);
+    handHeart(g, x0 + tw + 50, y0 - 26, 30, '#ef5a7f', true);
+    // wavy underline
+    g.strokeStyle = '#ef7f9f'; g.lineWidth = 5; g.beginPath();
+    for (let i = 0; i <= 60; i++) { const xx = x0 - 20 + (tw + 40) * i / 60; const yy = y0 + 24 + Math.sin(i * 0.9) * 6; i ? g.lineTo(xx, yy) : g.moveTo(xx, yy); }
+    g.stroke();
+    // little sparkles + tiny hearts floating around like the spell is working
+    handSparkle(g, x0 - 30, y0 - 92, 18, '#f0a020'); handSparkle(g, x0 + tw + 34, y0 - 96, 14, '#f0a020');
+    handSparkle(g, x0 + tw * 0.55, y0 - 100, 11, '#ef7f9f');
+    handHeart(g, x0 + tw * 0.25, y0 - 96, 12, '#ef7f9f', false, 3.5);
+    handHeart(g, x0 + tw + 82, y0 - 52, 10, '#f5a3ba', true);
+    // arrow doodle pointing at it
+    g.strokeStyle = '#d63a55'; g.lineWidth = 4; g.beginPath(); g.moveTo(170, 880); g.bezierCurveTo(140, 930, 160, 975, x0 - 90, y0 - 40); g.stroke();
+    g.beginPath(); g.moveTo(x0 - 90, y0 - 40); g.lineTo(x0 - 112, y0 - 52); g.moveTo(x0 - 90, y0 - 40); g.lineTo(x0 - 104, y0 - 18); g.stroke();
+    handText(g, 'だいじ!', 180, 870, 40, '#d63a55', POP);
+    g.restore();
   } else {
-    g.fillStyle = '#6b3424'; g.font = font(50);
-    ['memo', '温度に気をつける', 'つや出しは 32℃ ☆', 'あとで写真とる!'].forEach((l, i) => g.fillText(l, 120, 225 + i * 72));
-    // doodles: hearts + a chocolate sketch
-    g.strokeStyle = '#e0607f'; g.lineWidth = 7;
-    for (let i = 0; i < 5; i++) { heartPath(g, 200 + i * 150, 620 + (i % 2) * 40, 46); g.stroke(); }
-    g.fillStyle = 'rgba(244,150,175,0.55)'; heartPath(g, 600, 960, 160); g.fill();
-    g.strokeStyle = '#8a4a34'; g.lineWidth = 6; heartPath(g, 600, 960, 160); g.stroke();
-    g.fillStyle = '#d63a55'; g.font = font(64); g.fillText('to you ♡', 480, 1200);
+    handText(g, 'memo', 150, 125, 64, '#d63a55', POP);
+    ['温度に気をつける', 'つや出しは 32℃', 'あとで写真とる!'].forEach((l, i) => handText(g, l, 150, 222 + i * 72, 50, ink));
+    handSparkle(g, 560, 345, 16, '#f0a020');
+    for (let i = 0; i < 5; i++) handHeart(g, 200 + i * 150, 600 + (i % 2) * 40, 46, '#e0607f', false, 6);
+    handHeart(g, 600, 960, 160, 'rgba(244,150,175,0.55)', true);
+    handHeart(g, 600, 960, 160, '#8a4a34', false, 6);
+    handText(g, 'to you', 470, 1200, 64, '#d63a55', POP);
+    handHeart(g, 720, 1180, 20, '#d63a55', true);
   }
 });
 
@@ -402,7 +441,7 @@ let swirlDisk, whisk, swirlBase;
   const grp = new THREE.Group();
   const outer = smoothProfile([[0.0, 0.02], [0.55, 0.0], [0.62, 0.05], [1.0, 0.35], [1.32, 0.95], [1.42, 1.08]], 90);
   const inner = smoothProfile([[1.36, 1.1], [1.25, 0.95], [0.95, 0.42], [0.55, 0.14], [0.0, 0.1]], 90);
-  grp.add(mesh(lathe([...outer, [1.40, 1.12], ...inner], 160), mat.ceramicPink));
+  const bowlMesh = mesh(lathe([...outer, [1.40, 1.12], ...inner], 160), mat.ceramicPink); grp.add(bowlMesh);
   // gold-ish rim line
   const rim = mesh(new THREE.TorusGeometry(1.39, 0.028, 16, 200), mat.metalPink); rim.rotation.x = Math.PI / 2; rim.position.y = 1.11; grp.add(rim);
   // heart decals around bowl
@@ -457,10 +496,52 @@ let swirlDisk, whisk, swirlBase;
   whisk.position.set(0.35, 1.25, 0.1);
   whisk.rotation.set(0.15, 0, -0.6);
 
-  // drip down the outer bowl side
-  const drip = mesh(new THREE.CapsuleGeometry(0.06, 0.3, 12, 24), mat.chocoDark);
-  drip.position.set(1.33, 0.92, 0.42); drip.rotation.z = 0.5; grp.add(drip);
-  const dripTop = mesh(new THREE.TorusGeometry(1.39, 0.05, 16, 60, 0.5), mat.chocoDark); dripTop.rotation.set(Math.PI / 2, 0, 0.12); dripTop.position.y = 1.12; grp.add(dripTop);
+  // chocolate overflowing the rim: a coat on the lip + tapered drips that follow the bowl's outer wall
+  // find the real outer wall point + normal by raycasting onto the bowl mesh
+  const rc = new THREE.Raycaster();
+  bowlMesh.material.side = THREE.FrontSide;
+  function wallHit(an, y) {
+    rc.set(new THREE.Vector3(Math.cos(an) * 3, y, Math.sin(an) * 3), new THREE.Vector3(-Math.cos(an), 0, -Math.sin(an)));
+    const h = rc.intersectObject(bowlMesh, false)[0];
+    if (!h) return { p: new THREE.Vector3(Math.cos(an) * 1.42, y, Math.sin(an) * 1.42), n: new THREE.Vector3(Math.cos(an), 0, Math.sin(an)) };
+    const n = h.face.normal.clone(); if (n.x * Math.cos(an) + n.z * Math.sin(an) < 0) n.negate();
+    return { p: h.point, n: n.normalize() };
+  }
+  const radiusAt = (y) => { for (let k = 1; k < outer.length; k++) if (outer[k][1] >= y) { const [x0, y0] = outer[k - 1], [x1, y1] = outer[k]; return x0 + (x1 - x0) * (y - y0) / (y1 - y0 || 1); } return 1.42; };
+  function taperTube(curve, r0, prof, segs = 120, rad = 20, flat = 1) {
+    const g = new THREE.TubeGeometry(curve, segs, r0, rad, false);
+    const a = g.attributes.position, P = new THREE.Vector3();
+    for (let i = 0; i <= segs; i++) {
+      curve.getPointAt(i / segs, P); const f = prof(i / segs);
+      const nv = wallHit(Math.atan2(P.z, P.x), Math.min(1.075, P.y)).n;   // outward wall normal
+      for (let j = 0; j <= rad; j++) { const k = i * (rad + 1) + j; const d = new THREE.Vector3(a.getX(k) - P.x, a.getY(k) - P.y, a.getZ(k) - P.z).multiplyScalar(f); const dn = d.dot(nv); d.addScaledVector(nv, -dn * (1 - flat)); a.setXYZ(k, P.x + d.x, P.y + d.y, P.z + d.z); }
+    }
+    g.computeVertexNormals(); return g;
+  }
+  const lipPts = []; for (let i = 0; i <= 40; i++) { const an = 1.0 + 0.95 * i / 40; lipPts.push(new THREE.Vector3(Math.cos(an) * 1.395, 1.115, Math.sin(an) * 1.395)); }
+  grp.add(mesh(taperTube(new THREE.CatmullRomCurve3(lipPts), 0.045, u => Math.pow(Math.sin(Math.PI * u), 0.35)), mat.chocoDark, false));
+  [[1.18, 0.55, 0.06], [1.45, 0.86, 0.048], [1.72, 0.7, 0.054]].forEach(([an, yEnd, r0]) => {
+    // a raised strip of chocolate that lies exactly on the wall (built from wall hits, bulging outward)
+    const rows = 40, cols = 12, pos = [], idx = [];
+    for (let i = 0; i <= rows; i++) {
+      const u = i / rows, y = 1.085 - (1.085 - yEnd) * u;
+      const halfW = r0 * (1.25 - 0.45 * u) * (u < 0.05 ? 1.4 - 8 * u : 1);
+      for (let j = 0; j <= cols; j++) {
+        const t = j / cols * 2 - 1;
+        const hw = wallHit(an + t * halfW / 1.3, y);
+        const bulge = Math.sqrt(Math.max(0, 1 - t * t)) * halfW * 0.55 + 0.006;
+        const q = hw.p.clone().addScaledVector(hw.n, bulge);
+        pos.push(q.x, q.y, q.z);
+        if (i < rows && j < cols) { const k = i * (cols + 1) + j; idx.push(k, k + 1, k + cols + 1, k + 1, k + cols + 2, k + cols + 1); }
+      }
+    }
+    const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); dg.setIndex(idx); dg.computeVertexNormals();
+    const dripM = mesh(dg, mat.chocoDark, false); dripM.material = mat.chocoDark; grp.add(dripM);
+    const c = { getPointAt: () => wallHit(an, yEnd).p.clone().addScaledVector(wallHit(an, yEnd).n, r0 * 0.35) };
+    const end = c.getPointAt(1);
+    const bead = mesh(new THREE.SphereGeometry(r0 * 1.25, 32, 24), mat.chocoDark, false);
+    bead.position.copy(end); bead.position.y -= r0 * 0.3; bead.scale.set(1, 1.25, 1); bead.position.addScaledVector(wallHit(an, end.y).n, -r0 * 0.15); grp.add(bead);
+  });
 
   place(grp, 0.4, 0, -0.9);
 }
@@ -938,7 +1019,6 @@ let sparkles;
 const camKeys = [
   // [pos, lookAt]
   [[-7.2, 4.6, 6.8], [-3.2, 0.2, 0.6]],   // arriving: the notebook & the heart mold
-  [[-5.6, 2.9, 4.3], [-5.0, 0.1, 2.1]],   // peeking at the recipe: ♥ 最後におまじないをかける ♥
   [[-4.6, 3.2, 4.6], [-2.4, 0.15, 1.2]],  // leaning in on the mold & strawberries
   [[-1.6, 3.4, 4.4], [-1.2, 0.3, 1.8]],   // strawberries
   [[0.6, 4.2, 3.0], [0.4, 0.8, -0.9]],    // over the bowl of chocolate
