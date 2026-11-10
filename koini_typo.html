@@ -1,0 +1,138 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>恋に タイポ</title>
+<style>@font-face{font-family:"Mochiy Pop One";src:url(fonts/MochiyPopOne.ttf)}@font-face{font-family:"Hachi Maru Pop";src:url(fonts/HachiMaruPop.ttf)}
+html,body{margin:0;background:#00ff00;overflow:hidden}svg{display:block}</style></head><body>
+<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 -->
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <path id="heartP" d="M0 14 C-28 -6 -15 -32 0 -15 C15 -32 28 -6 0 14Z"/>
+ <path id="sparkP" d="M0 -22 Q3 -3 22 0 Q3 3 0 22 Q-3 3 -22 0 Q-3 -3 0 -22Z"/>
+ <pattern id="dotsS" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="#fff" opacity=".55"/><circle cx="12" cy="12" r="2.2" fill="#fff" opacity=".55"/></pattern>
+ <pattern id="dotsW" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="3.8" fill="#fff" opacity=".6"/><circle cx="19" cy="19" r="3.8" fill="#fff" opacity=".6"/></pattern>
+ <pattern id="heartPat" width="60" height="60" patternUnits="userSpaceOnUse"><use href="#heartP" fill="#fff" opacity=".28" transform="translate(15 16) scale(.45)"/><use href="#heartP" fill="#fff" opacity=".28" transform="translate(45 46) scale(.45)"/></pattern>
+ <radialGradient id="balP" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffd9e8"/><stop offset=".45" stop-color="#ffa3c8"/><stop offset="1" stop-color="#f77fb1"/></radialGradient>
+ <radialGradient id="balB" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#e4f6ff"/><stop offset=".45" stop-color="#a6dcfc"/><stop offset="1" stop-color="#72c0f2"/></radialGradient>
+ <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0f6"/><stop offset=".6" stop-color="#ffc4dc"/><stop offset="1" stop-color="#ffa6cb"/></linearGradient>
+ <linearGradient id="gBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0faff"/><stop offset=".6" stop-color="#c4e9ff"/><stop offset="1" stop-color="#9ad8fd"/></linearGradient>
+</defs>
+<g id="stage"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const stage=document.getElementById('stage'), defs=document.querySelector('defs');
+const F1="Mochiy Pop One", F2="Hachi Maru Pop";
+const clamp=x=>Math.max(0,Math.min(1,x));
+const back=(x,c=2.2)=>1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);
+const eOut=x=>1-Math.pow(1-x,3);
+const TAU=Math.PI*2;
+let uid=0;
+
+function heart(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':3,transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill:'url(#dotsS)',transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-9*sc,cy:-14*sc,rx:4.5*sc,ry:2.6*sc,fill:'#fff',transform:`rotate(-35 ${-9*sc} ${-14*sc})`},g);return g;}
+function spark(fill,sc){const g=el('g',{});
+ el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':9,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#sparkP',fill,transform:`scale(${sc})`},g);return g;}
+function bow(main,line,sc){const g=el('g',{});const b=el('g',{transform:`scale(${sc})`},g);
+ const loopL='M0 0 C-30 -50 -95 -48 -92 -5 C-90 35 -35 30 0 0Z', loopR='M0 0 C30 -50 95 -48 92 -5 C90 35 35 30 0 0Z';
+ const tails='M-8 6 C-30 40 -10 60 -44 92 L-24 92 L-20 112 C0 70 -12 50 6 10Z M8 6 C30 40 10 60 44 92 L24 92 L20 112 C0 70 12 50 -6 10Z';
+ [tails,loopL,loopR].forEach(d=>el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':16,'stroke-linejoin':'round'},b));
+ [tails,loopL,loopR].forEach(d=>{el('path',{d,fill:main,stroke:line,'stroke-width':4,'stroke-linejoin':'round'},b);el('path',{d,fill:'url(#dotsS)'},b);});
+ el('path',{d:'M-60 -10 C-50 -22 -30 -20 -18 -8 M60 -10 C50 -22 30 -20 18 -8',fill:'none',stroke:line,'stroke-width':3,'stroke-linecap':'round',opacity:.7},b);
+ el('rect',{x:-17,y:-17,width:34,height:34,rx:12,fill:main,stroke:line,'stroke-width':4},b);
+ el('ellipse',{cx:-5,cy:-7,rx:6,ry:3.5,fill:'#fff'},b);return g;}
+
+// ---- 後ろでふわふわ昇るちびハート ----
+const minis=[];
+for(let i=0;i<14;i++){const pk=i%2===0;const g=heart(pk?'#ffc4dc':'#c4e9ff',pk?'#f27aaa':'#5fb0e6',0.55+(i%4)*0.18);stage.appendChild(g);
+ minis.push({g,x:120+((i*263)%1700),P:6+(i%5)*1.2,ph:(i*0.41)%1,sw:16+(i%3)*12});}
+
+// ---- ヒモ ----
+const strings=[0,1].map(i=>{const g=el('g',{},stage);
+ return {w:el('path',{fill:'none',stroke:'#fff','stroke-width':14,'stroke-linecap':'round'},g),
+         c:el('path',{fill:'none',stroke:i?'#5fb0e6':'#f27aaa','stroke-width':6,'stroke-linecap':'round'},g)};});
+
+// ---- ハート風船 ----
+const hp=t=>[16*Math.pow(Math.sin(t),3),-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))];
+const heartPath=s=>{let d='';for(let i=0;i<=160;i++){const [x,y]=hp(i/160*TAU);d+=(i?'L':'M')+(x*s).toFixed(1)+' '+(y*s).toFixed(1);}return d+'Z';};
+function balloon(s,grad,line,dark,ch,font,size,cText,fat){
+ const g=el('g',{}),body=el('g',{},g);const d=heartPath(s);
+ el('path',{d,fill:dark,transform:'translate(10 14)'},body);
+ el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':26,'stroke-linejoin':'round'},body);
+ el('path',{d,fill:grad,stroke:line,'stroke-width':6,'stroke-linejoin':'round'},body);
+ el('path',{d,fill:'url(#heartPat)'},body);
+ el('path',{d:heartPath(s*0.88),fill:'none',stroke:'#fff','stroke-width':5,'stroke-dasharray':'16 12','stroke-linecap':'round',opacity:.9},body);
+ // つや
+ el('ellipse',{cx:-8.5*s,cy:-6.5*s,rx:2.8*s,ry:1.3*s,fill:'#fff',opacity:.85,transform:`rotate(-38 ${-8.5*s} ${-6.5*s})`},body);
+ el('circle',{cx:-5*s,cy:-9.2*s,r:0.6*s,fill:'#fff',opacity:.85},body);
+ el('ellipse',{cx:8*s,cy:4*s,rx:1.6*s,ry:0.5*s,fill:'#fff',opacity:.5,transform:`rotate(-50 ${8*s} ${4*s})`},body);
+ // 結び目
+ const ty=17*s;
+ el('path',{d:`M0 ${ty-6} L-18 ${ty+22} Q0 ${ty+14} 18 ${ty+22}Z`,fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round'},body);
+ el('path',{d:`M0 ${ty-6} L-18 ${ty+22} Q0 ${ty+14} 18 ${ty+22}Z`,fill:dark,stroke:line,'stroke-width':4,'stroke-linejoin':'round'},body);
+ // 文字
+ const tg=el('g',{},g);
+ const base={'font-family':font,'font-size':size,'text-anchor':'middle','stroke-linejoin':'round'};
+ const T=a=>{const e=el('text',{...base,...a},tg);e.textContent=ch;return e;};
+ T({fill:cText.dark,stroke:cText.dark,'stroke-width':56,transform:'translate(8 12)'});
+ T({fill:cText.outer,stroke:cText.outer,'stroke-width':56});
+ T({fill:'#fff',stroke:'#fff','stroke-width':40});
+ T({fill:cText.inner,stroke:cText.inner,'stroke-width':12});
+ T({fill:cText.fill,...(fat?{stroke:cText.solid,'stroke-width':fat*2}:{})});
+ T({fill:'url(#dotsW)'});
+ const id='kc'+(uid++);const cp=el('clipPath',{id},defs);const ct=el('text',base,cp);ct.textContent=ch;
+ const sh=el('g',{'clip-path':`url(#${id})`},tg);
+ el('ellipse',{cx:-size*0.14,cy:-size*0.66,rx:size*0.42,ry:size*0.1,fill:'#fff',opacity:.75,transform:`rotate(-18 ${-size*0.14} ${-size*0.66})`},sh);
+ return {g,body,tg,tip:ty+20,size};}
+const KOI=balloon(21,'url(#balP)','#f27aaa','#e0679c','恋',F1,400,{dark:'#3f8cc8',outer:'#5fb0e6',inner:'#f06d9f',fill:'url(#gPink)',solid:'#ffc4dc'});
+const NI=balloon(14.5,'url(#balB)','#5fb0e6','#4c9ad3','に',F2,330,{dark:'#d95b91',outer:'#f27aaa',inner:'#4fa6e0',fill:'url(#gBlue)',solid:'#c4e9ff'},4);
+stage.appendChild(KOI.g);stage.appendChild(NI.g);
+const BAL=[{o:KOI,x:770,y:420,r:-8,t0:0.1,ph:0,tx:0,ty:145},{o:NI,x:1275,y:480,r:9,t0:0.35,ph:1.7,tx:0,ty:118}];
+const knot=bow('#ffb3d1','#ef78a8',1.05);stage.appendChild(knot);
+
+const floaters=[];
+[[200,210,'#ffb3d1','#ef78a8',1.3],[1730,190,'#a9defb','#4fa6e0',1.3],[1770,640,'#ffb3d1','#ef78a8',1.0],[170,700,'#a9defb','#4fa6e0',1.0]]
+ .forEach(([x,y,f,l,s],i)=>{const g=heart(f,l,s);stage.appendChild(g);floaters.push({g,x,y,s:1,t0:1.6+i*0.1,ph:i*1.1,rot:i%2?14:-14,kind:'h'});});
+[[420,110,'#bfe8ff',1.2],[1560,100,'#ffd1e4',1.2],[1640,420,'#fff',1.0],[300,440,'#ffd1e4',1.0],[1500,900,'#bfe8ff',0.9],[420,920,'#ffd1e4',0.9],[1050,140,'#fff',0.8]]
+ .forEach(([x,y,f,s],i)=>{const g=spark(f,s);stage.appendChild(g);floaters.push({g,x,y,s,t0:1.5+i*0.1,ph:i*0.9,kind:'s'});});
+
+const BOW={x:1010,y:930};
+window.render=function(t){
+ minis.forEach(m=>{const show=clamp((t-0.8)/0.6);const u=((t/m.P)+m.ph)%1;
+  const y=1150-u*1350,x=m.x+Math.sin(TAU*u*2+m.ph*9)*m.sw;
+  m.g.setAttribute('transform',`translate(${x} ${y}) rotate(${Math.sin(TAU*u*3)*15}) scale(${Math.max(0.0001,show*(u<0.08?u/0.08:1))})`);});
+ // リボン（ヒモの結び目）
+ const rise=eOut(clamp((t-0.1)/1.3));
+ const bx=BOW.x+Math.sin(TAU*t*0.4)*6, by=BOW.y+(1-rise)*500+Math.sin(TAU*t*0.5+1)*5;
+ knot.setAttribute('transform',`translate(${bx} ${by}) rotate(${Math.sin(TAU*t*0.6)*7})`);
+ knot.style.visibility=rise>0?'visible':'hidden';
+ BAL.forEach((b,i)=>{
+  const p=clamp((t-b.t0)/1.4), e=eOut(p);
+  const idle=clamp((t-b.t0-1.2)/0.8);
+  const x=b.x+Math.sin(TAU*t*0.32+b.ph)*14*idle+(1-e)*(i?120:-120);
+  const y=b.y+(1-e)*900+Math.sin(TAU*t*0.45+b.ph)*16*idle-Math.sin(Math.PI*clamp((p-0.6)/0.4))*30;
+  const r=b.r+Math.sin(TAU*t*0.38+b.ph)*4*idle+(1-e)*(i?-20:20);
+  const sq=Math.sin(TAU*t*0.9+b.ph)*0.015*idle;
+  b.o.g.setAttribute('transform',`translate(${x} ${y}) rotate(${r})`);
+  b.o.body.setAttribute('transform',`scale(${1+sq} ${1-sq})`);
+  b.o.g.style.visibility=p>0?'visible':'hidden';
+  // 文字ぽんっ
+  const tp=clamp((t-b.t0-1.15)/0.45);
+  const ts=tp<=0?0.0001:back(tp,2.8);
+  b.o.tg.setAttribute('transform',`translate(${b.tx} ${b.ty+Math.sin(TAU*t*0.5+b.ph)*4*idle}) rotate(${(1-eOut(tp))*-25+Math.sin(TAU*t*0.4+b.ph)*3*idle}) scale(${ts})`);
+  // ヒモ：結び目→リボン
+  const a=r*Math.PI/180, kx=x-Math.sin(a)*b.o.tip, ky=y+Math.cos(a)*b.o.tip;
+  const cx=(kx+bx)/2+Math.sin(TAU*t*0.7+b.ph)*40+(i?40:-40), cy=(ky+by)/2+20;
+  const d=`M${kx.toFixed(1)} ${ky.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${bx.toFixed(1)} ${(by-6).toFixed(1)}`;
+  strings[i].w.setAttribute('d',d);strings[i].c.setAttribute('d',d);});
+ floaters.forEach(o=>{const p=clamp((t-o.t0)/0.4);const b=p<=0?0.0001:back(p,2.6);
+  if(o.kind==='h')o.g.setAttribute('transform',`translate(${o.x} ${o.y+Math.sin(TAU*t*0.5+o.ph)*12}) rotate(${o.rot+Math.sin(TAU*t*0.4+o.ph)*10}) scale(${b*(1+0.06*Math.sin(TAU*t*1.2+o.ph))})`);
+  else o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${t*35+o.ph*20}) scale(${b*o.s*(0.6+0.4*Math.abs(Math.sin(TAU*t*0.6+o.ph)))})`);});
+};
+if(location.hash.includes('transparent'))document.body.style.background='transparent';
+window.ready=Promise.all([document.fonts.load(`400px "${F1}"`,'恋'),document.fonts.load(`330px "${F2}"`,'に')]).then(()=>document.fonts.ready).then(()=>{
+ const m=location.hash.match(/t=([\d.]+)/);render(m?parseFloat(m[1]):6);});
+</script></body></html>
