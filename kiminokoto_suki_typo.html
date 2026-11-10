@@ -1,0 +1,156 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>君のことが好きなの タイポ</title>
+<style>@font-face{font-family:"Mochiy Pop One";src:url(fonts/MochiyPopOne.ttf)}@font-face{font-family:"Hachi Maru Pop";src:url(fonts/HachiMaruPop.ttf)}
+html,body{margin:0;background:#00ff00;overflow:hidden}svg{display:block}</style></head><body>
+<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 -->
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <path id="heartP" d="M0 14 C-28 -6 -15 -32 0 -15 C15 -32 28 -6 0 14Z"/>
+ <path id="sparkP" d="M0 -22 Q3 -3 22 0 Q3 3 0 22 Q-3 3 -22 0 Q-3 -3 0 -22Z"/>
+ <pattern id="dotsS" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="#fff" opacity=".55"/><circle cx="12" cy="12" r="2.2" fill="#fff" opacity=".55"/></pattern>
+ <pattern id="dotsW" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="3.4" fill="#fff" opacity=".6"/><circle cx="18" cy="18" r="3.4" fill="#fff" opacity=".6"/></pattern>
+ <pattern id="bgB" width="44" height="44" patternUnits="userSpaceOnUse"><rect width="44" height="44" fill="#e9f7ff"/><circle cx="11" cy="11" r="5" fill="#cdeeff"/><circle cx="33" cy="33" r="5" fill="#cdeeff"/></pattern>
+ <pattern id="bgP" width="44" height="44" patternUnits="userSpaceOnUse"><rect width="44" height="44" fill="#fff0f6"/><use href="#heartP" fill="#ffd3e5" transform="translate(11 12) scale(.36)"/><use href="#heartP" fill="#ffd3e5" transform="translate(33 34) scale(.36)"/></pattern>
+ <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd6e7"/><stop offset=".55" stop-color="#ffa6cb"/><stop offset="1" stop-color="#ff8dbd"/></linearGradient>
+ <linearGradient id="gBlue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2f6ff"/><stop offset=".55" stop-color="#a9e0ff"/><stop offset="1" stop-color="#86cff9"/></linearGradient>
+</defs>
+<g id="stage"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const stage=document.getElementById('stage'), defs=document.querySelector('defs');
+const F1="Mochiy Pop One", F2="Hachi Maru Pop";
+const clamp=x=>Math.max(0,Math.min(1,x));
+const back=(x,c=2.2)=>1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);
+const eOut=x=>1-Math.pow(1-x,3), eIO=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const TAU=Math.PI*2;
+let uid=0;
+function heart(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':3,transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill:'url(#dotsS)',transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-9*sc,cy:-14*sc,rx:4.5*sc,ry:2.6*sc,fill:'#fff',transform:`rotate(-35 ${-9*sc} ${-14*sc})`},g);return g;}
+function spark(fill,sc){const g=el('g',{});
+ el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':9,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#sparkP',fill,transform:`scale(${sc})`},g);return g;}
+function bow(main,line,sc){const g=el('g',{});const b=el('g',{transform:`scale(${sc})`},g);
+ const loopL='M0 0 C-30 -50 -95 -48 -92 -5 C-90 35 -35 30 0 0Z', loopR='M0 0 C30 -50 95 -48 92 -5 C90 35 35 30 0 0Z';
+ const tails='M-8 6 C-30 40 -10 60 -44 92 L-24 92 L-20 112 C0 70 -12 50 6 10Z M8 6 C30 40 10 60 44 92 L24 92 L20 112 C0 70 12 50 -6 10Z';
+ [tails,loopL,loopR].forEach(d=>el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':16,'stroke-linejoin':'round'},b));
+ [tails,loopL,loopR].forEach(d=>{el('path',{d,fill:main,stroke:line,'stroke-width':4,'stroke-linejoin':'round'},b);el('path',{d,fill:'url(#dotsS)'},b);});
+ el('path',{d:'M-60 -10 C-50 -22 -30 -20 -18 -8 M60 -10 C50 -22 30 -20 18 -8',fill:'none',stroke:line,'stroke-width':3,'stroke-linecap':'round',opacity:.7},b);
+ el('rect',{x:-17,y:-17,width:34,height:34,rx:12,fill:main,stroke:line,'stroke-width':4},b);
+ el('ellipse',{cx:-5,cy:-7,rx:6,ry:3.5,fill:'#fff'},b);return g;}
+
+function puffy(ch,font,size,c,o,sh,fat){
+ const g=el('g',{}),base={'font-family':font,'font-size':size,'text-anchor':'middle','stroke-linejoin':'round'};
+ const T=a=>{const e=el('text',{...base,...a},g);e.textContent=ch;return e;};
+ T({fill:c.dark,stroke:c.dark,'stroke-width':o[0]*2,transform:`translate(${sh[0]} ${sh[1]})`});
+ T({fill:c.line,stroke:c.line,'stroke-width':o[0]*2});
+ T({fill:'#fff',stroke:'#fff','stroke-width':o[1]*2});
+ T({fill:c.inner||c.line,stroke:c.inner||c.line,'stroke-width':o[2]*2});
+ T({fill:c.fill,...(fat?{stroke:c.solid,'stroke-width':fat*2}:{})});
+ T({fill:'url(#dotsW)'});
+ const id='tc'+(uid++);const cp=el('clipPath',{id},defs);const ct=el('text',base,cp);ct.textContent=ch;
+ const sh2=el('g',{'clip-path':`url(#${id})`},g);
+ el('ellipse',{cx:-size*0.14,cy:-size*0.66,rx:size*0.42,ry:size*0.1,fill:'#fff',opacity:.7,transform:`rotate(-18 ${-size*0.14} ${-size*0.66})`},sh2);
+ return g;}
+const PK={dark:'#d95b91',line:'#f27aaa',fill:'url(#gPink)',solid:'#ffb0d0'},BL={dark:'#4c9ad3',line:'#5fb0e6',fill:'url(#gBlue)',solid:'#b2e3ff'};
+
+// ---- レース付きチャット吹き出し ----
+function rrPath(w,h,r,tail){ // 中心原点の角丸長方形＋しっぽ（tail: -1 左下 / 1 右下）
+ const x0=-w/2,y0=-h/2,x1=w/2,y1=h/2;
+ if(tail<0) return `M${x0+r} ${y0} L${x1-r} ${y0} Q${x1} ${y0} ${x1} ${y0+r} L${x1} ${y1-r} Q${x1} ${y1} ${x1-r} ${y1} L${x0+r+40} ${y1} Q${x0+20} ${y1+50} ${x0-40} ${y1+56} Q${x0+8} ${y1+16} ${x0} ${y1-r} L${x0} ${y0+r} Q${x0} ${y0} ${x0+r} ${y0}Z`;
+ return `M${x0+r} ${y0} L${x1-r} ${y0} Q${x1} ${y0} ${x1} ${y0+r} L${x1} ${y1-r} Q${x1-8} ${y1+16} ${x1+40} ${y1+56} Q${x1-20} ${y1+50} ${x1-r-40} ${y1} L${x0+r} ${y1} Q${x0} ${y1} ${x0} ${y1-r} L${x0} ${y0+r} Q${x0} ${y0} ${x0+r} ${y0}Z`;}
+function chatBubble(w,h,tail,line,dark,fill){
+ const g=el('g',{});const d=rrPath(w,h,70,tail);
+ el('path',{d,fill:dark,transform:'translate(10 14)'},g);
+ const tmp=el('path',{d},defs),len=tmp.getTotalLength(),N=Math.round(len/34);
+ const pts=[...Array(N)].map((_,i)=>tmp.getPointAtLength(i/N*len));
+ pts.forEach(p=>el('circle',{cx:p.x,cy:p.y,r:21,fill:line},g));
+ pts.forEach(p=>el('circle',{cx:p.x,cy:p.y,r:17.5,fill:'#fff'},g));
+ el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':14,'stroke-linejoin':'round'},g);
+ el('path',{d,fill,stroke:line,'stroke-width':5,'stroke-linejoin':'round',transform:'scale(.965)'},g);
+ el('path',{d,fill:'none',stroke:'#fff','stroke-width':4,'stroke-dasharray':'14 10','stroke-linecap':'round',transform:'scale(.92)'},g);
+ return g;}
+
+// 吹き出し1：君のことが（水色・左）
+const B1={x:760,y:290,w:1060,h:270};
+const b1=el('g',{},stage);b1.appendChild(chatBubble(B1.w,B1.h,-1,'#5fb0e6','#4c9ad3','url(#bgB)'));
+// 入力中…の吹き出し
+const typing=el('g',{},stage);
+typing.appendChild(chatBubble(260,130,1,'#f27aaa','#d95b91','url(#bgP)'));
+const tdots=[-62,0,62].map(x=>{el('circle',{cx:x,cy:0,r:24,fill:'#fff'},typing);return el('circle',{cx:x,cy:0,r:18,fill:'#f27aaa'},typing);});
+// 吹き出し2：好きなの（ピンク・右）
+const B2={x:1150,y:735,w:1150,h:340};
+const b2=el('g',{},stage);b2.appendChild(chatBubble(B2.w,B2.h,1,'#f27aaa','#d95b91','url(#bgP)'));
+const ribbon=bow('#a9defb','#4fa6e0',1.05);stage.appendChild(ribbon);
+const ribbon2=bow('#ffb3d1','#ef78a8',0.9);stage.appendChild(ribbon2);
+
+// 文字
+const line1=[],line2=[];
+[...'君のことが'].forEach((ch,i)=>{const c=i===0?PK:BL;const s=i===0?205:185;
+ const g=puffy(ch,F1,s,c,[22,16,6],[7,10]);stage.appendChild(g);
+ line1.push({g,x:B1.x-420+i*205,y:B1.y+68+(i%2?-6:6),r:i%2?5:-5,t0:0.45+i*0.11,ph:i*0.9});});
+[...'好きなの'].forEach((ch,i)=>{const c=i<2?PK:(i===2?BL:PK);const big=i<2;const s=big?270:235;
+ const g=puffy(ch,big?F1:F2,s,c,[26,19,7],[9,13],big?0:4);stage.appendChild(g);
+ line2.push({g,x:B2.x-420+i*280+(i>1?10:0),y:B2.y+92+(i%2?-8:8),r:i%2?5:-5,t0:2.75+i*0.13,ph:i*0.9+2});});
+
+// リアクションのハート
+const react=el('g',{},stage);
+(()=>{el('circle',{r:62,fill:'#fff'},react);el('circle',{r:54,fill:'#ffe3ef',stroke:'#f27aaa','stroke-width':5},react);
+ const h=heart('#ff8dbd','#ef78a8',2.0);h.setAttribute('transform','translate(0 4)');react.appendChild(h);})();
+const burst=[];
+for(let i=0;i<10;i++){const pk=i%2===0;const g=heart(pk?'#ffb3d1':'#a9defb',pk?'#ef78a8':'#4fa6e0',0.7+(i%3)*0.22);stage.appendChild(g);burst.push({g,a:(115+i*14)*Math.PI/180,d:150+(i%3)*45,ph:i*0.7});}
+
+const floaters=[];
+[[120,560,'#ffb3d1','#ef78a8',1.2],[1800,180,'#a9defb','#4fa6e0',1.3],[1830,470,'#ffb3d1','#ef78a8',1.0],[300,980,'#a9defb','#4fa6e0',1.0],[1500,90,'#ffb3d1','#ef78a8',0.85]]
+ .forEach(([x,y,f,l,s],i)=>{const g=heart(f,l,s);stage.appendChild(g);floaters.push({g,x,y,s:1,t0:1.2+i*0.12,ph:i*1.1,rot:i%2?14:-14,kind:'h'});});
+[[1450,330,'#ffd1e4',1.1],[160,170,'#bfe8ff',1.2],[480,690,'#fff',1.0],[1840,980,'#bfe8ff',0.9],[960,560,'#ffd1e4',0.8],[90,840,'#fff',0.8]]
+ .forEach(([x,y,f,s],i)=>{const g=spark(f,s);stage.appendChild(g);floaters.push({g,x,y,s,t0:1.1+i*0.1,ph:i*0.9,kind:'s'});});
+
+const TYPE0=1.45, SEND=2.55;
+window.render=function(t){
+ // 吹き出し1：しっぽからぽんっ
+ const p1=clamp(t/0.4),s1=p1<=0?0.0001:back(p1,2.2);
+ const f1=Math.sin(TAU*t*0.4)*5;
+ b1.setAttribute('transform',`translate(${B1.x-B1.w/2-40} ${B1.y+B1.h/2+56+f1}) scale(${s1}) translate(${B1.w/2+40} ${-B1.h/2-56})`);
+ const rb=clamp((t-0.9)/0.4);
+ ribbon.setAttribute('transform',`translate(${B1.x+B1.w/2-30} ${B1.y-B1.h/2+10+f1}) rotate(${22+Math.sin(TAU*t*0.6)*6}) scale(${rb<=0?0.0001:back(rb,3)})`);
+ line1.forEach(o=>{const p=clamp((t-o.t0)/0.4);
+  if(p<=0){o.g.setAttribute('transform','translate(-9999 0)');return;}
+  const s=back(p,2.6),idle=clamp((t-o.t0-0.4)/0.4);
+  o.g.setAttribute('transform',`translate(${o.x} ${o.y+f1+Math.sin(TAU*t*0.45+o.ph)*6*idle}) rotate(${o.r+(1-eOut(p))*-30+Math.sin(TAU*t*0.35+o.ph)*2*idle}) scale(${s})`);});
+ // 入力中…
+ const tp=clamp((t-TYPE0)/0.3), tq=clamp((t-SEND)/0.18);
+ const ts=tp<=0||tq>=1?0.0001:back(tp,2.4)*(1-tq);
+ typing.setAttribute('transform',`translate(${B2.x+B2.w/2-130} ${B2.y+40}) scale(${ts})`);
+ tdots.forEach((d,i)=>d.setAttribute('cy',-Math.max(0,Math.sin(TAU*(t*1.6)-i*0.9))*18));
+ // 吹き出し2：ポンッと届く
+ const p2=clamp((t-SEND)/0.45),s2=p2<=0?0.0001:back(p2,2.6);
+ const f2=Math.sin(TAU*t*0.4+1.5)*5;
+ b2.setAttribute('transform',`translate(${B2.x+B2.w/2+40} ${B2.y+B2.h/2+56+f2}) scale(${s2}) translate(${-B2.w/2-40} ${-B2.h/2-56})`);
+ const rb2=clamp((t-SEND-0.4)/0.4);
+ ribbon2.setAttribute('transform',`translate(${B2.x-B2.w/2+30} ${B2.y-B2.h/2+10+f2}) rotate(${-22+Math.sin(TAU*t*0.6)*6}) scale(${rb2<=0?0.0001:back(rb2,3)})`);
+ line2.forEach((o,i)=>{const p=clamp((t-o.t0)/0.42);
+  if(p<=0){o.g.setAttribute('transform','translate(-9999 0)');return;}
+  const s=back(p,2.8),idle=clamp((t-o.t0-0.42)/0.4);
+  const hb=t>3.6?((t-3.6)%1.2):9, beat=i<2?idle*(Math.max(0,Math.sin(Math.PI*clamp(hb/0.16)))*0.07+Math.max(0,Math.sin(Math.PI*clamp((hb-0.2)/0.16)))*0.04):0;
+  o.g.setAttribute('transform',`translate(${o.x} ${o.y+f2+Math.sin(TAU*t*0.45+o.ph)*7*idle}) rotate(${o.r+(1-eOut(p))*-30+Math.sin(TAU*t*0.35+o.ph)*2*idle}) scale(${s*(1+beat)})`);});
+ // リアクション
+ const rp=clamp((t-3.5)/0.4);
+ const RX=B2.x-B2.w/2+70, RY=B2.y+B2.h/2+20+f2;
+ react.setAttribute('transform',`translate(${RX} ${RY}) rotate(${Math.sin(TAU*t*0.7)*8}) scale(${rp<=0?0.0001:back(rp,3.2)*(1+0.05*Math.sin(TAU*t*1.4))})`);
+ burst.forEach(o=>{const p=clamp((t-3.55)/0.7);
+  if(p<=0){o.g.setAttribute('transform','scale(0)');return;}
+  const d=o.d*eOut(p),idle=clamp((t-4.25)/0.5);
+  o.g.setAttribute('transform',`translate(${RX+Math.cos(o.a)*d*1.2} ${RY+Math.sin(o.a)*d+Math.sin(TAU*t*0.6+o.ph)*8*idle}) rotate(${(1-p)*180+Math.sin(TAU*t*0.5+o.ph)*12}) scale(${back(clamp(p*1.6),2)})`);});
+ floaters.forEach(o=>{const p=clamp((t-o.t0)/0.4);const b=p<=0?0.0001:back(p,2.6);
+  if(o.kind==='h')o.g.setAttribute('transform',`translate(${o.x} ${o.y+Math.sin(TAU*t*0.5+o.ph)*12}) rotate(${o.rot+Math.sin(TAU*t*0.4+o.ph)*10}) scale(${b*(1+0.06*Math.sin(TAU*t*1.2+o.ph))})`);
+  else o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${t*35+o.ph*20}) scale(${b*o.s*(0.6+0.4*Math.abs(Math.sin(TAU*t*0.6+o.ph)))})`);});
+};
+if(location.hash.includes('transparent'))document.body.style.background='transparent';
+window.ready=Promise.all([document.fonts.load(`270px "${F1}"`,'君のことが好き'),document.fonts.load(`235px "${F2}"`,'なの')]).then(()=>document.fonts.ready).then(()=>{
+ const m=location.hash.match(/t=([\d.]+)/);render(m?parseFloat(m[1]):6);});
+</script></body></html>
