@@ -611,10 +611,21 @@ const CAMS={
   high: {a:-0.35,d:9.2, y:6.2, ty:1.9, fov:30},  // 俯瞰 (上から見下ろす)
   close:{a:0.12,d:5.4, y:2.9, ty:2.75,fov:28},   // 寄り (2人のアップ)
 };
-const CAM=HASH.get('cam')||'front';
+// move: 引き→回り込み→寄り→あおり→引き を閉じたスプラインでなめらかにつなぐ (10秒ループ)
+//   [時刻, 回り込み角, 距離, 高さ, 注視点の高さ, 画角, ロール(傾き)]
+const MOVE=[[0,0,13.5,4.6,1.9,30,0],[2.5,0.75,9.4,3.0,2.25,30,-0.03],[5,0.22,5.6,2.9,2.75,28,0.02],[7.5,-0.5,7.4,1.0,2.4,34,0.035]];
+function moveAt(t){const n=MOVE.length,seg=LOOP/n,f=(t%LOOP)/seg,i=Math.floor(f),u=f-i;
+  const P=k=>MOVE[((i+k)%n+n)%n];const out=[];
+  for(let j=1;j<MOVE[0].length;j++){const p0=P(-1)[j],p1=P(0)[j],p2=P(1)[j],p3=P(2)[j];
+    out.push(0.5*((2*p1)+(-p0+p2)*u+(2*p0-5*p1+4*p2-p3)*u*u+(-p0+3*p1-3*p2+p3)*u*u*u));}
+  return out;}
+const CAM=HASH.get('cam')||'move';
 const CUTS=['front','diag','close','low'];   // cuts: 2.5秒ごとに切り替え
 function setCamera(t){const u=t/LOOP*TAU;let c,k=u;
   if(CAM==='cuts'){const i=Math.floor(t/(LOOP/CUTS.length))%CUTS.length;c=CAMS[CUTS[i]];k=(t%(LOOP/CUTS.length))/(LOOP/CUTS.length)*Math.PI-Math.PI/2;}
+  else if(CAM==='move'){const [a,d,y,ty,fov,roll]=moveAt(t);
+    if(Math.abs(camera.fov-fov)>1e-3){camera.fov=fov;camera.updateProjectionMatrix();}
+    camera.position.set(Math.sin(a)*d,y,Math.cos(a)*d);camera.lookAt(0,ty,0);camera.rotateZ(roll);return;}
   else c=CAMS[CAM]||CAMS.front;
   const sway=CAM==='cuts'?0.06*k:0.14*Math.sin(u);           // カットの中ではゆっくり横移動
   const push=CAM==='cuts'?-0.35*(k/(Math.PI/2)):-0.3*Math.sin(u*2); // ゆっくり寄る
@@ -670,8 +681,8 @@ window.render=function(t){
     renderer.setScissorTest(false);renderer.setViewport(0,0,W,H);
     return renderer.domElement.toDataURL('image/png');
   }
-  for(const f of anim)f(t);
   setCamera(t);
+  for(const f of anim)f(t);
   if(LAYER==='bg')drawLayers([L_BG]);
   else if(LAYER==='chara')drawLayers([L_CHARA],{bg:false});
   else if(LAYER==='fg')drawLayers([L_FG],{bg:false});
