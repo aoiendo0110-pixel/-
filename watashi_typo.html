@@ -1,0 +1,151 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>私 タイポ</title>
+<style>@font-face{font-family:"Mochiy Pop One";src:url(fonts/MochiyPopOne.ttf)}
+html,body{margin:0;background:#00ff00;overflow:hidden}svg{display:block}</style></head><body>
+<!-- #transparent で背景なし / #t=秒 でその瞬間を表示 -->
+<svg id="art" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+<defs>
+ <path id="heartP" d="M0 14 C-28 -6 -15 -32 0 -15 C15 -32 28 -6 0 14Z"/>
+ <path id="sparkP" d="M0 -22 Q3 -3 22 0 Q3 3 0 22 Q-3 3 -22 0 Q-3 -3 0 -22Z"/>
+ <pattern id="dotsS" width="16" height="16" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="#fff" opacity=".55"/><circle cx="12" cy="12" r="2.2" fill="#fff" opacity=".55"/></pattern>
+ <pattern id="heartPat" width="52" height="52" patternUnits="userSpaceOnUse"><use href="#heartP" fill="#fff" opacity=".6" transform="translate(13 14) scale(.36)"/><use href="#heartP" fill="#fff" opacity=".6" transform="translate(39 40) scale(.36)"/></pattern>
+ <linearGradient id="gPink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd6e7"/><stop offset=".55" stop-color="#ffa6cb"/><stop offset="1" stop-color="#ff8dbd"/></linearGradient>
+ <linearGradient id="frameG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd3e5"/><stop offset=".5" stop-color="#ffaccf"/><stop offset="1" stop-color="#ff94c1"/></linearGradient>
+ <radialGradient id="glass" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#e3f6ff"/><stop offset="1" stop-color="#b6e2fb"/></radialGradient>
+ <linearGradient id="handleG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff9cc4"/><stop offset=".4" stop-color="#ffd3e5"/><stop offset="1" stop-color="#ff9cc4"/></linearGradient>
+ <linearGradient id="crownG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6f7ff"/><stop offset="1" stop-color="#8ed2fa"/></linearGradient>
+</defs>
+<g id="stage"></g>
+</svg>
+<script>
+const NS='http://www.w3.org/2000/svg';
+const el=(tag,attrs,parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const stage=document.getElementById('stage'), defs=document.querySelector('defs');
+const F1="Mochiy Pop One";
+const clamp=x=>Math.max(0,Math.min(1,x));
+const back=(x,c=2.2)=>1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2);
+const eOut=x=>1-Math.pow(1-x,3), eIO=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const TAU=Math.PI*2;
+function heart(fill,line,sc){const g=el('g',{});
+ el('use',{href:'#heartP',fill:'#fff',stroke:'#fff','stroke-width':12,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill,stroke:line,'stroke-width':3,transform:`scale(${sc})`},g);
+ el('use',{href:'#heartP',fill:'url(#dotsS)',transform:`scale(${sc})`},g);
+ el('ellipse',{cx:-9*sc,cy:-14*sc,rx:4.5*sc,ry:2.6*sc,fill:'#fff',transform:`rotate(-35 ${-9*sc} ${-14*sc})`},g);return g;}
+function spark(fill,sc){const g=el('g',{});
+ el('use',{href:'#sparkP',fill:'#fff',stroke:'#fff','stroke-width':9,'stroke-linejoin':'round',transform:`scale(${sc})`},g);
+ el('use',{href:'#sparkP',fill,transform:`scale(${sc})`},g);return g;}
+function bow(main,line,sc){const g=el('g',{});const b=el('g',{transform:`scale(${sc})`},g);
+ const loopL='M0 0 C-30 -50 -95 -48 -92 -5 C-90 35 -35 30 0 0Z', loopR='M0 0 C30 -50 95 -48 92 -5 C90 35 35 30 0 0Z';
+ const tails='M-8 6 C-30 40 -10 60 -44 92 L-24 92 L-20 112 C0 70 -12 50 6 10Z M8 6 C30 40 10 60 44 92 L24 92 L20 112 C0 70 12 50 -6 10Z';
+ [tails,loopL,loopR].forEach(d=>el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':16,'stroke-linejoin':'round'},b));
+ [tails,loopL,loopR].forEach(d=>{el('path',{d,fill:main,stroke:line,'stroke-width':4,'stroke-linejoin':'round'},b);el('path',{d,fill:'url(#dotsS)'},b);});
+ el('path',{d:'M-60 -10 C-50 -22 -30 -20 -18 -8 M60 -10 C50 -22 30 -20 18 -8',fill:'none',stroke:line,'stroke-width':3,'stroke-linecap':'round',opacity:.7},b);
+ el('rect',{x:-17,y:-17,width:34,height:34,rx:12,fill:main,stroke:line,'stroke-width':4},b);
+ el('ellipse',{cx:-5,cy:-7,rx:6,ry:3.5,fill:'#fff'},b);return g;}
+
+// ===== 手鏡 =====
+const M={x:960,y:510,rx:275,ry:310};
+const mirror=el('g',{},stage);
+const handle=el('g',{},mirror);
+(()=>{const g=handle;const top=M.ry-20,bot=M.ry+175;
+ const d=`M-34 ${top} L-44 ${bot-20} Q-44 ${bot} -24 ${bot} L24 ${bot} Q44 ${bot} 44 ${bot-20} L34 ${top}Z`;
+ el('path',{d,fill:'#d95b91',transform:'translate(9 12)'},g);
+ el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':22,'stroke-linejoin':'round'},g);
+ el('path',{d,fill:'url(#handleG)',stroke:'#f27aaa','stroke-width':5,'stroke-linejoin':'round'},g);
+ el('path',{d,fill:'url(#dotsS)'},g);
+ [top+70,bot-40].forEach(y=>{el('rect',{x:-52,y:y-14,width:104,height:28,rx:14,fill:'#fff'},g);el('rect',{x:-46,y:y-9,width:92,height:18,rx:9,fill:'#a9defb',stroke:'#4fa6e0','stroke-width':3.5},g);});
+ const hh=heart('#a9defb','#4fa6e0',1.2);hh.setAttribute('transform',`translate(0 ${bot+18})`);g.appendChild(hh);
+})();
+const frame=el('g',{},mirror);
+(()=>{const g=frame;
+ el('ellipse',{rx:M.rx+56,ry:M.ry+56,fill:'#d95b91',transform:'translate(10 14)'},g);
+ const N=56;for(let i=0;i<N;i++){const a=i/N*TAU;el('circle',{cx:Math.cos(a)*(M.rx+52),cy:Math.sin(a)*(M.ry+52),r:23,fill:'#f27aaa'},g);}
+ for(let i=0;i<N;i++){const a=i/N*TAU;el('circle',{cx:Math.cos(a)*(M.rx+52),cy:Math.sin(a)*(M.ry+52),r:19,fill:'#fff'},g);}
+ for(let i=0;i<N;i++){const a=i/N*TAU;el('circle',{cx:Math.cos(a)*(M.rx+60),cy:Math.sin(a)*(M.ry+60),r:4.3,fill:'#ffc1da'},g);}
+ el('ellipse',{rx:M.rx+46,ry:M.ry+46,fill:'#fff'},g);
+ el('ellipse',{rx:M.rx+24,ry:M.ry+24,fill:'none',stroke:'#f27aaa','stroke-width':52},g);
+ el('ellipse',{rx:M.rx+24,ry:M.ry+24,fill:'none',stroke:'url(#frameG)','stroke-width':42},g);
+ el('ellipse',{rx:M.rx+24,ry:M.ry+24,fill:'none',stroke:'url(#dotsS)','stroke-width':42},g);
+ el('ellipse',{rx:M.rx+24,ry:M.ry+24,fill:'none',stroke:'#fff','stroke-width':4,'stroke-dasharray':'14 10','stroke-linecap':'round'},g);
+ // 枠の飾りハート
+ for(let i=0;i<8;i++){const a=i/8*TAU+TAU/16;const h=heart(i%2?'#a9defb':'#ffd1e4',i%2?'#4fa6e0':'#ef78a8',0.62);
+  h.setAttribute('transform',`translate(${Math.cos(a)*(M.rx+24)} ${Math.sin(a)*(M.ry+24)}) rotate(${a*180/Math.PI+90})`);g.appendChild(h);}
+ el('ellipse',{rx:M.rx,ry:M.ry,fill:'#fff'},g);
+ el('ellipse',{rx:M.rx-4,ry:M.ry-4,fill:'url(#glass)',stroke:'#5fb0e6','stroke-width':6},g);
+ el('ellipse',{rx:M.rx-26,ry:M.ry-26,fill:'none',stroke:'#fff','stroke-width':4,'stroke-dasharray':'12 10',opacity:.9},g);
+})();
+// 鏡の中（文字＋光）
+const cp=el('clipPath',{id:'glassClip'},defs);el('ellipse',{rx:M.rx-6,ry:M.ry-6},cp);
+const inGlass=el('g',{'clip-path':'url(#glassClip)'},mirror);
+const reflect=el('g',{},inGlass);
+[[-160,'#fff',60],[-60,'#fff',24]].forEach(([x,f,w])=>el('rect',{x:x,y:-600,width:w,height:1200,fill:f,opacity:.55,transform:'rotate(28)'},reflect));
+const sweep=el('rect',{x:-70,y:-700,width:140,height:1400,fill:'#fff',opacity:.75,transform:'rotate(28)'},inGlass);
+// ティアラ
+const tiara=el('g',{},stage);
+(()=>{const g=tiara;
+ const d='M-150 40 L-170 -40 L-105 0 L-60 -80 L-20 -10 L0 -105 L20 -10 L60 -80 L105 0 L170 -40 L150 40 Q0 70 -150 40Z';
+ el('path',{d,fill:'#4c9ad3',transform:'translate(7 10)'},g);
+ el('path',{d,fill:'#fff',stroke:'#fff','stroke-width':20,'stroke-linejoin':'round'},g);
+ el('path',{d,fill:'url(#crownG)',stroke:'#4fa6e0','stroke-width':5,'stroke-linejoin':'round'},g);
+ el('path',{d,fill:'url(#dotsS)'},g);
+ [[-170,-40,10],[-60,-80,12],[60,-80,12],[170,-40,10]].forEach(([x,y,r])=>{el('circle',{cx:x,cy:y,r:r+5,fill:'#fff'},g);el('circle',{cx:x,cy:y,r,fill:'#ffb3d1',stroke:'#ef78a8','stroke-width':3},g);});
+ const top=heart('#ffb3d1','#ef78a8',1.05);top.setAttribute('transform','translate(0 -112)');g.appendChild(top);
+ const mid=heart('#ff9cc4','#ef78a8',1.25);mid.setAttribute('transform','translate(0 18)');g.appendChild(mid);
+ [-90,90].forEach(x=>{const h=heart('#a9defb','#4fa6e0',0.7);h.setAttribute('transform',`translate(${x} 22)`);g.appendChild(h);});
+})();
+const sideBow=bow('#a9defb','#4fa6e0',1.0);stage.appendChild(sideBow);
+
+// ===== 私 =====
+const ch=el('g',{},stage);
+(()=>{const size=400,base={'font-family':F1,'font-size':size,'text-anchor':'middle','stroke-linejoin':'round'};
+ const T=a=>{const e=el('text',{...base,...a},ch);e.textContent='私';return e;};
+ T({fill:'#4c9ad3',stroke:'#4c9ad3','stroke-width':62,transform:'translate(10 15)'});
+ T({fill:'#5fb0e6',stroke:'#5fb0e6','stroke-width':62});
+ T({fill:'#fff',stroke:'#fff','stroke-width':44});
+ T({fill:'#f06d9f',stroke:'#f06d9f','stroke-width':12});
+ T({fill:'url(#gPink)'});
+ T({fill:'url(#heartPat)'});
+ const c2=el('clipPath',{id:'wc'},defs);const ct=el('text',base,c2);ct.textContent='私';
+ const sh=el('g',{'clip-path':'url(#wc)'},ch);
+ el('ellipse',{cx:-size*0.14,cy:-size*0.66,rx:size*0.42,ry:size*0.1,fill:'#fff',opacity:.75,transform:`rotate(-18 ${-size*0.14} ${-size*0.66})`},sh);
+ ch.shine=el('rect',{x:-40,y:-700,width:80,height:1400,fill:'#fff',opacity:.6,transform:'rotate(28)'},sh);
+})();
+
+const floaters=[];
+[[330,220,'#ffb3d1','#ef78a8',1.4],[1600,210,'#a9defb','#4fa6e0',1.4],[1640,700,'#ffb3d1','#ef78a8',1.1],[290,720,'#a9defb','#4fa6e0',1.1],[470,960,'#ffb3d1','#ef78a8',0.9],[1460,970,'#a9defb','#4fa6e0',0.9]]
+ .forEach(([x,y,f,l,s],i)=>{const g=heart(f,l,s);stage.appendChild(g);floaters.push({g,x,y,s:1,t0:1.3+i*0.1,ph:i*1.1,rot:i%2?14:-14,kind:'h'});});
+const bursts=[];
+[[540,120,'#bfe8ff',1.4],[1390,110,'#ffd1e4',1.4],[1460,450,'#fff',1.2],[460,460,'#fff',1.2],[1720,960,'#bfe8ff',1.0],[200,940,'#ffd1e4',1.0],[1740,420,'#ffd1e4',0.9],[180,420,'#bfe8ff',0.9]]
+ .forEach(([x,y,f,s],i)=>{const g=spark(f,s);stage.appendChild(g);floaters.push({g,x,y,s,t0:1.2+i*0.08,ph:i*0.9,kind:'s'});});
+
+window.render=function(t){
+ // 鏡：くるっと回って登場
+ const mp=clamp(t/0.8),me=eOut(mp);
+ const flip=mp<=0?0.0001:Math.cos((1-me)*Math.PI*2);
+ const sway=Math.sin(TAU*t*0.35)*2.5*clamp((t-1.2)/0.6);
+ const bob=Math.sin(TAU*t*0.45)*6;
+ mirror.setAttribute('transform',`translate(${M.x} ${M.y+bob+(1-me)*80}) rotate(${sway}) scale(${(mp<=0?0.0001:back(mp,1.6))*Math.max(0.02,Math.abs(flip))} ${mp<=0?0.0001:back(mp,1.6)})`);
+ // 鏡の光がシャッと走る（くり返し）
+ const sw=t>0.9?((t-0.9)%2.6)/0.7:9;
+ sweep.setAttribute('x',-70+(-600+1200*clamp(sw)));
+ sweep.style.visibility=sw<1?'visible':'hidden';
+ // 私：鏡の中からぽんっ
+ const cp_=clamp((t-0.75)/0.5);
+ const cs=cp_<=0?0.0001:back(cp_,2.8);
+ const idle=clamp((t-1.25)/0.5);
+ ch.setAttribute('transform',`translate(${M.x+sway*2} ${M.y+140+bob+Math.sin(TAU*t*0.5+1)*5*idle}) rotate(${(1-eOut(cp_))*-25+Math.sin(TAU*t*0.4)*2*idle}) scale(${cs*(1+0.03*Math.sin(TAU*t*0.9)*idle)})`);
+ const cs2=t>1.4?((t-1.4)%2.6)/0.6:9;
+ ch.shine.setAttribute('x',-40+(-500+1000*clamp(cs2)));ch.shine.style.visibility=cs2<1?'visible':'hidden';
+ // ティアラ：上からちょこん
+ const tp=clamp((t-1.05)/0.45);
+ tiara.setAttribute('transform',`translate(${M.x+sway*3} ${M.y-M.ry-28+bob-(1-eOut(tp))*260}) rotate(${-6+Math.sin(TAU*t*0.5)*3}) scale(${tp<=0?0.0001:1})`);
+ const bp=clamp((t-1.3)/0.4);
+ sideBow.setAttribute('transform',`translate(${M.x+M.rx-10+sway} ${M.y+M.ry-40+bob}) rotate(${20+Math.sin(TAU*t*0.6)*6}) scale(${bp<=0?0.0001:back(bp,3)})`);
+ floaters.forEach(o=>{const p=clamp((t-o.t0)/0.4);const b=p<=0?0.0001:back(p,2.6);
+  if(o.kind==='h')o.g.setAttribute('transform',`translate(${o.x} ${o.y+Math.sin(TAU*t*0.5+o.ph)*12}) rotate(${o.rot+Math.sin(TAU*t*0.4+o.ph)*10}) scale(${b*(1+0.06*Math.sin(TAU*t*1.2+o.ph))})`);
+  else o.g.setAttribute('transform',`translate(${o.x} ${o.y}) rotate(${t*35+o.ph*20}) scale(${b*o.s*(0.6+0.4*Math.abs(Math.sin(TAU*t*0.6+o.ph)))})`);});
+};
+if(location.hash.includes('transparent'))document.body.style.background='transparent';
+window.ready=document.fonts.load(`430px "${F1}"`,'私').then(()=>document.fonts.ready).then(()=>{
+ const m=location.hash.match(/t=([\d.]+)/);render(m?parseFloat(m[1]):6);});
+</script></body></html>
