@@ -41,7 +41,7 @@ import * as THREE from './three.module.min.js';
 const W = 1920, H = 1080;
 const hp = new URLSearchParams(location.hash.slice(1));
 const VIEW = hp.get('view') || 'beauty';
-const SLOTS = +(hp.get('slots') || 2);
+const SLOTS = +(hp.get('slots') || (hp.has('img') ? 1 : 2));
 const TAU = Math.PI * 2;
 
 const COL = {
@@ -56,7 +56,7 @@ renderer.setPixelRatio(1);
 renderer.setSize(W, H);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = .82;
+renderer.toneMappingExposure = .8;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.prepend(renderer.domElement);
@@ -494,11 +494,11 @@ const dummy = new THREE.Object3D();
 // ---------- 11. キャラクターの差しこみ枠 ----------
 // 足元をステージ天板にそろえて立たせる板。画像の縦横比に合わせて自動で幅が決まる。
 const STAGE_TOP = STAGE.h1 + STAGE.h2;
-const CHAR_H = 4.3; // 全身の高さ (ステージ上)
+const CHAR_H = SLOTS === 1 ? 8.3 : 5.8; // 全身の高さ (ステージ上)
 const slotDefs = SLOTS === 1
   ? [{ id: 'img', label: '2人の全身絵', x: 0, aspect: 1.0, color: '#ee88ab' }]
   : [{ id: 'imgA', label: 'Aさん', x: -1.15, aspect: .42, color: '#ee88ab' }, { id: 'imgB', label: 'Bさん', x: 1.15, aspect: .42, color: '#7db8db' }];
-const slots = [];
+const slots = [], loads = [];
 function placeholderTex(label, color, aspect) {
   const h = 1024, w = Math.round(h * aspect);
   return canvasTex(w, h, (g) => {
@@ -525,19 +525,25 @@ for (const s of slotDefs) {
   const g = new THREE.Group(); g.add(plane);
   const setAspect = a => { plane.scale.set(CHAR_H * a, CHAR_H, 1); plane.position.y = CHAR_H / 2; };
   setAspect(s.aspect);
-  g.position.set(s.x, STAGE_TOP + .01, .3);
+  g.position.set(s.x, STAGE_TOP - .04, 1.3);
   scene.add(g);
-  slots.push({ ...s, g, plane, setAspect });
+  // 足元の接地影 (ステージ天板の上にふんわり)
+  const cs = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({
+    map: canvasTex(256, 256, (c, w, h) => { const gr = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, "rgba(200,90,140,.55)"); gr.addColorStop(.6, "rgba(220,120,160,.22)"); gr.addColorStop(1, "rgba(230,150,180,0)"); c.fillStyle = gr; c.fillRect(0, 0, w, h); }),
+    transparent: true, depthWrite: false }));
+  cs.rotation.x = -Math.PI / 2; cs.position.set(s.x, STAGE_TOP + .012, 1.3); cs.scale.set(CHAR_H * s.aspect * 1.1, 1.3, 1);
+  scene.add(cs);
+  slots.push({ ...s, g, plane, setAspect, cs });
   // 実際の画像が指定されていれば差しかえ
   const src = hp.get(s.id);
-  if (src) new THREE.TextureLoader().load(src, t => { t.colorSpace = THREE.SRGBColorSpace; mat.map = t; plane.customDepthMaterial.map = t; mat.needsUpdate = true; setAspect(t.image.width / t.image.height); });
+  if (src) loads.push(new Promise(res => new THREE.TextureLoader().load(src, t => { t.colorSpace = THREE.SRGBColorSpace; mat.map = t; plane.customDepthMaterial.map = t; mat.needsUpdate = true; setAspect(t.image.width / t.image.height); cs.scale.x = CHAR_H * t.image.width / t.image.height * 1.0; res(); })));
 }
 
 // ---------- ライト ----------
 scene.add(new THREE.HemisphereLight(0xfff4f8, 0xf6b8cf, .55));
 const key = new THREE.DirectionalLight(0xffffff, 2.4);
 key.position.set(-5, 11, 10); key.castShadow = true;
-key.shadow.mapSize.set(4096, 4096); key.shadow.radius = 6; key.shadow.bias = -.0004; key.shadow.normalBias = .02;
+key.shadow.mapSize.set(hp.has("fast") ? 2048 : 4096, hp.has("fast") ? 2048 : 4096); key.shadow.radius = 6; key.shadow.bias = -.0004; key.shadow.normalBias = .02;
 Object.assign(key.shadow.camera, { left: -14, right: 14, top: 14, bottom: -6, near: 1, far: 40 });
 scene.add(key);
 const moonLight = new THREE.PointLight(0xfff0c0, 14, 12, 1.5); moonLight.position.set(0, 4.6, -4.4); scene.add(moonLight);
@@ -577,7 +583,7 @@ function update(t) {
   }
   for (const f of new Set(floaters.map(f => f.im))) f.instanceMatrix.needsUpdate = true;
   // キャラはほんの少し呼吸するように上下
-  slots.forEach((s, i) => { s.g.position.y = STAGE_TOP + .01 + .03 * Math.max(0, Math.sin(TAU * (2 * p + i * .5))); s.g.lookAt(camera.position.x * .3, s.g.position.y, camera.position.z); });
+  slots.forEach((s, i) => { s.g.position.y = STAGE_TOP - .04 + .03 * Math.max(0, Math.sin(TAU * (2 * p + i * .5))); s.g.lookAt(camera.position.x * .3, s.g.position.y, camera.position.z); });
 }
 
 // ---------- ビューごとの見せ方 ----------
@@ -658,10 +664,12 @@ function overlay() {
   }
 }
 
+// 映り込みを少し控えめにして、白っぽいかすみを減らす
+scene.traverse(m => { if (m.isMesh) (Array.isArray(m.material) ? m.material : [m.material]).forEach(mt => { if ('envMapIntensity' in mt) mt.envMapIntensity = .55; }); });
 applyView();
 const t0 = hp.has('t') ? +hp.get('t') : 0;
 window.renderAt = t => { update(t); renderer.render(scene, camera); };
-window.ready = document.fonts.ready.then(() => { slots.forEach(s => s.plane.material.map.needsUpdate = true); });
+window.ready = Promise.all([document.fonts.ready, ...loads]).then(() => { slots.forEach(s => s.plane.material.map.needsUpdate = true); });
 window.ready.then(() => {
   // プレースホルダーの文字を、フォントが読みこまれてから描き直す
   slots.forEach(s => { const t = placeholderTex(s.label, s.color, s.aspect); if (!hp.get(s.id)) { s.plane.material.map = t; s.plane.customDepthMaterial.map = t; s.plane.material.needsUpdate = true; } });
