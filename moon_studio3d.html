@@ -168,7 +168,7 @@ function makeBow(color = COL.pink, size = 1) {
 function centerless(geo) { return geo; }
 
 // ---------- 1. ホリゾント (床から壁までつながったスタジオの背景) ----------
-const CYC = { x0: -13, x1: 13, zFront: 9, zWall: -6.5, R: 3.2, top: 13 };
+const CYC = { x0: -26, x1: 26, zFront: 9, zWall: -6.5, R: 3.2, top: 13 };
 {
   const { x0, x1, zFront, zWall, R, top } = CYC;
   const Lf = (zFront - (zWall + R)), La = Math.PI / 2 * R, Lw = top - R, L = Lf + La + Lw;
@@ -566,8 +566,18 @@ function update(t) {
   // カメラ: 撮影カメラはゆっくり左右にスライド + 少し寄る (12 秒ループ)
   const p = t / 12;
   if (VIEW === 'parts') { camera.position.set(...cv.pos); }
-  else camera.position.set(cv.pos[0] + 1.6 * Math.sin(TAU * p), cv.pos[1] + .2 * Math.sin(TAU * 2 * p), cv.pos[2] - .6 * (1 - Math.cos(TAU * p)) / 2);
-  camera.lookAt(...cv.look);
+  else if (hp.has('still')) { camera.position.set(...cv.pos); }
+  else {
+    // 12秒で: 正面の高め引き → 左から寄り → 正面のローアングル引き → 右から寄り → 戻る
+    const near = .5 - .5 * Math.cos(TAU * 2 * p);           // 0=引き, 1=寄り
+    const th = .4 * Math.sin(TAU * p);                       // 左右に回りこむ角度
+    const r = 18.5 - 7 * near;
+    const y = 4.3 + 1.9 * Math.cos(TAU * p) * (1 - .4 * near) + .3 * near;
+    camera.position.set(Math.sin(th) * r, y, Math.cos(th) * r + .2);
+    camera.fov = 34 - 4 * near; camera.updateProjectionMatrix();
+  }
+  if (VIEW === 'parts' || hp.has('still')) camera.lookAt(...cv.look);
+  else { const near = .5 - .5 * Math.cos(TAU * 2 * p); camera.lookAt(0, 3.3 + 1.0 * near, .3); }
   moonGroup.position.y = MOON.y + .08 * Math.sin(TAU * 2 * p);
   moonGroup.getObjectByName('lace').rotation.z = -TAU * p / 20;
   moonGroup.getObjectByName('halo').scale.setScalar(1 + .05 * Math.sin(TAU * 3 * p));
@@ -583,7 +593,7 @@ function update(t) {
   }
   for (const f of new Set(floaters.map(f => f.im))) f.instanceMatrix.needsUpdate = true;
   // キャラはほんの少し呼吸するように上下
-  slots.forEach((s, i) => { s.g.position.y = STAGE_TOP - .04 + .03 * Math.max(0, Math.sin(TAU * (2 * p + i * .5))); s.g.lookAt(camera.position.x * .3, s.g.position.y, camera.position.z); });
+  slots.forEach((s, i) => { s.g.position.y = STAGE_TOP - .04 + .03 * Math.max(0, Math.sin(TAU * (2 * p + i * .5))); s.g.lookAt(camera.position.x, s.g.position.y, camera.position.z); });
 }
 
 // ---------- ビューごとの見せ方 ----------
