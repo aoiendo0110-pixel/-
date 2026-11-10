@@ -602,9 +602,26 @@ anim.push((t)=>{for(const s of charaSlots){s.g.quaternion.copy(camera.quaternion
 // ================= カメラ・描画 =================
 const LOOP=10;
 const CAM_T=new THREE.Vector3(0,2.0,0);
-function setCamera(t){const u=t/LOOP*TAU;
-  const ang=0.14*Math.sin(u),dist=9.6-0.3*Math.sin(u*2);
-  camera.position.set(Math.sin(ang)*dist,3.0+0.15*Math.sin(u*2),Math.cos(ang)*dist);camera.lookAt(CAM_T);}
+// カメラアングル (#cam=front|low|diag|high|close|cuts)
+//   a=左右の回り込み角, d=距離, y=カメラ高さ, ty=注視点の高さ, fov=画角, tx=注視点の左右
+const CAMS={
+  front:{a:0,   d:9.6, y:3.0, ty:2.0, fov:30},   // 正面 (これまで)
+  low:  {a:-0.25,d:7.2, y:0.75,ty:2.45,fov:34},  // あおり (下から見上げる)
+  diag: {a:0.62,d:9.6, y:2.9, ty:2.45,fov:30},   // ななめ45° (ロールのうずまきが見える)
+  high: {a:-0.35,d:9.2, y:6.2, ty:1.9, fov:30},  // 俯瞰 (上から見下ろす)
+  close:{a:0.12,d:5.4, y:2.9, ty:2.75,fov:28},   // 寄り (2人のアップ)
+};
+const CAM=HASH.get('cam')||'front';
+const CUTS=['front','diag','close','low'];   // cuts: 2.5秒ごとに切り替え
+function setCamera(t){const u=t/LOOP*TAU;let c,k=u;
+  if(CAM==='cuts'){const i=Math.floor(t/(LOOP/CUTS.length))%CUTS.length;c=CAMS[CUTS[i]];k=(t%(LOOP/CUTS.length))/(LOOP/CUTS.length)*Math.PI-Math.PI/2;}
+  else c=CAMS[CAM]||CAMS.front;
+  const sway=CAM==='cuts'?0.06*k:0.14*Math.sin(u);           // カットの中ではゆっくり横移動
+  const push=CAM==='cuts'?-0.35*(k/(Math.PI/2)):-0.3*Math.sin(u*2); // ゆっくり寄る
+  const ang=c.a+sway,dist=c.d+push;
+  if(camera.fov!==c.fov){camera.fov=c.fov;camera.updateProjectionMatrix();}
+  camera.position.set(Math.sin(ang)*dist,c.y+0.12*Math.sin(u*2),Math.cos(ang)*dist);
+  camera.lookAt(c.tx||0,c.ty,0);}
 
 const wireMat=new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:0.35,depthTest:true,polygonOffset:true});
 const clayMat=new THREE.MeshStandardMaterial({color:0xf3eeea,roughness:0.9});
