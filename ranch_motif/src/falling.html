@@ -1,0 +1,56 @@
+<!doctype html><html><head><meta charset="utf-8"><title>ふわふわ降る素材</title>
+<style>html,body{margin:0;background:#5a6aa8}canvas{display:block;width:100vw;height:auto}</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script src="motifs.js"></script>
+<script>
+// ハート・クローバー・お花・花びらがひらひら降ってくる (透過 / 8秒ループ)
+//   #up で下から上へふわっと昇る版
+const W = 1920, H = 1080, DUR = 8;
+window.SPEC = { w: W, h: H, fps: 30, dur: DUR, alpha: true };
+const ctx = document.getElementById('c').getContext('2d');
+const { TAU, C } = M;
+const up = location.hash.includes('up');
+const R = M.rng(up ? 99 : 42);
+const parts = [];
+const N = 64;
+for (let i = 0; i < N; i++) {
+  const depth = R(); // 0=奥 1=手前
+  parts.push({
+    kind: Math.floor(R() * 8), x: R() * W, ph: R(), depth,
+    size: 28 + depth * 46 + R() * 10,
+    cyc: depth > 0.6 ? 2 : 1,            // ループ中に何回落ちるか (整数でつなぎ目なし)
+    sway: 30 + R() * 60, swk: 1 + Math.floor(R() * 2), swph: R() * TAU,
+    rot0: R() * TAU, spin: (R() < 0.5 ? -1 : 1) * Math.floor(1 + R() * 2), flip: 1 + Math.floor(R() * 3),
+    col: R(),
+  });
+}
+parts.sort((a, b) => a.depth - b.depth);
+const PET = [C.pink, C.yel, '#ffb8d2', C.grn];
+
+window.renderFrame = (t) => {
+  const p = t / DUR;
+  ctx.clearRect(0, 0, W, H);
+  for (const q of parts) {
+    const u = (q.ph + p * q.cyc) % 1;
+    const y = up ? H + 120 - u * (H + 240) : -120 + u * (H + 240);
+    const x = q.x + Math.sin(TAU * p * q.swk + q.swph) * q.sway;
+    const rot = q.rot0 + TAU * p * q.spin + Math.sin(TAU * p * 2 + q.swph) * 0.3;
+    const tilt = Math.sin(TAU * p * 2 + q.swph) * 0.45; // ゆらゆら (ハート用)
+    const sx = Math.cos(TAU * p * q.flip + q.swph); // くるっと裏返る
+    ctx.globalAlpha = 0.75 + q.depth * 0.25;
+    const s = q.size;
+    switch (q.kind) {
+      case 0: M.heart(ctx, x, y, s, tilt, C.pink, { sx: Math.abs(sx) * 0.7 + 0.3 }); break;
+      case 1: M.heart(ctx, x, y, s * 0.85, tilt, C.yel, { sx: Math.abs(sx) * 0.7 + 0.3 }); break;
+      case 2: M.clover(ctx, x, y, s * 1.1, rot, { stem: false, sx }); break;
+      case 3: M.clover(ctx, x, y, s, rot, { stem: false, leaves: 3, sx }); break;
+      case 4: M.daisy(ctx, x, y, s * 1.1, rot, { sx: Math.abs(sx) * 0.6 + 0.4 }); break;
+      case 5: M.blossom(ctx, x, y, s, rot, { petal: q.col < 0.5 ? C.pink : C.yel, center: q.col < 0.5 ? C.yel : C.pink }); break;
+      case 6: M.petal(ctx, x, y, s * 0.75, rot, PET[Math.floor(q.col * 4)], sx); break;
+      case 7: M.sparkle(ctx, x, y, s * 0.45 * (0.6 + 0.4 * Math.abs(Math.sin(TAU * p * 3 + q.swph))), q.col < 0.5 ? '#ffffff' : C.yelL, tilt); break;
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+window.renderFrame(0);
+</script></body></html>

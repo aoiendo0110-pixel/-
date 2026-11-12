@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8"><title>ギンガム柄ループ背景</title>
+<style>html,body{margin:0;background:#fff}canvas{display:block;width:100vw;height:auto}</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script src="motifs.js"></script>
+<script>
+// ギンガムチェック + クローバー・ハート・お花の柄がななめに流れる背景 (6秒ループ)
+// 上下はフリル + レース。#yellow で黄色ベース、#green で黄緑ベース
+const W = 1920, H = 1080, DUR = 6;
+window.SPEC = { w: W, h: H, fps: 30, dur: DUR, alpha: false };
+const ctx = document.getElementById('c').getContext('2d');
+const { TAU, C } = M;
+const mode = location.hash.slice(1);
+const T = {
+  yellow: { base: '#fff6c4', line: 'rgba(255,214,80,0.42)', frill: C.pink, frillD: C.pinkD, frillL: C.pinkLL, frill2: C.grn, frill2D: C.grnD, frill2L: C.grnL },
+  green: { base: '#eefad2', line: 'rgba(160,215,90,0.38)', frill: C.pink, frillD: C.pinkD, frillL: C.pinkLL, frill2: C.yel, frill2D: C.yelD, frill2L: C.yelL },
+}[mode] || { base: '#ffe6ef', line: 'rgba(255,150,190,0.32)', frill: C.yel, frillD: C.yelD, frillL: C.yelL, frill2: C.grn, frill2D: C.grnD, frill2L: C.grnL };
+const TILE = 240, CELL = 30;
+const lace = M.makeLace(W + 60, 40, { scallop: 36 });
+
+function motif(k, x, y, t, i) {
+  const tt = TAU * t / DUR;
+  const b = 1 + 0.06 * Math.sin(tt * 2 + i);
+  const r = Math.sin(tt + i) * 0.15;
+  switch (k) {
+    case 0: M.clover(ctx, x, y, 84 * b, r + 0.2, { stem: false }); break;
+    case 1: M.heart(ctx, x, y, 74 * b, r, C.pink); break;
+    case 2: M.daisy(ctx, x, y, 86 * b, r * 2); break;
+    case 3: M.heart(ctx, x, y, 68 * b, r, C.yel); break;
+    case 4: M.blossom(ctx, x, y, 80 * b, r * 2, { petal: C.pink }); break;
+    case 5: M.clover(ctx, x, y, 74 * b, r - 0.3, { stem: false, leaves: 3 }); break;
+  }
+}
+
+window.renderFrame = (t) => {
+  const p = t / DUR, tt = TAU * p;
+  // ギンガム (ゆっくり横へ: 1ループでちょうど 2マス)
+  M.gingham(ctx, 0, 0, W, H, CELL, T.base, T.line, p * CELL * 2, 0);
+  // ななめに流れる柄 (1ループで横1タイル・縦2タイル動く → 柄の割り当ても同じだけずれて一致)
+  const ox = p * TILE, oy = p * TILE * 2;
+  for (let gy = -3; gy < H / TILE + 2; gy++) for (let gx = -2; gx < W / TILE + 2; gx++) {
+    const odd = ((gy % 2) + 2) % 2;
+    const x = gx * TILE + ox + (odd ? TILE / 2 : 0), y = gy * TILE + oy;
+    const k = ((((gx + gy) % 3) + 3) % 3) + odd * 3;
+    motif(k, x, y, t, k * 1.3);
+    // すきまのキラキラ
+    const a = Math.max(0, Math.sin(tt * 2 + k * 2.1));
+    M.sparkle(ctx, x + TILE / 2, y + TILE / 4, 16 * a, '#ffffff');
+  }
+  // 上下のフリル + レース
+  for (const [y, rot] of [[0, 0], [H, Math.PI]]) {
+    ctx.save(); ctx.translate(rot ? W + 20 : -20, y); ctx.rotate(rot);
+    M.frill(ctx, W + 60, 80, { col: T.frill, dark: T.frillD, light: T.frillL, pleat: 48, phase: tt * 2, amp: 0.1 });
+    M.frill(ctx, W + 60, 54, { col: T.frill2, dark: T.frill2D, light: T.frill2L, pleat: 40, phase: -tt * 2 + 1, amp: 0.12 });
+    ctx.drawImage(lace, 0, -4);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W + 60, 10);
+    ctx.restore();
+  }
+};
+window.renderFrame(0);
+</script></body></html>

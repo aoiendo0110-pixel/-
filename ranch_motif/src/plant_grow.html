@@ -1,0 +1,127 @@
+<!doctype html><html><head><meta charset="utf-8"><title>植物にょきにょき</title>
+<style>html,body{margin:0;background:#5a6aa8}canvas{display:block;width:100vw;height:auto}</style></head><body>
+<canvas id="c" width="1920" height="1080"></canvas>
+<script src="motifs.js"></script>
+<script>
+// 画面の下の両すみからツルが伸びて、葉っぱ・クローバー・お花が咲く (透過 / 6秒)
+// 0〜3.2秒で伸びて咲き、そのあとはゆらゆら揺れながらハートがふわっと昇る
+const W = 1920, H = 1080, DUR = 6;
+window.SPEC = { w: W, h: H, fps: 30, dur: DUR, alpha: true };
+const ctx = document.getElementById('c').getContext('2d');
+const { TAU, C } = M;
+
+// タートルで曲線を作る: 長さ len、最初の向き a0、曲がり具合 k(s)、先端でくるんと巻く
+function vine(x0, y0, a0, len, bend, curl, ds = 4) {
+  const pts = []; let x = x0, y = y0, a = a0;
+  const n = Math.floor(len / ds);
+  for (let i = 0; i <= n; i++) {
+    const s = i / n;
+    pts.push([x, y, a]);
+    const k = bend * Math.sin(s * Math.PI * 1.3) + curl * Math.pow(Math.max(0, (s - 0.72) / 0.28), 2);
+    a += k * ds; x += Math.cos(a) * ds; y += Math.sin(a) * ds;
+  }
+  return pts;
+}
+const R = M.rng(11);
+const VINES = [];
+function addSide(side) {
+  const sx = side < 0 ? 0 : W, m = side < 0 ? 1 : -1; // m: 内向き
+  const up = -Math.PI / 2;
+  const mains = [
+    { x: sx + m * 110, y: H + 10, a: up + m * 0.3, len: 820, bend: -m * 0.0011, curl: m * 0.05, w: 18, delay: 0 },
+    { x: sx + m * 10, y: H - 60, a: up + m * 0.95, len: 600, bend: -m * 0.0018, curl: -m * 0.05, w: 14, delay: 0.25 },
+    { x: sx + m * 260, y: H + 10, a: up + m * 0.16, len: 470, bend: m * 0.0016, curl: m * 0.055, w: 12, delay: 0.45 },
+  ];
+  for (const v of mains) {
+    const pts = vine(v.x, v.y, v.a, v.len, v.bend, v.curl);
+    const deco = [];
+    // 葉っぱ・クローバー・お花を道にそって置く
+    for (let s = 0.1; s < 0.8; s += 0.055 + R() * 0.035) {
+      const k = Math.floor(R() * 10);
+      deco.push({ s, k, side: R() < 0.5 ? -1 : 1, size: 0.75 + R() * 0.5, ph: R() * TAU });
+    }
+    deco.push({ s: 0.88, k: 99, side: 1, size: 1.2, ph: R() * TAU }); // 先端の大きいお花
+    VINES.push({ ...v, pts, deco, side, tip: Math.floor(R() * 3) });
+  }
+}
+addSide(-1); addSide(1);
+
+const GROW = 2.6;
+function drawVine(v, t) {
+  const g = M.clamp((t - v.delay) / GROW);
+  if (g <= 0) return;
+  const eg = M.easeOut(g);
+  const sway = (t > 2.6 ? Math.min(1, (t - 2.6) / 0.8) : 0) * Math.sin(TAU * t / 3 + v.delay * 3) * 0.018 * (v.side);
+  // 揺れ: 根元を中心にほんの少し回す
+  ctx.save(); ctx.translate(v.x, v.y); ctx.rotate(sway); ctx.translate(-v.x, -v.y);
+  const n = Math.floor((v.pts.length - 1) * eg);
+  // ツル (先が細くなる)
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const [col, extra] of [['#ffffff', 7], [C.grnD, 0]]) {
+    ctx.strokeStyle = col;
+    for (let i = 1; i <= n; i++) {
+      const [x0, y0] = v.pts[i - 1], [x1, y1] = v.pts[i];
+      ctx.lineWidth = v.w * (1 - (i / v.pts.length) * 0.75) + extra;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+    }
+  }
+  // ツルのハイライト
+  ctx.strokeStyle = 'rgba(230,250,190,0.8)'; ctx.lineWidth = v.w * 0.22;
+  ctx.beginPath(); for (let i = 0; i <= n; i += 2) { const [x, y, a] = v.pts[i]; const ox = Math.cos(a - Math.PI / 2) * v.w * 0.22; const oy = Math.sin(a - Math.PI / 2) * v.w * 0.22; i ? ctx.lineTo(x + ox, y + oy) : ctx.moveTo(x + ox, y + oy); } ctx.stroke();
+  // 飾り
+  for (const d of v.deco) {
+    const pop = (eg - d.s) / 0.12;                // その位置までツルが来たらぽんっと出る
+    if (pop <= 0) continue;
+    const sc = M.easeOutBack(pop) * d.size;
+    const idx = d.k === 99 ? n : Math.min(v.pts.length - 1, Math.floor(d.s * (v.pts.length - 1)));
+    const [x, y, a] = v.pts[idx];
+    const wob = Math.sin(TAU * t / 2 + d.ph) * 0.08;
+    const na = a + d.side * Math.PI / 2;          // ツルの横向き
+    if (d.k === 99) {
+      // 先端の大きい花 (巻いた先に咲く)
+      const s = 130 * sc;
+      if (v.tip === 0) M.daisy(ctx, x, y, s, wob, {});
+      else if (v.tip === 1) M.blossom(ctx, x, y, s * 0.95, wob, { petal: C.pink });
+      else M.daisy(ctx, x, y, s, wob, { petal: C.yel, center: '#ffb347', petalLine: 'rgba(230,160,40,0.4)' });
+      continue;
+    }
+    const lx = x + Math.cos(na) * 6, ly = y + Math.sin(na) * 6;
+    if (d.k <= 3) M.leaf(ctx, lx, ly, 86 * sc, na + Math.PI / 2 + wob, {});
+    else if (d.k <= 5) { // くき付きクローバー
+      const ex = x + Math.cos(na) * 50 * sc, ey = y + Math.sin(na) * 50 * sc;
+      ctx.strokeStyle = C.grnD; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ex, ey); ctx.stroke();
+      M.clover(ctx, ex, ey, 76 * sc, na + wob, { stem: false, leaves: d.k === 4 ? 4 : 3 });
+    } else if (d.k === 6) M.blossom(ctx, x + Math.cos(na) * 26 * sc, y + Math.sin(na) * 26 * sc, 66 * sc, wob, { petal: C.pink });
+    else if (d.k === 7) M.blossom(ctx, x + Math.cos(na) * 26 * sc, y + Math.sin(na) * 26 * sc, 60 * sc, wob, { petal: C.yel, center: C.pink });
+    else if (d.k === 8) M.tulip(ctx, x + Math.cos(na) * 34 * sc, y + Math.sin(na) * 34 * sc, 48 * sc, na + Math.PI / 2 + wob, { stem: false, col: C.pink, dark: C.pinkD });
+    else M.heart(ctx, x + Math.cos(na) * 30 * sc, y + Math.sin(na) * 30 * sc, 42 * sc, wob, C.pink);
+  }
+  ctx.restore();
+}
+
+window.renderFrame = (t) => {
+  ctx.clearRect(0, 0, W, H);
+  for (const v of VINES) drawVine(v, t);
+  // 根元のこんもりクローバー
+  for (const side of [-1, 1]) {
+    const bx = side < 0 ? 0 : W, m = side < 0 ? 1 : -1;
+    const g = M.easeOutBack(M.clamp(t / 0.6));
+    for (let i = 0; i < 7; i++) M.clover(ctx, bx + m * (20 + i * 46), H - 10 - (i % 2) * 30, 70 * g * (1 - i * 0.06), i * 0.9 + Math.sin(TAU * t / 3 + i) * 0.06, { stem: false, leaves: i % 3 ? 3 : 4 });
+  }
+  // 咲いたあと昇るハートとキラキラ
+  const RR = M.rng(3);
+  for (let i = 0; i < 22; i++) {
+    const st = 2.0 + RR() * 3.2, life = 1.6 + RR() * 0.8, side = RR() < 0.5 ? -1 : 1;
+    const x0 = side < 0 ? 80 + RR() * 420 : W - 80 - RR() * 420, y0 = 300 + RR() * 600, s = 28 + RR() * 26, k = Math.floor(RR() * 3);
+    const u = (t - st) / life;
+    if (u <= 0 || u >= 1) continue;
+    ctx.globalAlpha = Math.sin(u * Math.PI);
+    const x = x0 + Math.sin(u * 6 + i) * 20, y = y0 - u * 160;
+    if (k === 0) M.heart(ctx, x, y, s, Math.sin(u * 5) * 0.3, i % 2 ? C.pink : C.yel);
+    else if (k === 1) M.sparkle(ctx, x, y, s * 0.6, '#fff');
+    else M.petal(ctx, x, y, s * 0.6, u * 4 + i, C.pink, Math.cos(u * 8));
+  }
+  ctx.globalAlpha = 1;
+};
+window.renderFrame(4);
+</script></body></html>
