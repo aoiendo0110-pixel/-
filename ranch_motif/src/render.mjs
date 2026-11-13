@@ -67,9 +67,10 @@ const inp = ['-framerate', String(spec.fps), '-i', path.join(work, 'f%05d.png')]
 if (spec.alpha) {
   // 透過 WebM (VP9 alpha)
   ff([...inp, '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-b:v', '0', '-crf', '30', '-row-mt', '1', '-auto-alt-ref', '0', path.join(outDir, `${tag}_transparent.webm`)]);
-  // グリーンバック MP4 (クロマキー用)
-  ff([...inp, '-filter_complex', `color=0x00ff00:s=${spec.w}x${spec.h}:r=${spec.fps}[bg];[bg][0]overlay=shortest=1,format=yuv420p`,
-    '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', '-movflags', '+faststart', path.join(outDir, `${tag}_greenback.mp4`)]);
+  // パープルバック MP4 (クロマキー用。色は KEY=0xRRGGBB で変更可)
+  const key = process.env.KEY || '0x8000ff';
+  ff([...inp, '-filter_complex', `color=${key}:s=${spec.w}x${spec.h}:r=${spec.fps}[bg];[bg][0]overlay=shortest=1,format=yuv420p`,
+    '-c:v', 'libx264', '-crf', '17', '-preset', 'slow', '-movflags', '+faststart', path.join(outDir, `${tag}_purpleback.mp4`)]);
   // 透過 MOV (ProRes 4444, 編集ソフト用)
   if (process.env.PRORES) ff([...inp, '-c:v', 'prores_ks', '-profile:v', '4444', '-pix_fmt', 'yuva444p10le', '-vendor', 'apl0', path.join(outDir, `${tag}_alpha.mov`)]);
 } else {

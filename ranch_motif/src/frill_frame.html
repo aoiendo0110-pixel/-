@@ -29,24 +29,26 @@ const dots = [];
 for (let x = 30; x < W; x += 92) for (const y of [30, H - 30]) dots.push([x + (y > H / 2 ? 46 : 0), y]);
 for (let y = 122; y < H - 90; y += 92) for (const x of [30, W - 30]) dots.push([x, y + (x > W / 2 ? 46 : 0)]);
 
+const SHADE = { yellow: 'rgba(240,190,60,0.4)', green: 'rgba(130,190,70,0.38)' }[mode] || 'rgba(240,110,165,0.38)';
+
 function corner(cx, cy, rot, t, ph) {
   const tt = TAU * t / DUR;
   ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.translate(38, 38); ctx.scale(1.08, 1.08);
+  M.doily(ctx, 120, 120, 150, tt / 6 + ph);
   // 葉っぱ
   for (const [a, l] of [[-0.15, 95], [0.55, 82], [1.15, 95], [1.75, 75]]) M.leaf(ctx, 0, 0, l, a + Math.sin(tt + ph + a) * 0.05 + Math.PI / 2 + 0.2, {});
-  M.clover(ctx, 150, 40, 92, 0.3 + Math.sin(tt + ph) * 0.08, { stem: false });
-  M.clover(ctx, 40, 150, 70, -0.4 + Math.sin(tt + ph + 1) * 0.08, { stem: false, leaves: 3 });
-  M.daisy(ctx, 112, 128, 104, Math.sin(tt * 2 + ph) * 0.1);
-  M.daisy(ctx, 205, 105, 66, 0.3 + Math.sin(tt * 2 + ph + 1) * 0.1, { petal: C.yel, center: '#ffb347', petalLine: 'rgba(230,160,40,0.4)' });
-  M.blossom(ctx, 95, 215, 70, Math.sin(tt * 2 + ph + 2) * 0.12, { petal: C.pink });
-  M.blossom(ctx, 175, 185, 48, Math.sin(tt * 2 + ph + 3) * 0.12, { petal: C.yel, center: C.pink });
-  M.bow(ctx, 62, 62, 110 * (1 + Math.sin(tt * 2 + ph) * 0.03), -Math.PI / 4 + Math.sin(tt + ph) * 0.05, C.pink, C.pinkD);
-  // パール
-  for (let i = 0; i < 7; i++) { const a = 0.05 + i * 0.24; M.pearl(ctx, Math.cos(a) * 250, Math.sin(a) * 250, 9); }
+  M.clover(ctx, 165, 30, 86, 0.3 + Math.sin(tt + ph) * 0.08, { stem: false });
+  M.clover(ctx, 30, 165, 66, -0.4 + Math.sin(tt + ph + 1) * 0.08, { stem: false, leaves: 3 });
+  M.rose(ctx, 118, 125, 118, Math.sin(tt * 2 + ph) * 0.08);
+  M.rose(ctx, 215, 110, 74, 0.5 + Math.sin(tt * 2 + ph + 1) * 0.1, { col: C.yel, dark: C.yelD, light: C.yelL });
+  M.daisy(ctx, 100, 222, 70, Math.sin(tt * 2 + ph + 2) * 0.12);
+  M.blossom(ctx, 190, 195, 50, Math.sin(tt * 2 + ph + 3) * 0.12, { petal: C.pink });
+  M.bow(ctx, 58, 58, 118 * (1 + Math.sin(tt * 2 + ph) * 0.03), -Math.PI / 4 + Math.sin(tt + ph) * 0.05, C.pink, C.pinkD);
+  M.pearlSwag(ctx, 270, 10, 10, 270, 60, 8);
   // 浮かぶハート
   const hp = ((t / DUR) * 2 + ph / TAU) % 1;
   ctx.globalAlpha = Math.sin(hp * Math.PI);
-  M.heart(ctx, 230 + hp * 60, 230 + hp * 60, 40 + hp * 10, 0.2, C.pink);
+  M.jewelHeart(ctx, 250 + hp * 60, 250 + hp * 60, 40 + hp * 10, 0.2, C.pink);
   ctx.globalAlpha = 1;
   ctx.restore();
 }
@@ -54,18 +56,16 @@ function corner(cx, cy, rot, t, ph) {
 window.renderFrame = (t) => {
   const p = t / DUR, tt = TAU * p;
   ctx.clearRect(0, 0, W, H);
-  // 帯: ストライプ地 + ハート水玉
-  ctx.fillStyle = T.base; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = T.line;
-  for (let x = -H; x < W; x += 56) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + 22, 0); ctx.lineTo(x + 22 + H, H); ctx.lineTo(x + H, H); ctx.fill(); }
-  dots.forEach(([x, y], i) => M.heart(ctx, x, y, 26 * (1 + 0.12 * Math.sin(tt * 2 + i * 0.6)), 0, '#ffffff', { outline: false, shine: false }));
+  // 帯: パールのキルティング
+  M.quilt(ctx, 0, 0, W, H, 64, T.base, SHADE);
   // 窓を抜く
   ctx.clearRect(B, B, W - 2 * B, H - 2 * B);
-  // 窓の内側へ: 2段フリル → レース
+  // 窓の内側へ: フリル → チュール → フリル → レース
   sides.forEach(([x, y, a, len], si) => {
     ctx.save(); ctx.translate(x, y); ctx.rotate(a);
-    M.frill(ctx, len, 74, { col: T.frill, dark: T.frillD, light: T.frillL, pleat: 44, phase: tt * 2 + si, amp: 0.1 });
-    M.frill(ctx, len, 54, { col: T.frill2, dark: T.frill2D, light: T.frill2L, pleat: 36, phase: -tt * 2 + si * 2, amp: 0.12 });
+    M.frill(ctx, len, 82, { col: T.frill, dark: T.frillD, light: T.frillL, pleat: 44, phase: tt * 2 + si, amp: 0.1 });
+    M.tulle(ctx, len, 66, { phase: tt * 2 + si + 1, alpha: 0.7 });
+    M.frill(ctx, len, 48, { col: T.frill2, dark: T.frill2D, light: T.frill2L, pleat: 36, phase: -tt * 2 + si * 2, amp: 0.12 });
     const L = (si % 2 ? lace.v : lace.h);
     ctx.drawImage(L, 0, 0, len, L.height, 0, -4, len, L.height);
     ctx.restore();
@@ -76,11 +76,23 @@ window.renderFrame = (t) => {
   ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.setLineDash([10, 8]); ctx.lineDashOffset = -p * 36 * 6;
   ctx.strokeRect(B - 2, B - 2, W - 2 * B + 4, H - 2 * B + 4);
   ctx.restore();
-  // 辺のまんなかのハート飾り
-  for (const [x, y, r] of [[W / 2, B, 0], [W / 2, H - B, Math.PI], [B, H / 2, -Math.PI / 2], [W - B, H / 2, Math.PI / 2]]) {
-    ctx.save(); ctx.translate(x, y); ctx.rotate(r);
-    M.heart(ctx, 0, 6, 64 * (1 + 0.08 * Math.sin(tt * 2)), 0, C.pink);
-    M.sparkle(ctx, 42, -14, 14 * (0.5 + 0.5 * Math.sin(tt * 3)), '#fff');
+  // 上辺から垂れるパールの飾り鎖 + 小さいリボン
+  const sw = [380, 600, 820, 1100, 1320, 1540];
+  for (let i = 0; i < sw.length - 1; i++) {
+    if (i === 2) continue; // まんなかは大きいリボン
+    M.pearlSwag(ctx, sw[i], B + 70, sw[i + 1], B + 70, 46 + Math.sin(tt * 2 + i) * 6, 7);
+  }
+  for (const [i, x] of sw.entries()) M.bow(ctx, x, B + 66, 46, Math.sin(tt * 2 + i) * 0.08, i % 2 ? C.yel : C.pink, i % 2 ? C.yelD : C.pinkD);
+  // 上: ティアラ + 大きいリボン / 下: ドイリーに宝石ハート / 左右: 宝石ハート
+  M.pearlSwag(ctx, 820, B + 70, 1100, B + 70, 80 + Math.sin(tt * 2) * 6, 8);
+  M.bow(ctx, W / 2, B + 22, 200 * (1 + 0.03 * Math.sin(tt * 2)), Math.sin(tt) * 0.04, C.pink, C.pinkD);
+  M.crown(ctx, W / 2, B - 44, 96, Math.sin(tt) * 0.05);
+  M.doily(ctx, W / 2, H - B, 70, tt / 6);
+  M.jewelHeart(ctx, W / 2, H - B + 4, 78 * (1 + 0.08 * Math.sin(tt * 2)), 0, C.pink);
+  for (const [x, r] of [[B, -Math.PI / 2], [W - B, Math.PI / 2]]) {
+    ctx.save(); ctx.translate(x, H / 2); ctx.rotate(r);
+    M.doily(ctx, 0, 0, 52, tt / 6);
+    M.jewelHeart(ctx, 0, 4, 58 * (1 + 0.08 * Math.sin(tt * 2 + 1)), 0, x < W / 2 ? C.yel : C.grn, {});
     ctx.restore();
   }
   // 四隅の花束
@@ -88,14 +100,20 @@ window.renderFrame = (t) => {
   corner(W, 0, Math.PI / 2, t, 1.6);
   corner(W, H, Math.PI, t, 3.2);
   corner(0, H, -Math.PI / 2, t, 4.8);
-  // キラキラ
-  for (let i = 0; i < 16; i++) {
-    const a = Math.max(0, Math.sin(tt * 2 + i * 2.1));
-    const onTop = i % 2 === 0;
-    const x = (i * 263 + 140) % (W - 200) + 100;
-    const y = onTop ? 40 + (i % 3) * 18 : H - 40 - (i % 3) * 18;
-    M.sparkle(ctx, x, y, 20 * a, i % 3 ? '#fff' : C.yelL, a);
+  // 窓の下からのぼるシャボン玉
+  for (let i = 0; i < 10; i++) {
+    const u = (i / 10 + p) % 1, left = i % 2 === 0;
+    const x = (left ? 220 : W - 220) + Math.sin(TAU * (u * 2 + i * 0.3)) * 40 + (left ? 1 : -1) * (i % 5) * 30;
+    const y = H - 170 - u * 520;
+    ctx.globalAlpha = Math.sin(u * Math.PI);
+    M.bubble(ctx, x, y, 16 + (i % 3) * 9, u);
   }
+  ctx.globalAlpha = 1;
+  // 帯のラメ
+  M.glitter(ctx, p, 50, 0, 0, W, B - 10, 3, 14);
+  M.glitter(ctx, p, 50, 0, H - B + 10, W, B - 10, 4, 14);
+  M.glitter(ctx, p, 20, 0, B, B - 10, H - 2 * B, 5, 12);
+  M.glitter(ctx, p, 20, W - B + 10, B, B - 10, H - 2 * B, 6, 12);
 };
 window.renderFrame(0);
 </script></body></html>

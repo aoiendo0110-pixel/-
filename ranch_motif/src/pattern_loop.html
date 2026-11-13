@@ -17,24 +17,26 @@ const T = {
 const TILE = 240, CELL = 30;
 const lace = M.makeLace(W + 60, 40, { scallop: 36 });
 
+const QB = { yellow: ['#fff1b8', 'rgba(240,190,60,0.38)'], green: ['#e4f7c0', 'rgba(130,190,70,0.36)'] }[mode] || ['#ffd6e6', 'rgba(240,110,165,0.34)'];
 function motif(k, x, y, t, i) {
   const tt = TAU * t / DUR;
   const b = 1 + 0.06 * Math.sin(tt * 2 + i);
   const r = Math.sin(tt + i) * 0.15;
+  M.doily(ctx, x, y, 66, tt / 18);
   switch (k) {
-    case 0: M.clover(ctx, x, y, 84 * b, r + 0.2, { stem: false }); break;
-    case 1: M.heart(ctx, x, y, 74 * b, r, C.pink); break;
-    case 2: M.daisy(ctx, x, y, 86 * b, r * 2); break;
-    case 3: M.heart(ctx, x, y, 68 * b, r, C.yel); break;
-    case 4: M.blossom(ctx, x, y, 80 * b, r * 2, { petal: C.pink }); break;
-    case 5: M.clover(ctx, x, y, 74 * b, r - 0.3, { stem: false, leaves: 3 }); break;
+    case 0: M.clover(ctx, x, y, 82 * b, r + 0.2, { stem: false }); break;
+    case 1: M.jewelHeart(ctx, x, y, 74 * b, r, C.pink); break;
+    case 2: M.rose(ctx, x, y, 84 * b, r * 2); break;
+    case 3: M.bow(ctx, x, y + 4, 92 * b, r, C.pink, C.pinkD); break;
+    case 4: M.rose(ctx, x, y, 80 * b, r * 2, { col: C.yel, dark: C.yelD, light: C.yelL }); break;
+    case 5: M.crown(ctx, x, y + 4, 86 * b, r); break;
   }
 }
 
 window.renderFrame = (t) => {
   const p = t / DUR, tt = TAU * p;
   // ギンガム (ゆっくり横へ: 1ループでちょうど 2マス)
-  M.gingham(ctx, 0, 0, W, H, CELL, T.base, T.line, p * CELL * 2, 0);
+  M.quilt(ctx, 0, 0, W, H, 80, QB[0], QB[1]);
   // ななめに流れる柄 (1ループで横1タイル・縦2タイル動く → 柄の割り当ても同じだけずれて一致)
   const ox = p * TILE, oy = p * TILE * 2;
   for (let gy = -3; gy < H / TILE + 2; gy++) for (let gx = -2; gx < W / TILE + 2; gx++) {
@@ -45,11 +47,13 @@ window.renderFrame = (t) => {
     // すきまのキラキラ
     const a = Math.max(0, Math.sin(tt * 2 + k * 2.1));
     M.sparkle(ctx, x + TILE / 2, y + TILE / 4, 16 * a, '#ffffff');
+    M.pearl(ctx, x + TILE / 2, y - TILE / 4 + 120, 6);
   }
   // 上下のフリル + レース
   for (const [y, rot] of [[0, 0], [H, Math.PI]]) {
     ctx.save(); ctx.translate(rot ? W + 20 : -20, y); ctx.rotate(rot);
     M.frill(ctx, W + 60, 80, { col: T.frill, dark: T.frillD, light: T.frillL, pleat: 48, phase: tt * 2, amp: 0.1 });
+    M.tulle(ctx, W + 60, 70, { phase: tt * 2 + 2, alpha: 0.7 });
     M.frill(ctx, W + 60, 54, { col: T.frill2, dark: T.frill2D, light: T.frill2L, pleat: 40, phase: -tt * 2 + 1, amp: 0.12 });
     ctx.drawImage(lace, 0, -4);
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W + 60, 10);

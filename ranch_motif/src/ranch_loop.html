@@ -60,6 +60,7 @@ function sun(t) {
   ctx.beginPath(); ctx.arc(x, y + 8, 18, 0.2, Math.PI - 0.2); ctx.stroke();
   ctx.fillStyle = 'rgba(255,130,170,0.55)';
   ctx.beginPath(); ctx.ellipse(x - 52, y + 14, 14, 8, 0, 0, TAU); ctx.ellipse(x + 52, y + 14, 14, 8, 0, 0, TAU); ctx.fill();
+  M.crown(ctx, x + 6, y - 92, 96, 0.12);
 }
 function tree(x, y, s, t, ph) {
   const sw = Math.sin(TAU * t / DUR * 2 + ph) * 0.02;
@@ -84,7 +85,12 @@ function barn(x, y, s) {
   ctx.fillStyle = '#ffc6da'; ctx.fillRect(-40, -88, 80, 88);
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(-40, -88); ctx.lineTo(40, 0); ctx.moveTo(40, -88); ctx.lineTo(-40, 0); ctx.stroke();
   // ハートの窓
-  M.heart(ctx, 0, -140, 46, 0, '#fff4b8', { shine: false });
+  M.jewelHeart(ctx, 0, -140, 52, 0, C.pink);
+  // ひさしのレース + パール
+  ctx.fillStyle = '#fff';
+  for (let i = 0; i <= 12; i++) { const u = i / 12; const xx = -118 + 236 * u, yy = -100 - 84 * (1 - Math.abs(u - 0.5) * 2); ctx.beginPath(); ctx.arc(xx, yy + 8, 9, 0, TAU); ctx.fill(); }
+  M.pearlSwag(ctx, -100, -40, 100, -40, 26, 5);
+  M.bow(ctx, 0, -38, 40, 0, C.yel, C.yelD);
   ctx.restore();
 }
 function windmill(x, y, s, t) {
@@ -112,6 +118,8 @@ function fence(y, t) {
     ctx.save(); ctx.translate(x + 17, y - 88); M.heartPath(ctx, 14); ctx.fillStyle = '#ffb3cd'; ctx.fill(); ctx.restore();
   }
   // 柵にかかったリボン
+  const bx = [-20, 278, 870, 1462, 1960];
+  for (let i = 0; i < bx.length - 1; i++) { const mid = (bx[i] + bx[i + 1]) / 2; M.pearlSwag(ctx, bx[i] + 17, y - 66, mid + 17, y - 66, 30, 6); M.pearlSwag(ctx, mid + 17, y - 66, bx[i + 1] + 17, y - 66, 30, 6); }
   for (const [x, ph] of [[278, 0], [870, 1.5], [1462, 3]]) M.bow(ctx, x + 17, y - 62, 52, Math.sin(TAU * t / DUR + ph) * 0.06, C.pink, C.pinkD);
 }
 function sheep(x, y, s, t, ph, flip) {
@@ -137,7 +145,11 @@ function sheep(x, y, s, t, ph, flip) {
   ctx.fillStyle = '#5a4a4a'; ctx.beginPath(); ctx.arc(-9, 4, 3.6, 0, TAU); ctx.arc(9, 4, 3.6, 0, TAU); ctx.fill();
   ctx.fillStyle = 'rgba(255,130,170,0.6)'; ctx.beginPath(); ctx.ellipse(-16, 16, 6, 4, 0, 0, TAU); ctx.ellipse(16, 16, 6, 4, 0, 0, TAU); ctx.fill();
   ctx.strokeStyle = '#5a4a4a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-4, 20); ctx.quadraticCurveTo(0, 24, 4, 20); ctx.stroke();
-  M.bow(ctx, 0, -40, 34, 0, C.pink, C.pinkD);
+  M.doily(ctx, 0, -30, 30, 0);
+  M.bow(ctx, 0, -40, 38, 0, C.pink, C.pinkD);
+  // レースのえり
+  ctx.fillStyle = '#fff'; for (let k = -3; k <= 3; k++) { ctx.beginPath(); ctx.arc(k * 9, 40, 7, 0, TAU); ctx.fill(); }
+  ctx.fillStyle = C.pink; ctx.beginPath(); ctx.arc(0, 44, 5, 0, TAU); ctx.fill();
   ctx.restore();
   ctx.restore();
 }
@@ -163,13 +175,28 @@ window.renderFrame = (t) => {
   const p = t / DUR, tt = TAU * p;
   // 空
   const sky = ctx.createLinearGradient(0, 0, 0, 700);
-  sky.addColorStop(0, '#ffc9de'); sky.addColorStop(0.55, '#ffe6ef'); sky.addColorStop(1, '#fff7cf');
+  sky.addColorStop(0, '#ffc2df'); sky.addColorStop(0.45, '#f3e0ff'); sky.addColorStop(0.8, '#ffe9f2'); sky.addColorStop(1, '#fff3c6');
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
   // 空のハート水玉
   ctx.globalAlpha = 0.35;
   for (let i = 0; i < 18; i++) { const x = (i * 211) % W, y = 60 + ((i * 137) % 380); M.heart(ctx, x, y + Math.sin(tt + i) * 6, 22, Math.sin(i) * 0.4, '#ffffff', { outline: false, shine: false }); }
   ctx.globalAlpha = 1;
+  // パステルの虹
+  ctx.save(); ctx.globalAlpha = 0.55;
+  ['#ffb6d5', '#ffd6b8', '#fff1a6', '#d6f5b0', '#cdeef0', '#e3d4ff'].forEach((c, i) => {
+    ctx.beginPath(); ctx.arc(820, 820, 640 - i * 26, Math.PI, 0); ctx.lineWidth = 27; ctx.strokeStyle = c; ctx.stroke();
+  });
+  ctx.restore();
+  // 空の星とラメ
+  for (let i = 0; i < 10; i++) M.star(ctx, (i * 331 + 60) % W, 50 + ((i * 97) % 300), 9 + (i % 3) * 4, ['#fff3a8', '#ffd0e6', '#ffffff'][i % 3], Math.sin(tt + i) * 0.3);
+  M.glitter(ctx, p, 40, 0, 0, W, 520, 8, 12);
   sun(t);
+  // ハートの雲
+  for (const [x, y, s, ph] of [[560, 90, 120, 0], [1060, 300, 90, 2], [1450, 80, 70, 4]]) {
+    ctx.save(); ctx.shadowColor = 'rgba(255,170,210,0.5)'; ctx.shadowBlur = 20;
+    M.heart(ctx, x + Math.sin(tt + ph) * 20, y + Math.sin(tt * 2 + ph) * 8, s, Math.sin(tt + ph) * 0.08, '#ffffff', { outline: false, light: '#ffffff' });
+    ctx.restore();
+  }
   // 雲 (ふわふわ揺れる)
   cloud(260 + Math.sin(tt) * 30, 150 + Math.sin(tt * 2) * 6, 1.2);
   cloud(820 + Math.sin(tt + 2) * 36, 230 + Math.sin(tt * 2 + 1) * 6, 0.9);
@@ -208,6 +235,13 @@ window.renderFrame = (t) => {
     else if (f.k === 3) M.tulip(ctx, f.x, f.y - f.s * 0.7, f.s * 0.85, r, { col: (f.x | 0) % 2 ? C.pink : C.yelD, dark: (f.x | 0) % 2 ? C.pinkD : '#efa92d' });
     else M.blossom(ctx, tipX, tipY, f.s * 0.8, r, { petal: C.yel, inner: C.white, center: C.pink });
   }
+  // ふわふわ昇るシャボン玉
+  for (let i = 0; i < 14; i++) {
+    const u = (i / 14 + p) % 1;
+    const x = (i * 271 + 120) % W + Math.sin(TAU * (u * 2) + i) * 30, y = 900 - u * 760;
+    ctx.globalAlpha = Math.sin(u * Math.PI); M.bubble(ctx, x, y, 14 + (i % 4) * 8, u + i * 0.1);
+  }
+  ctx.globalAlpha = 1;
   // ちょうちょ
   butterfly(t, 0, 960, 520, 380, 70, C.pink);
   butterfly(t, 2.4, 760, 650, 300, 60, C.yel);

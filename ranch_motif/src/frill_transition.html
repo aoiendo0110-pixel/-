@@ -12,24 +12,27 @@ const { TAU, C } = M;
 const lace = M.makeLace(W + 80, 46, { scallop: 42 });
 const FD = 90; // フリルの深さ
 
-// 布の柄
+// 布の柄 (布の上端 y0 を基準に描くので、布と一緒に動く)
 function cloth(kind, y0, y1, t) {
   ctx.save(); ctx.beginPath(); ctx.rect(0, y0, W, y1 - y0); ctx.clip();
   if (kind === 'green') {
-    M.gingham(ctx, 0, y0, W, y1 - y0, 40, '#d8f2a2', 'rgba(150,210,80,0.45)', 0, -y0);
-    for (let y = Math.floor(y0 / 180) * 180; y < y1 + 180; y += 180) for (let x = 0; x < W + 180; x += 180)
-      M.clover(ctx, x + ((y / 180) % 2 ? 90 : 0), y + 90 - 0, 54, 0.3, { stem: false });
+    M.gingham(ctx, 0, y0, W, y1 - y0, 40, '#d8f2a2', 'rgba(150,210,80,0.45)', 0, 0);
+    for (let j = 0; y0 + j * 180 < y1 + 90; j++) for (let x = 0; x < W + 180; x += 180)
+      M.clover(ctx, x + (j % 2 ? 90 : 0), y0 + j * 180 + 90, 54, 0.3, { stem: false });
   } else if (kind === 'yellow') {
     ctx.fillStyle = '#fff0a6'; ctx.fillRect(0, y0, W, y1 - y0);
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    for (let x = -H; x < W + H; x += 70) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x + 30, y0); ctx.lineTo(x + 30 + (y1 - y0), y1); ctx.lineTo(x + (y1 - y0), y1); ctx.fill(); }
-    for (let y = Math.floor(y0 / 200) * 200; y < y1 + 200; y += 200) for (let x = 0; x < W + 200; x += 200)
-      M.daisy(ctx, x + ((y / 200) % 2 ? 100 : 0), y + 100, 70, 0.2);
+    for (let x = -H * 2; x < W + H; x += 70) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x + 30, y0); ctx.lineTo(x + 30 + (y1 - y0), y1); ctx.lineTo(x + (y1 - y0), y1); ctx.fill(); }
+    for (let j = 0; y0 + j * 200 < y1 + 100; j++) for (let x = 0; x < W + 200; x += 200) {
+      const cx = x + (j % 2 ? 100 : 0), cy = y0 + j * 200 + 100;
+      if ((j + x / 200) % 3 === 0) M.star(ctx, cx, cy, 34, C.pink, 0.2); else M.daisy(ctx, cx, cy, 70, 0.2);
+    }
   } else {
-    ctx.fillStyle = '#ffc2d9'; ctx.fillRect(0, y0, W, y1 - y0);
-    for (let y = Math.floor(y0 / 150) * 150; y < y1 + 150; y += 150) for (let x = 0; x < W + 150; x += 150) {
-      const odd = (y / 150) % 2;
-      M.heart(ctx, x + (odd ? 75 : 0), y + 75, 56, 0, odd ? C.white : C.pink, { outline: !odd, shine: !odd });
+    M.quilt(ctx, 0, y0, W, y1 - y0, 90, '#ffc8de', 'rgba(240,110,165,0.35)', 0, 0);
+    for (let j = 0; y0 + j * 270 < y1 + 135; j++) for (let x = 0; x < W + 270; x += 270) {
+      const odd = j % 2, cx = x + (odd ? 135 : 0), cy = y0 + j * 270 + 135;
+      M.doily(ctx, cx, cy, 62, 0);
+      if (odd) M.rose(ctx, cx, cy, 74, 0.3); else M.jewelHeart(ctx, cx, cy, 70, 0, C.pink);
     }
   }
   ctx.restore();
@@ -41,7 +44,9 @@ function panel(top, h, kind, t, ph) {
   // 下のフリル (+ レース)
   ctx.save(); ctx.translate(-20, top + h);
   M.frill(ctx, W + 60, FD, { col: col[0], dark: col[1], light: col[2], pleat: 60, phase: t * 12 + ph, amp: 0.14 });
+  M.tulle(ctx, W + 60, FD * 0.78, { phase: t * 12 + ph + 1, alpha: 0.75 });
   ctx.drawImage(lace, 0, -6);
+  for (let x = 20; x < W + 40; x += 384) M.pearlSwag(ctx, x + 192, 6, x + 384, 6, 60, 7);
   ctx.restore();
   // 上のフリル (上向き)
   ctx.save(); ctx.translate(W + 20, top); ctx.rotate(Math.PI);
@@ -54,7 +59,7 @@ function panel(top, h, kind, t, ph) {
   ctx.fillStyle = 'rgba(255,255,255,0.9)';
   for (let x = 10; x < W; x += 26) { ctx.fillRect(x, top + h - 5, 12, 3); ctx.fillRect(x, top + 3, 12, 3); }
   // リボン飾り
-  for (let i = 0; i < 5; i++) M.bow(ctx, 192 + i * 384, top + h, 74, Math.sin(t * 9 + i) * 0.1, kind === 'pink' ? C.yel : C.pink, kind === 'pink' ? C.yelD : C.pinkD);
+  for (let i = 0; i < 5; i++) M.bow(ctx, 192 + i * 384, top + h, 96, Math.sin(t * 9 + i) * 0.1, kind === 'pink' ? C.yel : C.pink, kind === 'pink' ? C.yelD : C.pinkD);
 }
 
 // 3枚の布: 緑→黄→ピンクの順に降りてきて、ピンク→黄→緑の順に下へ抜ける
@@ -79,16 +84,18 @@ window.renderFrame = (t) => {
   });
   // 布のまわりにハート・キラキラが舞う
   const R = M.rng(5);
-  for (let i = 0; i < 26; i++) {
+  for (let i = 0; i < 40; i++) {
     const st = 0.1 + R() * 1.4, life = 0.7 + R() * 0.4;
     const u = (t - st) / life;
-    const x = R() * W, y = R() * H, s = 30 + R() * 40, k = Math.floor(R() * 4);
+    const x = R() * W, y = R() * H, s = 30 + R() * 40, k = Math.floor(R() * 6);
     if (u <= 0 || u >= 1) continue;
     ctx.globalAlpha = Math.sin(u * Math.PI);
     const yy = y - u * 120;
     if (k === 0) M.heart(ctx, x, yy, s, Math.sin(u * 6) * 0.3, C.pink);
     else if (k === 1) M.clover(ctx, x, yy, s, u * 3, { stem: false });
     else if (k === 2) M.blossom(ctx, x, yy, s, u * 2, { petal: C.yel, center: C.pink });
+    else if (k === 3) M.bubble(ctx, x, yy, s * 0.5, u);
+    else if (k === 4) M.star(ctx, x, yy, s * 0.4, C.yel, u * 2);
     else M.sparkle(ctx, x, yy, s * 0.6 * Math.sin(u * Math.PI), '#fff');
   }
   ctx.globalAlpha = 1;

@@ -321,5 +321,170 @@
   }
   function hexA(hex, a) { const [r, g, b] = hexRGB(hex); return `rgba(${r},${g},${b},${a})`; }
 
-  window.M = { TAU, C, wave, clamp, ease, easeOut, easeOutBack, rng, tf, heartPath, heart, leafPath, clover, daisy, blossom, tulip, leaf, petal, sparkle, bow, pearl, frill, makeLace, gingham, lighten, hexA };
+  // ===== ゆめかわ・ロリータ・乙女パーツ =====
+  C.lav = '#e9dcff'; C.mint = '#cdf6e6'; C.peach = '#ffe0cc'; C.gold = '#ffd36b'; C.goldD = '#e9a93a';
+  // パステルのオーロラ (ホロ) グラデ
+  function holo(ctx, x0, y0, x1, y1, shift = 0) {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    const cols = ['#ffd0e6', '#fff1b8', '#d9f7c6', '#ecdfff', '#ffd0e6'];
+    for (let i = 0; i < 5; i++) g.addColorStop(((i / 4 + shift) % 1 + 1) % 1, cols[i]);
+    // addColorStop は順番がずれても大丈夫なように 0 と 1 も入れる
+    g.addColorStop(0, cols[0]); g.addColorStop(1, cols[0]);
+    return g;
+  }
+  // バラ (上から見た形)
+  function rose(ctx, x, y, size, rot = 0, opt = {}) {
+    const col = opt.col || C.pink, dark = opt.dark || C.pinkD, light = opt.light || C.pinkLL;
+    tf(ctx, x, y, rot, 1, 1, () => {
+      // 外の花びら
+      for (let i = 0; i < 6; i++) {
+        tf(ctx, 0, 0, (i / 6) * TAU, 1, 1, () => {
+          ctx.beginPath(); ctx.ellipse(0, -size * 0.3, size * 0.26, size * 0.22, 0, 0, TAU);
+          const g = ctx.createRadialGradient(0, -size * 0.1, 0, 0, -size * 0.3, size * 0.3);
+          g.addColorStop(0, dark); g.addColorStop(1, light);
+          ctx.fillStyle = g; ctx.fill();
+          ctx.lineWidth = size * 0.025; ctx.strokeStyle = '#fff'; ctx.stroke();
+        });
+      }
+      ctx.beginPath(); ctx.arc(0, 0, size * 0.3, 0, TAU); ctx.fillStyle = col; ctx.fill();
+      // うずまき
+      ctx.lineCap = 'round';
+      for (let k = 0; k < 3; k++) {
+        ctx.beginPath();
+        for (let a = 0; a < TAU * 1.6; a += 0.15) {
+          const r = size * (0.04 + a * 0.03) + k * 0;
+          const px = Math.cos(a + k * 2.1) * r, py = Math.sin(a + k * 2.1) * r;
+          a ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+        }
+        ctx.strokeStyle = k === 0 ? dark : 'rgba(255,255,255,0.75)'; ctx.lineWidth = size * (k === 0 ? 0.05 : 0.025); ctx.stroke();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.ellipse(-size * 0.2, -size * 0.36, size * 0.07, size * 0.035, -0.6, 0, TAU); ctx.fill();
+    });
+  }
+  // 宝石ハート (カット面とキラッ)
+  function jewelHeart(ctx, x, y, size, rot = 0, col = C.pink, opt = {}) {
+    tf(ctx, x, y, rot, opt.sx ?? 1, 1, () => {
+      heartPath(ctx, size);
+      ctx.lineWidth = size * 0.1; ctx.strokeStyle = opt.rim || C.gold; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.lineWidth = size * 0.035; ctx.strokeStyle = '#fff'; ctx.stroke();
+      const g = ctx.createLinearGradient(-size * 0.5, -size * 0.5, size * 0.5, size * 0.5);
+      g.addColorStop(0, lighten(col, 0.6)); g.addColorStop(0.45, col); g.addColorStop(1, lighten(col, 0.25));
+      ctx.fillStyle = g; ctx.fill();
+      ctx.save(); heartPath(ctx, size); ctx.clip();
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = size * 0.02;
+      ctx.beginPath(); ctx.moveTo(0, -size * 0.12); ctx.lineTo(-size * 0.3, -size * 0.38); ctx.moveTo(0, -size * 0.12); ctx.lineTo(size * 0.3, -size * 0.38);
+      ctx.moveTo(0, -size * 0.12); ctx.lineTo(0, size * 0.48); ctx.moveTo(-size * 0.45, -size * 0.05); ctx.lineTo(0, -size * 0.12); ctx.lineTo(size * 0.45, -size * 0.05); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.beginPath(); ctx.moveTo(0, -size * 0.12); ctx.lineTo(-size * 0.3, -size * 0.38); ctx.lineTo(-size * 0.48, -size * 0.1); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      sparkle(ctx, -size * 0.2, -size * 0.2, size * 0.16, '#fff');
+    });
+  }
+  // ティアラ
+  function crown(ctx, x, y, size, rot = 0) {
+    tf(ctx, x, y, rot, 1, 1, () => {
+      const w = size, h = size * 0.62;
+      ctx.beginPath(); ctx.moveTo(-w / 2, h * 0.3);
+      ctx.lineTo(-w / 2, -h * 0.15); ctx.lineTo(-w * 0.3, h * 0.05); ctx.lineTo(-w * 0.15, -h * 0.45); ctx.lineTo(0, -h * 0.05);
+      ctx.lineTo(w * 0.15, -h * 0.45); ctx.lineTo(w * 0.3, h * 0.05); ctx.lineTo(w / 2, -h * 0.15); ctx.lineTo(w / 2, h * 0.3);
+      ctx.quadraticCurveTo(0, h * 0.15, -w / 2, h * 0.3); ctx.closePath();
+      const g = ctx.createLinearGradient(0, -h * 0.5, 0, h * 0.3); g.addColorStop(0, '#fff6c8'); g.addColorStop(1, C.gold);
+      ctx.fillStyle = g; ctx.fill(); ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.04; ctx.strokeStyle = '#fff'; ctx.stroke();
+      for (const [px, py, r] of [[-w / 2, -h * 0.2, 0.06], [-w * 0.15, -h * 0.5, 0.07], [w * 0.15, -h * 0.5, 0.07], [w / 2, -h * 0.2, 0.06]]) pearl(ctx, px, py, size * r);
+      jewelHeart(ctx, 0, h * 0.0, size * 0.32, 0, C.pink, { rim: '#fff' });
+      for (const px of [-w * 0.32, w * 0.32]) { ctx.fillStyle = '#c9f07e'; ctx.beginPath(); ctx.arc(px, h * 0.16, size * 0.045, 0, TAU); ctx.fill(); }
+    });
+  }
+  // 星 (まるい5つ星)
+  function star(ctx, x, y, r, col = C.yel, rot = 0) {
+    tf(ctx, x, y, rot, 1, 1, () => {
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i / 10) * TAU, rr = i % 2 ? r * 0.48 : r; ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+      ctx.closePath(); ctx.lineJoin = 'round'; ctx.lineWidth = r * 0.22; ctx.strokeStyle = '#fff'; ctx.stroke();
+      ctx.fillStyle = col; ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(-r * 0.2, -r * 0.2, r * 0.13, 0, TAU); ctx.fill();
+    });
+  }
+  // シャボン玉
+  function bubble(ctx, x, y, r, shift = 0) {
+    const g = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+    g.addColorStop(0, 'rgba(255,255,255,0.15)'); g.addColorStop(0.75, 'rgba(255,230,245,0.25)'); g.addColorStop(1, 'rgba(255,255,255,0.75)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+    ctx.lineWidth = Math.max(2, r * 0.07); ctx.strokeStyle = holo(ctx, x - r, y - r, x + r, y + r, shift); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.ellipse(x - r * 0.4, y - r * 0.4, r * 0.18, r * 0.09, -0.8, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r * 0.45, y + r * 0.35, r * 0.06, 0, TAU); ctx.fill();
+  }
+  // パールの飾り鎖 (2点のあいだを垂れ下がる)
+  function pearlSwag(ctx, x0, y0, x1, y1, sag, r) {
+    const L = Math.hypot(x1 - x0, y1 - y0), n = Math.max(3, Math.floor(L / (r * 2.3)));
+    for (let i = 0; i <= n; i++) {
+      const u = i / n, x = x0 + (x1 - x0) * u, y = y0 + (y1 - y0) * u + sag * 4 * u * (1 - u);
+      pearl(ctx, x, y, r * (i % 4 === 2 ? 1.35 : 1));
+    }
+  }
+  // レースのドイリー (丸い透かしレース) - キャッシュ
+  const doilyCache = {};
+  function doily(ctx, x, y, r, rot = 0, col = '#ffffff') {
+    const key = Math.round(r) + col;
+    if (!doilyCache[key]) {
+      const cv = document.createElement('canvas'), R = Math.ceil(r * 1.2); cv.width = cv.height = R * 2;
+      const c = cv.getContext('2d'); c.translate(R, R); c.fillStyle = col;
+      const n = 18;
+      c.beginPath(); c.arc(0, 0, r * 0.86, 0, TAU); c.fill();
+      for (let i = 0; i < n; i++) { const a = (i / n) * TAU; c.beginPath(); c.arc(Math.cos(a) * r * 0.88, Math.sin(a) * r * 0.88, r * 0.17, 0, TAU); c.fill();
+        c.beginPath(); c.arc(Math.cos(a) * r * 1.06, Math.sin(a) * r * 1.06, r * 0.04, 0, TAU); c.fill(); }
+      c.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < n; i++) { const a = (i / n) * TAU; c.beginPath(); c.arc(Math.cos(a) * r * 0.88, Math.sin(a) * r * 0.88, r * 0.07, 0, TAU); c.fill();
+        const b = a + TAU / n / 2; c.beginPath(); c.ellipse(Math.cos(b) * r * 0.66, Math.sin(b) * r * 0.66, r * 0.09, r * 0.04, b, 0, TAU); c.fill(); }
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU; c.beginPath(); c.arc(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, r * 0.045, 0, TAU); c.fill(); }
+      c.globalCompositeOperation = 'source-over';
+      doilyCache[key] = cv;
+    }
+    const cv = doilyCache[key];
+    tf(ctx, x, y, rot, 1, 1, () => ctx.drawImage(cv, -cv.width / 2, -cv.height / 2));
+  }
+  // チュール (透けるフリル + ドット)
+  function tulle(ctx, len, depth, opt = {}) {
+    ctx.save(); ctx.globalAlpha *= opt.alpha ?? 0.6;
+    frill(ctx, len, depth, { col: '#ffffff', dark: opt.dark || '#ffc6dc', light: '#ffffff', pleat: opt.pleat ?? 30, phase: opt.phase ?? 0, amp: 0.1, hem: false });
+    ctx.restore();
+    ctx.save(); ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    for (let x = 12; x < len; x += 26) for (let y = 12; y < depth * 0.8; y += 22) { ctx.beginPath(); ctx.arc(x + ((y / 22) % 2 ? 13 : 0), y, 2.4, 0, TAU); ctx.fill(); }
+    ctx.restore();
+  }
+  // キルティング (ひし形のステッチ + 交点にパール)
+  function quilt(ctx, x, y, w, h, cell, base, shade, offx = 0, offy = 0, pearls = true) {
+    ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+    ctx.fillStyle = base; ctx.fillRect(x, y, w, h);
+    const ox = ((offx % cell) + cell) % cell, oy = ((offy % cell) + cell) % cell;
+    // ふっくら陰影
+    for (let gy = -1; gy < h / cell * 2 + 2; gy++) for (let gx = -1; gx < w / cell + 2; gx++) {
+      const cx = x + gx * cell + (gy % 2 ? cell / 2 : 0) + ox - cell, cy = y + gy * cell / 2 + oy - cell;
+      const g = ctx.createRadialGradient(cx - cell * 0.1, cy - cell * 0.12, 0, cx, cy, cell * 0.55);
+      g.addColorStop(0, 'rgba(255,255,255,0.55)'); g.addColorStop(1, shade);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(cx, cy - cell / 2); ctx.lineTo(cx + cell / 2, cy); ctx.lineTo(cx, cy + cell / 2); ctx.lineTo(cx - cell / 2, cy); ctx.closePath(); ctx.fill();
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,0.95)'; ctx.lineWidth = 2.5; ctx.setLineDash([8, 6]);
+    for (let k = -h - cell * 2; k < w + h + cell * 2; k += cell) {
+      ctx.beginPath(); ctx.moveTo(x + k + ox, y + oy - cell); ctx.lineTo(x + k + ox + h + cell * 2, y + oy + h + cell); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + k + ox, y + oy - cell); ctx.lineTo(x + k + ox - h - cell * 2, y + oy + h + cell); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    if (pearls) for (let gy = -1; gy < h / cell * 2 + 2; gy++) for (let gx = -1; gx < w / cell + 2; gx++) {
+      const px = x + gx * cell + (gy % 2 ? 0 : cell / 2) + ox - cell, py = y + gy * cell / 2 + oy - cell;
+      pearl(ctx, px, py, cell * 0.07);
+    }
+    ctx.restore();
+  }
+  // 細かいラメ
+  function glitter(ctx, t, n, x, y, w, h, seed = 1, size = 10) {
+    const r = rng(seed);
+    for (let i = 0; i < n; i++) {
+      const px = x + r() * w, py = y + r() * h, ph = r() * TAU, sp = 1 + Math.floor(r() * 3), s = size * (0.5 + r());
+      const a = Math.pow(Math.max(0, Math.sin(TAU * t * sp + ph)), 3);
+      if (a < 0.02) continue;
+      sparkle(ctx, px, py, s * a, r() < 0.7 ? '#ffffff' : ['#fff3a8', '#ffd0e6', '#d9f7c6'][i % 3]);
+    }
+  }
+
+  window.M = { holo, rose, jewelHeart, crown, star, bubble, pearlSwag, doily, tulle, quilt, glitter, TAU, C, wave, clamp, ease, easeOut, easeOutBack, rng, tf, heartPath, heart, leafPath, clover, daisy, blossom, tulip, leaf, petal, sparkle, bow, pearl, frill, makeLace, gingham, lighten, hexA };
 })();

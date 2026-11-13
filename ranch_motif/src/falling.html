@@ -12,11 +12,11 @@ const { TAU, C } = M;
 const up = location.hash.includes('up');
 const R = M.rng(up ? 99 : 42);
 const parts = [];
-const N = 64;
+const N = 76;
 for (let i = 0; i < N; i++) {
   const depth = R(); // 0=奥 1=手前
   parts.push({
-    kind: Math.floor(R() * 8), x: R() * W, ph: R(), depth,
+    kind: Math.floor(R() * 14), x: R() * W, ph: R(), depth,
     size: 28 + depth * 46 + R() * 10,
     cyc: depth > 0.6 ? 2 : 1,            // ループ中に何回落ちるか (整数でつなぎ目なし)
     sway: 30 + R() * 60, swk: 1 + Math.floor(R() * 2), swph: R() * TAU,
@@ -47,6 +47,12 @@ window.renderFrame = (t) => {
       case 4: M.daisy(ctx, x, y, s * 1.1, rot, { sx: Math.abs(sx) * 0.6 + 0.4 }); break;
       case 5: M.blossom(ctx, x, y, s, rot, { petal: q.col < 0.5 ? C.pink : C.yel, center: q.col < 0.5 ? C.yel : C.pink }); break;
       case 6: M.petal(ctx, x, y, s * 0.75, rot, PET[Math.floor(q.col * 4)], sx); break;
+      case 8: M.rose(ctx, x, y, s * 0.95, rot, q.col < 0.5 ? {} : { col: C.yel, dark: C.yelD, light: C.yelL }); break;
+      case 9: M.bow(ctx, x, y, s * 1.1, tilt, q.col < 0.5 ? C.pink : C.yel, q.col < 0.5 ? C.pinkD : C.yelD); break;
+      case 10: M.jewelHeart(ctx, x, y, s * 0.9, tilt, [C.pink, C.yel, C.grn, '#d9c4ff'][Math.floor(q.col * 4)], { sx: Math.abs(sx) * 0.7 + 0.3 }); break;
+      case 11: M.star(ctx, x, y, s * 0.42, [C.yel, '#ffd0e6', '#d9f7c6'][Math.floor(q.col * 3)], rot); break;
+      case 12: M.pearl(ctx, x, y, s * 0.18); M.pearl(ctx, x + s * 0.3, y + s * 0.1, s * 0.13); break;
+      case 13: if (q.depth > 0.4) M.bubble(ctx, x, y, s * 0.4, u); else M.crown(ctx, x, y, s * 0.9, tilt); break;
       case 7: M.sparkle(ctx, x, y, s * 0.45 * (0.6 + 0.4 * Math.abs(Math.sin(TAU * p * 3 + q.swph))), q.col < 0.5 ? '#ffffff' : C.yelL, tilt); break;
     }
   }

@@ -80,9 +80,10 @@ function drawVine(v, t) {
     if (d.k === 99) {
       // 先端の大きい花 (巻いた先に咲く)
       const s = 130 * sc;
-      if (v.tip === 0) M.daisy(ctx, x, y, s, wob, {});
-      else if (v.tip === 1) M.blossom(ctx, x, y, s * 0.95, wob, { petal: C.pink });
+      if (v.tip === 0) M.rose(ctx, x, y, s, wob);
+      else if (v.tip === 1) M.rose(ctx, x, y, s * 0.95, wob, { col: C.yel, dark: C.yelD, light: C.yelL });
       else M.daisy(ctx, x, y, s, wob, { petal: C.yel, center: '#ffb347', petalLine: 'rgba(230,160,40,0.4)' });
+      M.sparkle(ctx, x + s * 0.4, y - s * 0.35, s * 0.18 * (0.5 + 0.5 * Math.sin(TAU * t)), '#fff');
       continue;
     }
     const lx = x + Math.cos(na) * 6, ly = y + Math.sin(na) * 6;
@@ -94,7 +95,8 @@ function drawVine(v, t) {
     } else if (d.k === 6) M.blossom(ctx, x + Math.cos(na) * 26 * sc, y + Math.sin(na) * 26 * sc, 66 * sc, wob, { petal: C.pink });
     else if (d.k === 7) M.blossom(ctx, x + Math.cos(na) * 26 * sc, y + Math.sin(na) * 26 * sc, 60 * sc, wob, { petal: C.yel, center: C.pink });
     else if (d.k === 8) M.tulip(ctx, x + Math.cos(na) * 34 * sc, y + Math.sin(na) * 34 * sc, 48 * sc, na + Math.PI / 2 + wob, { stem: false, col: C.pink, dark: C.pinkD });
-    else M.heart(ctx, x + Math.cos(na) * 30 * sc, y + Math.sin(na) * 30 * sc, 42 * sc, wob, C.pink);
+    else if (d.side > 0) M.bow(ctx, x, y, 46 * sc, wob, C.pink, C.pinkD);       // ツルに結んだリボン
+    else { M.pearl(ctx, x + Math.cos(na) * 16 * sc, y + Math.sin(na) * 16 * sc, 8 * sc); M.jewelHeart(ctx, x + Math.cos(na) * 40 * sc, y + Math.sin(na) * 40 * sc, 38 * sc, wob, C.pink); }
   }
   ctx.restore();
 }
@@ -110,14 +112,15 @@ window.renderFrame = (t) => {
   }
   // 咲いたあと昇るハートとキラキラ
   const RR = M.rng(3);
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 30; i++) {
     const st = 2.0 + RR() * 3.2, life = 1.6 + RR() * 0.8, side = RR() < 0.5 ? -1 : 1;
     const x0 = side < 0 ? 80 + RR() * 420 : W - 80 - RR() * 420, y0 = 300 + RR() * 600, s = 28 + RR() * 26, k = Math.floor(RR() * 3);
     const u = (t - st) / life;
     if (u <= 0 || u >= 1) continue;
     ctx.globalAlpha = Math.sin(u * Math.PI);
     const x = x0 + Math.sin(u * 6 + i) * 20, y = y0 - u * 160;
-    if (k === 0) M.heart(ctx, x, y, s, Math.sin(u * 5) * 0.3, i % 2 ? C.pink : C.yel);
+    if (k === 0) M.jewelHeart(ctx, x, y, s, Math.sin(u * 5) * 0.3, i % 2 ? C.pink : C.yel);
+    else if (i % 4 === 1) M.bubble(ctx, x, y, s * 0.5, u);
     else if (k === 1) M.sparkle(ctx, x, y, s * 0.6, '#fff');
     else M.petal(ctx, x, y, s * 0.6, u * 4 + i, C.pink, Math.cos(u * 8));
   }
