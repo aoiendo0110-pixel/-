@@ -17,9 +17,10 @@ const TH = {
 }[mode] || null;
 const T = TH || { base: '#ffc4da', line: 'rgba(255,255,255,0.55)', frill: C.yel, frillD: C.yelD, frillL: C.yelL, frill2: C.pink, frill2D: C.pinkD, frill2L: C.pinkLL, ribbon: C.grn, ribbonD: C.grnD };
 
-const B = 92; // 帯の太さ (窓はこの内側)
+const B = 92;  // 左右の帯の太さ
+const BV = 58; // 上下の帯の太さ (窓はこの内側)
 const sides = [ // [始点x, 始点y, 角度, 長さ]
-  [B, B, 0, W - 2 * B], [W - B, B, Math.PI / 2, H - 2 * B], [W - B, H - B, Math.PI, W - 2 * B], [B, H - B, -Math.PI / 2, H - 2 * B],
+  [B, BV, 0, W - 2 * B], [W - B, BV, Math.PI / 2, H - 2 * BV], [W - B, H - BV, Math.PI, W - 2 * B], [B, H - BV, -Math.PI / 2, H - 2 * BV],
 ];
 const lace = { h: makeL(W), v: makeL(H) };
 function makeL(len) { return M.makeLace(len, 32, { scallop: 30 }); }
@@ -59,36 +60,37 @@ window.renderFrame = (t) => {
   // 帯: パールのキルティング
   M.quilt(ctx, 0, 0, W, H, 64, T.base, SHADE);
   // 窓を抜く
-  ctx.clearRect(B, B, W - 2 * B, H - 2 * B);
+  ctx.clearRect(B, BV, W - 2 * B, H - 2 * BV);
   // 窓の内側へ: フリル → チュール → フリル → レース
   sides.forEach(([x, y, a, len], si) => {
     ctx.save(); ctx.translate(x, y); ctx.rotate(a);
-    M.frill(ctx, len, 82, { col: T.frill, dark: T.frillD, light: T.frillL, pleat: 44, phase: tt * 2 + si, amp: 0.1 });
-    M.tulle(ctx, len, 66, { phase: tt * 2 + si + 1, alpha: 0.7 });
-    M.frill(ctx, len, 48, { col: T.frill2, dark: T.frill2D, light: T.frill2L, pleat: 36, phase: -tt * 2 + si * 2, amp: 0.12 });
+    const k = si % 2 ? 1 : 0.68; // 上下は浅め
+    M.frill(ctx, len, 82 * k, { col: T.frill, dark: T.frillD, light: T.frillL, pleat: 44, phase: tt * 2 + si, amp: 0.1 });
+    M.tulle(ctx, len, 66 * k, { phase: tt * 2 + si + 1, alpha: 0.7 });
+    M.frill(ctx, len, 48 * k, { col: T.frill2, dark: T.frill2D, light: T.frill2L, pleat: 36, phase: -tt * 2 + si * 2, amp: 0.12 });
     const L = (si % 2 ? lace.v : lace.h);
-    ctx.drawImage(L, 0, 0, len, L.height, 0, -4, len, L.height);
+    ctx.drawImage(L, 0, 0, len, L.height, 0, -4, len, L.height * (si % 2 ? 1 : 0.8));
     ctx.restore();
   });
   // ふちのリボンライン + ステッチ
   ctx.save();
-  ctx.lineWidth = 14; ctx.strokeStyle = T.ribbon; ctx.strokeRect(B - 2, B - 2, W - 2 * B + 4, H - 2 * B + 4);
+  ctx.lineWidth = 14; ctx.strokeStyle = T.ribbon; ctx.strokeRect(B - 2, BV - 2, W - 2 * B + 4, H - 2 * BV + 4);
   ctx.lineWidth = 3; ctx.strokeStyle = '#fff'; ctx.setLineDash([10, 8]); ctx.lineDashOffset = -p * 36 * 6;
-  ctx.strokeRect(B - 2, B - 2, W - 2 * B + 4, H - 2 * B + 4);
+  ctx.strokeRect(B - 2, BV - 2, W - 2 * B + 4, H - 2 * BV + 4);
   ctx.restore();
   // 上辺から垂れるパールの飾り鎖 + 小さいリボン
   const sw = [380, 600, 820, 1100, 1320, 1540];
   for (let i = 0; i < sw.length - 1; i++) {
     if (i === 2) continue; // まんなかは大きいリボン
-    M.pearlSwag(ctx, sw[i], B + 70, sw[i + 1], B + 70, 46 + Math.sin(tt * 2 + i) * 6, 7);
+    M.pearlSwag(ctx, sw[i], BV + 50, sw[i + 1], BV + 50, 36 + Math.sin(tt * 2 + i) * 6, 7);
   }
-  for (const [i, x] of sw.entries()) M.bow(ctx, x, B + 66, 46, Math.sin(tt * 2 + i) * 0.08, i % 2 ? C.yel : C.pink, i % 2 ? C.yelD : C.pinkD);
+  for (const [i, x] of sw.entries()) M.bow(ctx, x, BV + 48, 42, Math.sin(tt * 2 + i) * 0.08, i % 2 ? C.yel : C.pink, i % 2 ? C.yelD : C.pinkD);
   // 上: ティアラ + 大きいリボン / 下: ドイリーに宝石ハート / 左右: 宝石ハート
-  M.pearlSwag(ctx, 820, B + 70, 1100, B + 70, 80 + Math.sin(tt * 2) * 6, 8);
-  M.bow(ctx, W / 2, B + 22, 200 * (1 + 0.03 * Math.sin(tt * 2)), Math.sin(tt) * 0.04, C.pink, C.pinkD);
-  M.crown(ctx, W / 2, B - 44, 96, Math.sin(tt) * 0.05);
-  M.doily(ctx, W / 2, H - B, 70, tt / 6);
-  M.jewelHeart(ctx, W / 2, H - B + 4, 78 * (1 + 0.08 * Math.sin(tt * 2)), 0, C.pink);
+  M.pearlSwag(ctx, 820, BV + 50, 1100, BV + 50, 64 + Math.sin(tt * 2) * 6, 8);
+  M.bow(ctx, W / 2, BV + 34, 170 * (1 + 0.03 * Math.sin(tt * 2)), Math.sin(tt) * 0.04, C.pink, C.pinkD);
+  M.crown(ctx, W / 2, BV - 22, 84, Math.sin(tt) * 0.05);
+  M.doily(ctx, W / 2, H - BV, 60, tt / 6);
+  M.jewelHeart(ctx, W / 2, H - BV + 4, 66 * (1 + 0.08 * Math.sin(tt * 2)), 0, C.pink);
   for (const [x, r] of [[B, -Math.PI / 2], [W - B, Math.PI / 2]]) {
     ctx.save(); ctx.translate(x, H / 2); ctx.rotate(r);
     M.doily(ctx, 0, 0, 52, tt / 6);
@@ -110,8 +112,8 @@ window.renderFrame = (t) => {
   }
   ctx.globalAlpha = 1;
   // 帯のラメ
-  M.glitter(ctx, p, 50, 0, 0, W, B - 10, 3, 14);
-  M.glitter(ctx, p, 50, 0, H - B + 10, W, B - 10, 4, 14);
+  M.glitter(ctx, p, 50, 0, 0, W, BV - 8, 3, 12);
+  M.glitter(ctx, p, 50, 0, H - BV + 8, W, BV - 8, 4, 12);
   M.glitter(ctx, p, 20, 0, B, B - 10, H - 2 * B, 5, 12);
   M.glitter(ctx, p, 20, W - B + 10, B, B - 10, H - 2 * B, 6, 12);
 };
