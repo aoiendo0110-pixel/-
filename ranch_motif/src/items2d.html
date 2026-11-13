@@ -1,0 +1,344 @@
+<!doctype html><html><head><meta charset="utf-8"><title>イラスト封入素材</title>
+<style>html,body{margin:0;background:#8000ff}canvas{display:block;max-width:100vw;max-height:100vh}</style></head><body>
+<canvas id="c"></canvas>
+<script src="motifs.js"></script>
+<script>
+// イラスト系の封入素材 (透過 / ループ)。#sheep #cow #badge #basket #bubble #banner #wreath
+const { TAU, C } = M;
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const item = location.hash.slice(1) || 'sheep';
+
+// ---- 共通: キラキラが周りでまたたく ----
+function twinkles(p, cx, cy, rx, ry, n, seed) {
+  const R = M.rng(seed);
+  for (let i = 0; i < n; i++) {
+    const a = R() * TAU, r = 0.75 + R() * 0.3, ph = R() * TAU, k = Math.floor(R() * 3);
+    const s = Math.pow(Math.max(0, Math.sin(TAU * p * 2 + ph)), 2);
+    const x = cx + Math.cos(a) * rx * r, y = cy + Math.sin(a) * ry * r;
+    if (k === 0) M.sparkle(ctx, x, y, 26 * s, '#fff');
+    else if (k === 1) M.star(ctx, x, y, 14 * s + 0.01, ['#fff3a8', '#ffd0e6', '#d9f7c6'][i % 3], ph);
+    else { ctx.globalAlpha = s; M.heart(ctx, x, y - s * 10, 30, Math.sin(ph) * 0.3, C.pink); ctx.globalAlpha = 1; }
+  }
+}
+function eye(x, y, s, blink) {
+  if (blink) { ctx.strokeStyle = '#5a3f4a'; ctx.lineWidth = s * 0.22; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(x, y - s * 0.2, s * 0.7, 0.3, Math.PI - 0.3); ctx.stroke(); return; }
+  ctx.fillStyle = '#4a3340'; ctx.beginPath(); ctx.ellipse(x, y, s * 0.78, s, 0, 0, TAU); ctx.fill();
+  const g = ctx.createLinearGradient(0, y, 0, y + s); g.addColorStop(0, 'rgba(255,120,180,0)'); g.addColorStop(1, 'rgba(255,140,190,0.9)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y, s * 0.78, s, 0, 0, TAU); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x - s * 0.25, y - s * 0.38, s * 0.3, s * 0.36, 0, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + s * 0.3, y + s * 0.4, s * 0.14, 0, TAU); ctx.fill();
+  M.sparkle(ctx, x + s * 0.32, y - s * 0.5, s * 0.25, '#fff');
+}
+function blush(x, y, s) {
+  ctx.fillStyle = 'rgba(255,120,170,0.5)'; ctx.beginPath(); ctx.ellipse(x, y, s, s * 0.55, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 3;
+  for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(x + k * s * 0.4 - 4, y + 4); ctx.lineTo(x + k * s * 0.4 + 4, y - 4); ctx.stroke(); }
+}
+function woolBlob(cx, cy, rx, ry, puff, n) {
+  ctx.beginPath();
+  for (let i = 0; i < n; i++) { const a = (i / n) * TAU; const x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry; ctx.moveTo(x + puff, y); ctx.arc(x, y, puff, 0, TAU); }
+  ctx.moveTo(cx + rx, cy); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU);
+}
+// ふりふりの円 (放射状フリル)
+function frillCircle(cx, cy, r, depth, n, col, dark, light, phase = 0) {
+  ctx.save(); ctx.translate(cx, cy);
+  ctx.beginPath();
+  for (let i = 0; i <= n * 8; i++) {
+    const a = (i / (n * 8)) * TAU, w = Math.abs(Math.sin(a * n / 2 + phase));
+    const rr = r + depth * (0.75 + 0.25 * w);
+    i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  ctx.closePath(); ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.stroke();
+  ctx.save(); ctx.clip();
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TAU;
+    const g = ctx.createLinearGradient(Math.cos(a) * r, Math.sin(a) * r, Math.cos(a) * (r + depth), Math.sin(a) * (r + depth));
+    ctx.strokeStyle = M.hexA(dark, 0.35); ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.moveTo(Math.cos(a) * r * 0.9, Math.sin(a) * r * 0.9); ctx.lineTo(Math.cos(a) * (r + depth), Math.sin(a) * (r + depth)); ctx.stroke();
+    const b = a + TAU / n / 2;
+    ctx.strokeStyle = M.hexA(light, 0.8); ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.moveTo(Math.cos(b) * r, Math.sin(b) * r); ctx.lineTo(Math.cos(b) * (r + depth * 0.9), Math.sin(b) * (r + depth * 0.9)); ctx.stroke();
+  }
+  ctx.restore(); ctx.restore();
+}
+
+const ITEMS = {
+  // ===== 羊ちゃん: ぴょこぴょこ跳ねる =====
+  sheep: { w: 1080, h: 1080, dur: 4, draw(t, p) {
+    const hop = Math.abs(Math.sin(TAU * p * 2));                  // 2回跳ねる
+    const land = Math.max(0, 1 - hop * 5);
+    const y0 = 760 - hop * 130, sq = 1 - land * 0.1, st = 1 + land * 0.08;
+    // 影
+    ctx.fillStyle = 'rgba(255,140,190,0.35)'; ctx.beginPath(); ctx.ellipse(520, 990, 300 * (1 - hop * 0.3), 40 * (1 - hop * 0.3), 0, 0, TAU); ctx.fill();
+    twinkles(p, 540, 520, 440, 400, 12, 3);
+    ctx.save(); ctx.translate(500, y0 + 40); ctx.scale(1.3 * st, 1.3 * sq); ctx.rotate(Math.sin(TAU * p * 2) * 0.04);
+    // 脚
+    ctx.fillStyle = '#c7a2a8';
+    for (const [lx, ph] of [[-120, 0], [-55, 1], [55, 2], [120, 3]]) { ctx.beginPath(); ctx.roundRect(lx - 24, 40 + hop * 10 * Math.sin(ph), 48, 96, 24); ctx.fill(); ctx.fillStyle = '#b08990'; ctx.beginPath(); ctx.roundRect(lx - 24, 108 + hop * 10 * Math.sin(ph), 48, 28, 14); ctx.fill(); ctx.fillStyle = '#c7a2a8'; }
+    // しっぽ
+    woolBlob(-230, -20, 18, 18, 18, 6); ctx.fillStyle = '#fff'; ctx.fill();
+    // もこもこ体
+    ctx.save(); ctx.shadowColor = 'rgba(240,140,190,0.45)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
+    woolBlob(0, -40, 200, 120, 66, 16); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+    ctx.lineWidth = 6; ctx.strokeStyle = '#ffd0e2'; woolBlob(0, -40, 200, 120, 66, 16); ctx.stroke();
+    woolBlob(0, -40, 200, 120, 66, 16); ctx.fillStyle = '#fff'; ctx.fill();
+    for (let i = 0; i < 9; i++) { const a = i * 0.7; ctx.strokeStyle = 'rgba(255,190,215,0.6)'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(Math.cos(a * 2.3) * 120, -40 + Math.sin(a * 1.7) * 70, 22, 0.5, 2.6); ctx.stroke(); }
+    // パールのネックレス + ハートチャーム
+    M.pearlSwag(ctx, -110, 10, 130, 10, 70, 10);
+    M.jewelHeart(ctx, 10, 92, 54, Math.sin(TAU * p * 2) * 0.2, C.pink);
+    // 頭
+    ctx.save(); ctx.translate(130, -140); ctx.rotate(-0.08 + Math.sin(TAU * p * 2 + 0.5) * 0.06);
+    // 耳
+    for (const s of [-1, 1]) { ctx.save(); ctx.translate(s * 115, -10); ctx.rotate(s * (0.5 + hop * 0.3)); ctx.fillStyle = '#f6dcd0'; ctx.beginPath(); ctx.ellipse(s * 40, 0, 56, 26, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#ffb3cf'; ctx.beginPath(); ctx.ellipse(s * 44, 0, 38, 14, 0, 0, TAU); ctx.fill(); ctx.restore(); }
+    ctx.fillStyle = '#fbe6db'; ctx.beginPath(); ctx.ellipse(0, 10, 118, 108, 0, 0, TAU); ctx.fill();
+    ctx.lineWidth = 6; ctx.strokeStyle = '#ffd0e2'; ctx.stroke();
+    // レースのボンネット
+    ctx.save(); ctx.beginPath(); ctx.arc(0, -40, 150, Math.PI * 1.05, Math.PI * 1.95); ctx.lineTo(0, -40); ctx.closePath(); ctx.restore();
+    for (let i = 0; i < 11; i++) { const a = Math.PI * 1.02 + (i / 10) * Math.PI * 0.96; M.doily(ctx, Math.cos(a) * 138, 14 + Math.sin(a) * 130, 34, a); }
+    woolBlob(0, -70, 70, 34, 34, 9); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#ffd0e2'; ctx.lineWidth = 5; ctx.stroke();
+    M.bow(ctx, 70, -110, 120, 0.25 + Math.sin(TAU * p * 2) * 0.06, C.pink, C.pinkD);
+    M.blossom(ctx, -78, -96, 48, 0.2, { petal: C.yel, center: C.pink });
+    M.clover(ctx, -112, -60, 46, -0.4, { stem: false });
+    // 顔
+    const blink = (p % 0.5) > 0.44;
+    eye(-44, 24, 26, blink); eye(44, 24, 26, blink);
+    blush(-76, 70, 22); blush(76, 70, 22);
+    ctx.strokeStyle = '#7a4a5a'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(-10, 66, 10, 0.1, Math.PI - 0.1); ctx.arc(10, 66, 10, 0.1, Math.PI - 0.1); ctx.stroke();
+    ctx.restore();
+    ctx.restore();
+  } },
+
+  // ===== ピンクのハート柄の牛ちゃん =====
+  cow: { w: 1080, h: 1080, dur: 4, draw(t, p) {
+    const sw = Math.sin(TAU * p);
+    ctx.fillStyle = 'rgba(255,140,190,0.35)'; ctx.beginPath(); ctx.ellipse(540, 940, 290, 36, 0, 0, TAU); ctx.fill();
+    twinkles(p, 540, 520, 460, 420, 12, 9);
+    ctx.save(); ctx.translate(540, 720); ctx.scale(1.12, 1.12); ctx.rotate(sw * 0.03);
+    // しっぽ
+    ctx.save(); ctx.translate(-210, -40); ctx.rotate(-0.6 + Math.sin(TAU * p * 2) * 0.35);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 16; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-60, 40, -50, 120); ctx.stroke();
+    ctx.strokeStyle = '#ffd0e2'; ctx.lineWidth = 4; ctx.stroke();
+    M.heart(ctx, -50, 140, 50, 0, C.pink); ctx.restore();
+    // 脚
+    for (const lx of [-150, -70, 70, 150]) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(lx - 30, 40, 60, 140, 28); ctx.fill(); ctx.strokeStyle = '#ffd0e2'; ctx.lineWidth = 5; ctx.stroke(); ctx.fillStyle = '#ffb3cf'; ctx.beginPath(); ctx.roundRect(lx - 30, 150, 60, 32, 14); ctx.fill(); }
+    // 体
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.roundRect(-230, -150, 460, 240, 120); ctx.fill(); ctx.strokeStyle = '#ffd0e2'; ctx.lineWidth = 6; ctx.stroke();
+    ctx.save(); ctx.beginPath(); ctx.roundRect(-230, -150, 460, 240, 120); ctx.clip();
+    for (const [hx, hy, hs, hr] of [[-140, -80, 110, -0.3], [40, 20, 90, 0.2], [150, -110, 80, 0.4], [-40, -140, 60, 0]]) M.heart(ctx, hx, hy, hs, hr, '#ffb3cf', { outline: false, shine: false });
+    ctx.restore();
+    // フリルのエプロン風よだれかけ + カウベル
+    ctx.save(); ctx.translate(-150, -150); M.frill(ctx, 300, 46, { col: C.yel, dark: C.yelD, light: C.yelL, pleat: 30, phase: TAU * p * 2, amp: 0.12 }); ctx.restore();
+    // 頭
+    ctx.save(); ctx.translate(0, -250); ctx.rotate(sw * 0.1);
+    for (const s of [-1, 1]) { // ツノと耳
+      ctx.fillStyle = C.gold; ctx.beginPath(); ctx.ellipse(s * 92, -128, 18, 34, s * 0.4, 0, TAU); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+      ctx.save(); ctx.translate(s * 160, -50); ctx.rotate(s * (0.35 + Math.sin(TAU * p * 2 + s) * 0.12));
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(s * 30, 0, 64, 32, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffd0e2'; ctx.lineWidth = 5; ctx.stroke();
+      ctx.fillStyle = '#ffc6dc'; ctx.beginPath(); ctx.ellipse(s * 34, 0, 42, 16, 0, 0, TAU); ctx.fill(); ctx.restore();
+    }
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(0, 0, 170, 150, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffd0e2'; ctx.lineWidth = 6; ctx.stroke();
+    M.heart(ctx, -86, -70, 70, -0.3, '#ffb3cf', { outline: false, shine: false });
+    // 鼻
+    ctx.fillStyle = '#ffc6dc'; ctx.beginPath(); ctx.ellipse(0, 78, 120, 64, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#f08ab3'; ctx.beginPath(); ctx.ellipse(-36, 76, 12, 16, 0, 0, TAU); ctx.ellipse(36, 76, 12, 16, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#c45a85'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, 106, 18, 0.2, Math.PI - 0.2); ctx.stroke();
+    const blink = (p % 0.5) > 0.44;
+    eye(-62, -6, 28, blink); eye(62, -6, 28, blink);
+    blush(-118, 36, 22); blush(118, 36, 22);
+    // 花かんむり
+    const fl = [[-150, -70, 'r'], [-110, -118, 'c'], [-60, -146, 'd'], [0, -156, 'R'], [60, -146, 'b'], [110, -118, 'c'], [150, -70, 'y']];
+    for (const [fx, fy, k] of fl) {
+      const r = Math.sin(TAU * p * 2 + fx) * 0.1;
+      if (k === 'r') M.rose(ctx, fx, fy, 64, r); else if (k === 'R') M.rose(ctx, fx, fy, 84, r, { col: C.yel, dark: C.yelD, light: C.yelL });
+      else if (k === 'c') M.clover(ctx, fx, fy, 56, r, { stem: false }); else if (k === 'd') M.daisy(ctx, fx, fy, 70, r);
+      else if (k === 'b') M.blossom(ctx, fx, fy, 60, r, { petal: C.pink }); else M.daisy(ctx, fx, fy, 62, r, { petal: C.yel, center: '#ffb347' });
+    }
+    ctx.restore();
+    // カウベル (首元で揺れる)
+    ctx.save(); ctx.translate(0, -120); ctx.rotate(Math.sin(TAU * p * 2) * 0.25);
+    ctx.fillStyle = C.gold; ctx.beginPath(); ctx.moveTo(-34, 20); ctx.quadraticCurveTo(-30, 80, -46, 92); ctx.lineTo(46, 92); ctx.quadraticCurveTo(30, 80, 34, 20); ctx.quadraticCurveTo(0, 6, -34, 20); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 5; ctx.stroke();
+    ctx.fillStyle = '#fff6c8'; ctx.beginPath(); ctx.ellipse(-14, 50, 8, 22, 0, 0, TAU); ctx.fill();
+    M.heart(ctx, 0, 70, 30, 0, C.pink, { outline: false });
+    M.bow(ctx, 0, 14, 110, 0, C.pink, C.pinkD);
+    ctx.restore();
+    ctx.restore();
+  } },
+
+  // ===== レースのハートワッペン =====
+  badge: { w: 1080, h: 1080, dur: 4, draw(t, p) {
+    const tt = TAU * p, beat = 1 + 0.06 * Math.pow(Math.max(0, Math.sin(tt * 2)), 3);
+    twinkles(p, 540, 540, 480, 480, 14, 5);
+    frillCircle(540, 540, 330, 90, 28, C.yel, C.yelD, C.yelL, tt);
+    frillCircle(540, 540, 290, 70, 34, C.pink, C.pinkD, C.pinkLL, -tt);
+    M.doily(ctx, 540, 540, 300, tt / 18);
+    // パールの輪 (36粒なので 1/36 回転でつながる → 1ループで 1/12 回転)
+    for (let i = 0; i < 36; i++) { const a = (i / 36) * TAU + tt / 12; M.pearl(ctx, 540 + Math.cos(a) * 250, 540 + Math.sin(a) * 250, i % 3 ? 9 : 13); }
+    ctx.fillStyle = '#ffe6f0'; ctx.beginPath(); ctx.arc(540, 540, 228, 0, TAU); ctx.fill();
+    ctx.setLineDash([12, 9]); ctx.strokeStyle = C.pink; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(540, 540, 210, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.save(); ctx.beginPath(); ctx.arc(540, 540, 196, 0, TAU); ctx.clip(); M.quilt(ctx, 344, 344, 392, 392, 56, '#ffe0ec', 'rgba(240,110,165,0.3)'); ctx.restore();
+    ctx.save(); ctx.translate(540, 560); ctx.scale(beat, beat);
+    M.jewelHeart(ctx, 0, 0, 290, Math.sin(tt) * 0.05, C.pink);
+    ctx.restore();
+    M.clover(ctx, 360, 360, 130, -0.4 + Math.sin(tt * 2) * 0.08, { stem: false });
+    M.rose(ctx, 735, 395, 104, Math.sin(tt * 2 + 1) * 0.1, { col: C.yel, dark: C.yelD, light: C.yelL });
+    M.daisy(ctx, 790, 480, 74, Math.sin(tt * 2 + 2) * 0.12);
+    M.bow(ctx, 540, 820, 220 * (1 + 0.03 * Math.sin(tt * 2)), Math.sin(tt) * 0.05, C.pink, C.pinkD);
+    M.crown(ctx, 540, 248, 130, Math.sin(tt) * 0.06);
+  } },
+
+  // ===== お花のかご =====
+  basket: { w: 1080, h: 1080, dur: 4, draw(t, p) {
+    const tt = TAU * p, rock = Math.sin(tt) * 0.06;
+    ctx.fillStyle = 'rgba(255,140,190,0.35)'; ctx.beginPath(); ctx.ellipse(540, 930, 280, 34, 0, 0, TAU); ctx.fill();
+    twinkles(p, 540, 480, 470, 440, 12, 21);
+    ctx.save(); ctx.translate(540, 900); ctx.rotate(rock); ctx.translate(-540, -900);
+    // 持ち手 (リボン巻き)
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#e8c48a'; ctx.lineWidth = 34; ctx.beginPath(); ctx.ellipse(540, 560, 250, 330, 0, Math.PI, 0); ctx.stroke();
+    ctx.strokeStyle = '#f7dca8'; ctx.lineWidth = 16; ctx.stroke();
+    ctx.strokeStyle = C.pink; ctx.lineWidth = 14; ctx.setLineDash([22, 30]); ctx.lineDashOffset = 0; ctx.beginPath(); ctx.ellipse(540, 560, 250, 330, 0, Math.PI, 0); ctx.stroke(); ctx.setLineDash([]);
+    M.bow(ctx, 540, 232, 150, Math.sin(tt * 2) * 0.06, C.pink, C.pinkD);
+    // 中のお花
+    const fl = [[380, 520, 'R', 130], [520, 460, 'r', 150], [680, 500, 'y', 130], [440, 600, 'd', 110], [610, 590, 'c', 110], [760, 590, 'b', 90], [320, 600, 'c', 90], [560, 560, 'd', 96], [480, 400, 't', 90], [650, 410, 't', 84]];
+    fl.forEach(([x, y, k, s], i) => {
+      const r = Math.sin(tt * 2 + i) * 0.08;
+      if (k === 't') { M.tulip(ctx, x, y, s, r, { col: i % 2 ? C.pink : C.yelD, dark: i % 2 ? C.pinkD : '#efa92d' }); return; }
+      if (k !== 'c') M.leaf(ctx, x, y + 20, s * 0.9, (i % 2 ? 0.9 : -0.9) + r, {});
+      if (k === 'R') M.rose(ctx, x, y, s, r); else if (k === 'r') M.rose(ctx, x, y, s, r, { col: C.pinkL, dark: C.pink, light: '#ffffff' });
+      else if (k === 'y') M.rose(ctx, x, y, s, r, { col: C.yel, dark: C.yelD, light: C.yelL }); else if (k === 'd') M.daisy(ctx, x, y, s, r);
+      else if (k === 'c') M.clover(ctx, x, y, s, r, { stem: false }); else M.blossom(ctx, x, y, s, r, { petal: C.pink });
+    });
+    // かご (編み目)
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(290, 640); ctx.lineTo(790, 640); ctx.lineTo(730, 890); ctx.quadraticCurveTo(540, 920, 350, 890); ctx.closePath();
+    ctx.fillStyle = '#f2d39c'; ctx.fill(); ctx.clip();
+    for (let y = 640; y < 920; y += 34) for (let x = 280; x < 800; x += 56) {
+      const o = ((y - 640) / 34) % 2 ? 28 : 0;
+      ctx.fillStyle = '#ffe9bf'; ctx.beginPath(); ctx.ellipse(x + o, y + 17, 26, 13, 0, 0, TAU); ctx.fill();
+      ctx.strokeStyle = '#d9ad6a'; ctx.lineWidth = 3; ctx.stroke();
+    }
+    ctx.restore();
+    // ギンガムのクロス + レース
+    ctx.save(); ctx.beginPath(); ctx.moveTo(270, 630);
+    for (let i = 0; i <= 8; i++) { const x = 270 + i * 67.5; ctx.quadraticCurveTo(x - 34, 720 + (i % 2) * 20, x, 690); }
+    ctx.lineTo(810, 630); ctx.closePath(); ctx.clip();
+    M.gingham(ctx, 260, 620, 560, 140, 18, '#ffe3ee', 'rgba(255,140,185,0.45)'); ctx.restore();
+    ctx.save(); ctx.translate(270, 618); M.frill(ctx, 540, 34, { col: '#ffffff', dark: '#ffc6dc', light: '#ffffff', pleat: 26, phase: tt * 2, amp: 0.1 }); ctx.restore();
+    M.pearlSwag(ctx, 330, 760, 750, 760, 50, 9);
+    M.jewelHeart(ctx, 540, 800, 70, 0, C.pink);
+    ctx.restore();
+  } },
+
+  // ===== レースの吹き出し (中に文字を入れる用) =====
+  bubble: { w: 1280, h: 1080, dur: 4, draw(t, p) {
+    const tt = TAU * p, bob = Math.sin(tt) * 12, br = 1 + 0.015 * Math.sin(tt * 2);
+    twinkles(p, 640, 520, 600, 470, 14, 13);
+    ctx.save(); ctx.translate(640, 500 + bob); ctx.scale(br, br);
+    const shape = () => { ctx.beginPath(); ctx.roundRect(-440, -300, 880, 560, 200); ctx.moveTo(-170, 250); ctx.quadraticCurveTo(-220, 380, -320, 420); ctx.quadraticCurveTo(-140, 400, -60, 255); };
+    // ふち: スカラップのフリル
+    const pts = [];
+    for (let i = 0; i < 64; i++) { const a = (i / 64) * TAU; const c = Math.cos(a), s = Math.sin(a); const k = 1 / Math.pow(Math.pow(Math.abs(c) / 470, 4) + Math.pow(Math.abs(s) / 330, 4), 0.25); pts.push([c * k, s * k - 20]); }
+    ctx.fillStyle = C.pink; for (const [x, y] of pts) { ctx.beginPath(); ctx.arc(x, y, 42, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = C.pinkL; for (const [x, y] of pts) { ctx.beginPath(); ctx.arc(x * 0.985, y * 0.985, 30, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = '#fff'; for (const [x, y] of pts) { ctx.beginPath(); ctx.arc(x * 1.06, y * 1.07, 5, 0, TAU); ctx.fill(); }
+    // しっぽ
+    ctx.fillStyle = C.pink; ctx.beginPath(); ctx.moveTo(-200, 230); ctx.quadraticCurveTo(-250, 400, -380, 450); ctx.quadraticCurveTo(-130, 430, -40, 250); ctx.fill();
+    shape(); ctx.fillStyle = '#fffafc'; ctx.fill();
+    ctx.lineWidth = 10; ctx.strokeStyle = '#fff'; ctx.stroke();
+    // レースのライン + ステッチ
+    ctx.save(); shape(); ctx.clip();
+    ctx.setLineDash([16, 10]); ctx.strokeStyle = C.pink; ctx.lineWidth = 5; ctx.beginPath(); ctx.roundRect(-405, -265, 810, 490, 170); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = 0.5; for (let i = 0; i < 12; i++) M.heart(ctx, -380 + (i * 151) % 760, -230 + ((i * 97) % 440), 22, 0, '#ffd0e2', { outline: false, shine: false }); ctx.globalAlpha = 1;
+    ctx.restore();
+    // かざり
+    M.bow(ctx, -380, -280, 170, -0.3 + Math.sin(tt * 2) * 0.05, C.pink, C.pinkD);
+    M.rose(ctx, 380, 210, 110, Math.sin(tt * 2) * 0.08, { col: C.yel, dark: C.yelD, light: C.yelL });
+    M.clover(ctx, 450, 120, 90, 0.4 + Math.sin(tt * 2 + 1) * 0.08, { stem: false });
+    M.daisy(ctx, 300, 270, 70, Math.sin(tt * 2 + 2) * 0.1);
+    M.jewelHeart(ctx, 400, -290, 76, 0.2 + Math.sin(tt * 2) * 0.1, C.pink);
+    M.pearlSwag(ctx, -250, -330, 250, -330, -40, 9);
+    ctx.restore();
+  } },
+
+  // ===== リボンのタイトル帯 (中に文字を入れる用) =====
+  banner: { w: 1920, h: 900, dur: 4, draw(t, p) {
+    const tt = TAU * p;
+    const wy = (x) => Math.sin(x * 0.004 + tt) * 14;
+    twinkles(p, 960, 450, 900, 400, 16, 17);
+    // 両はしの折り返し (後ろ)
+    for (const s of [-1, 1]) {
+      const x0 = 960 + s * 700;
+      ctx.fillStyle = C.pinkD;
+      ctx.beginPath(); ctx.moveTo(x0 - s * 40, 420 + wy(x0)); ctx.lineTo(x0 + s * 200, 420 + wy(x0)); ctx.lineTo(x0 + s * 140, 520 + wy(x0)); ctx.lineTo(x0 + s * 200, 620 + wy(x0)); ctx.lineTo(x0 - s * 40, 620 + wy(x0)); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 6; ctx.stroke();
+      ctx.fillStyle = '#c94078'; ctx.beginPath(); ctx.moveTo(x0 - s * 40, 620 + wy(x0)); ctx.lineTo(x0 - s * 60, 660 + wy(x0)); ctx.lineTo(x0 - s * 100, 620 + wy(x0)); ctx.fill();
+    }
+    // 本体の帯 (ゆらゆら)
+    const top = (x) => 290 + wy(x) - Math.sin(((x - 220) / 1480) * Math.PI) * 40, bot = (x) => top(x) + 330;
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(220, top(220)); for (let x = 220; x <= 1700; x += 20) ctx.lineTo(x, top(x)); for (let x = 1700; x >= 220; x -= 20) ctx.lineTo(x, bot(x)); ctx.closePath();
+    const g = ctx.createLinearGradient(0, 260, 0, 620); g.addColorStop(0, '#ffd3e5'); g.addColorStop(0.5, C.pink); g.addColorStop(1, '#ff9cc5');
+    ctx.fillStyle = g; ctx.fill(); ctx.lineWidth = 10; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.clip();
+    ctx.globalAlpha = 0.18; M.quilt(ctx, 200, 200, 1520, 500, 70, '#ffffff', 'rgba(255,255,255,0)', 0, 0, false); ctx.globalAlpha = 1;
+    ctx.restore();
+    // 上下のレース・フリル
+    const lace = ITEMS.banner.lace || (ITEMS.banner.lace = M.makeLace(1500, 40, { scallop: 36 }));
+    for (let x = 220; x < 1700; x += 36) {
+      const xt = top(x), xb = bot(x);
+      ctx.drawImage(lace, x - 220, 0, 37, lace.height * 0.7, x, xb - 4, 37, lace.height * 0.7);
+      ctx.save(); ctx.translate(x + 18, xt + 4); ctx.rotate(Math.PI); ctx.drawImage(lace, x - 220, 0, 37, lace.height * 0.7, -18, 0, 37, lace.height * 0.7); ctx.restore();
+    }
+    ctx.setLineDash([14, 10]); ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+    for (const f of [(x) => top(x) + 26, (x) => bot(x) - 26]) { ctx.beginPath(); for (let x = 240; x <= 1680; x += 20) x === 240 ? ctx.moveTo(x, f(x)) : ctx.lineTo(x, f(x)); ctx.stroke(); }
+    ctx.setLineDash([]);
+    // パールの飾り鎖
+    for (let i = 0; i < 4; i++) { const x0 = 320 + i * 320; M.pearlSwag(ctx, x0, bot(x0) + 34, x0 + 320, bot(x0 + 320) + 34, 60, 8); }
+    // かざり
+    M.crown(ctx, 960, top(960) - 70, 170, Math.sin(tt) * 0.04);
+    for (const s of [-1, 1]) {
+      const x = 960 + s * 640, y = top(x) + 10;
+      M.rose(ctx, x, y, 140, Math.sin(tt * 2 + s) * 0.08);
+      M.clover(ctx, x + s * 90, y - 60, 90, s * 0.4 + Math.sin(tt * 2) * 0.08, { stem: false });
+      M.daisy(ctx, x - s * 90, y - 40, 80, Math.sin(tt * 2 + 1) * 0.1);
+      M.bow(ctx, x + s * 10, bot(x) + 10, 120, s * 0.2, C.yel, C.yelD);
+    }
+  } },
+
+  // ===== クローバーとお花のリース =====
+  wreath: { w: 1080, h: 1080, dur: 4, draw(t, p) {
+    const tt = TAU * p, cx = 540, cy = 500, R = 340;
+    twinkles(p, cx, cy, 500, 500, 14, 31);
+    ctx.lineWidth = 34; ctx.strokeStyle = '#a9d86a'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+    ctx.lineWidth = 6; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, R + 20, 0, TAU); ctx.arc(cx, cy, R - 20, 0, TAU); ctx.stroke();
+    const N = 30;
+    for (let i = 0; i < N; i++) { const a = (i / N) * TAU; M.leaf(ctx, cx + Math.cos(a) * R, cy + Math.sin(a) * R, 90, a + (i % 2 ? 0.5 : 2.6) + Math.sin(tt * 2 + i) * 0.05, {}); }
+    const deco = ['R', 'c', 'd', 'b', 'y', 'c', 'r', 'd', 'p', 'c', 'b', 'y'];
+    deco.forEach((k, i) => {
+      const a = (i / deco.length) * TAU - Math.PI / 2 + 0.25, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R, r = Math.sin(tt * 2 + i) * 0.1;
+      if (Math.abs(a - Math.PI / 2) < 0.3) return; // 下はリボンの場所
+      if (k === 'R') M.rose(ctx, x, y, 130, r); else if (k === 'r') M.rose(ctx, x, y, 110, r, { col: C.pinkL, dark: C.pink, light: '#ffffff' });
+      else if (k === 'y') M.rose(ctx, x, y, 118, r, { col: C.yel, dark: C.yelD, light: C.yelL }); else if (k === 'c') M.clover(ctx, x, y, 110, a + r, { stem: false });
+      else if (k === 'd') M.daisy(ctx, x, y, 110, r); else if (k === 'b') M.blossom(ctx, x, y, 92, r, { petal: C.pink }); else { M.pearl(ctx, x, y, 22); M.pearl(ctx, x + 30, y + 22, 15); }
+    });
+    for (let i = 0; i < 24; i++) { const a = (i / 24) * TAU + 0.13; M.pearl(ctx, cx + Math.cos(a) * (R - 52), cy + Math.sin(a) * (R - 52), 9); }
+    // 下の大きいリボン
+    ctx.save(); ctx.translate(cx, cy + R + 10); ctx.rotate(Math.sin(tt) * 0.05);
+    M.bow(ctx, 0, 0, 260, 0, C.pink, C.pinkD);
+    M.jewelHeart(ctx, 0, 6, 60, 0, C.yel);
+    ctx.restore();
+    // 上にちょうちょ
+    const fl = 0.35 + 0.65 * Math.abs(Math.sin(tt * 6));
+    ctx.save(); ctx.translate(cx + 160 + Math.sin(tt) * 30, cy - R - 60 + Math.sin(tt * 2) * 16);
+    for (const s of [-1, 1]) { ctx.save(); ctx.scale(s * fl, 1); ctx.fillStyle = C.yel; ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.ellipse(28, -16, 28, 22, -0.5, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = C.pink; ctx.beginPath(); ctx.ellipse(20, 16, 18, 15, 0.5, 0, TAU); ctx.fill(); ctx.stroke(); ctx.restore(); }
+    ctx.fillStyle = '#8a6a6a'; ctx.beginPath(); ctx.ellipse(0, 0, 5, 20, 0, 0, TAU); ctx.fill(); ctx.restore();
+  } },
+};
+
+const it = ITEMS[item];
+cv.width = it.w; cv.height = it.h;
+window.SPEC = { w: it.w, h: it.h, fps: 30, dur: it.dur, alpha: true };
+window.renderFrame = (t) => { ctx.clearRect(0, 0, it.w, it.h); it.draw(t, (t % it.dur) / it.dur); };
+window.renderFrame(0.6);
+</script></body></html>

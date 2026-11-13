@@ -1,0 +1,305 @@
+<!doctype html><html><head><meta charset="utf-8"><title>3D封入素材</title>
+<style>html,body{margin:0;background:#8000ff}canvas{display:block;width:min(100vw,100vh);height:auto}</style></head><body>
+<script type="module">
+// 3Dの封入素材 (透過 / 4秒ループ)。#sheep #milk #bouquet #bow #house
+import * as THREE from '../../three.module.min.js';
+const item = location.hash.slice(1) || 'sheep';
+const S = 1080, DUR = 4, TAU = Math.PI * 2;
+window.SPEC = { w: S, h: S, fps: 30, dur: DUR, alpha: true };
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(S, S);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setClearColor(0x000000, 0);
+renderer.domElement.id = 'c';
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+camera.position.set(0, 1.2, 10); camera.lookAt(0, 0, 0);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xffd0e0, 1.7));
+const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(3, 5, 5); scene.add(key);
+const rim = new THREE.DirectionalLight(0xfff0a0, 1.2); rim.position.set(-4, 2, -3); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xffc0d8, 0.7); fill.position.set(-3, -2, 4); scene.add(fill);
+
+const mat = (color, o = {}) => new THREE.MeshPhysicalMaterial({ color, roughness: 0.38, clearcoat: 0.9, clearcoatRoughness: 0.3, sheen: 0.5, sheenColor: new THREE.Color(0xffffff), ...o });
+const PINK = mat(0xff86b6), PINK_L = mat(0xffc6dc), PINK_D = mat(0xf0679c), YEL = mat(0xffe27a), YEL_D = mat(0xf5c63c), GRN = mat(0xa4de55), GRN_D = mat(0x77bd3d),
+  WHITE = mat(0xfffaf5, { side: THREE.DoubleSide }), CREAM = mat(0xfbe4d8, { roughness: 0.6, clearcoat: 0.3 }),
+  PEARL = mat(0xfff4f7, { roughness: 0.15, clearcoat: 1, sheen: 1, sheenColor: new THREE.Color(0xffc8dc) }),
+  GOLD = mat(0xffd36b, { metalness: 0.55, roughness: 0.25, clearcoat: 1 }), DARK = mat(0x4a3340, { roughness: 0.15, clearcoat: 1 }),
+  HOLO = mat(0xff9cc6, { iridescence: 1, iridescenceIOR: 2.0, iridescenceThicknessRange: [300, 800], roughness: 0.25, clearcoat: 1 }),
+  WOOL = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.85, sheen: 1, sheenRoughness: 0.4, sheenColor: new THREE.Color(0xffd6e6) });
+const LINE = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.BackSide });
+const sph = (r, m, seg = 24) => new THREE.Mesh(new THREE.SphereGeometry(r, seg, Math.round(seg * 0.7)), m);
+function centered(geo) { geo.computeBoundingBox(); const c = new THREE.Vector3(); geo.boundingBox.getCenter(c); geo.translate(-c.x, -c.y, -c.z); return geo; }
+function outline(mesh, k = 1.06) { const o = new THREE.Mesh(mesh.geometry, LINE); o.scale.setScalar(k); mesh.add(o); return mesh; }
+function heartShape(k = 1) {
+  const h = new THREE.Shape();
+  h.moveTo(0, -1 * k);
+  h.bezierCurveTo(-0.15 * k, -0.78 * k, -1.08 * k, -0.42 * k, -1.08 * k, 0.28 * k);
+  h.bezierCurveTo(-1.08 * k, 0.86 * k, -0.48 * k, 1.06 * k, 0, 0.6 * k);
+  h.bezierCurveTo(0.48 * k, 1.06 * k, 1.08 * k, 0.86 * k, 1.08 * k, 0.28 * k);
+  h.bezierCurveTo(1.08 * k, -0.42 * k, 0.15 * k, -0.78 * k, 0, -1 * k);
+  return h;
+}
+function puffy(shape, m, depth = 0.08, bevel = 0.14) {
+  const geo = centered(new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel * 1.4, bevelSize: bevel, bevelSegments: 10, curveSegments: 48 }));
+  const g = new THREE.Group(); g.add(new THREE.Mesh(geo, m));
+  const o = new THREE.Mesh(geo, LINE); o.scale.set(1.05, 1.05, 1.15); g.add(o); return g;
+}
+const miniHeart = (m, s = 1) => { const g = puffy(heartShape(0.3), m, 0.05, 0.07); g.scale.setScalar(s); return g; };
+const leafGeo = (() => { const g = centered(new THREE.ExtrudeGeometry(heartShape(0.36), { depth: 0.03, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.03, bevelSegments: 6, curveSegments: 32 }));
+  g.rotateZ(Math.PI); g.scale(0.82, 1, 1); g.computeBoundingBox(); g.translate(0, -g.boundingBox.min.y + 0.03, 0); return g; })();
+function clover(n = 4, s = 1) {
+  const g = new THREE.Group();
+  for (let i = 0; i < n; i++) { const arm = new THREE.Group(); arm.rotation.z = (i / n) * TAU + (n === 4 ? Math.PI / 4 : 0); const tl = new THREE.Group(); tl.rotation.x = -0.25; arm.add(tl);
+    tl.add(new THREE.Mesh(leafGeo, GRN)); const o = new THREE.Mesh(leafGeo, LINE); o.scale.set(1.1, 1.06, 1.4); tl.add(o); g.add(arm); }
+  const c = sph(0.09, PINK, 16); c.position.z = 0.06; g.add(c); g.scale.setScalar(s); return g;
+}
+function daisy(pm = WHITE, cm = YEL, s = 1, n = 12) {
+  const g = new THREE.Group(), pg = new THREE.SphereGeometry(0.1, 16, 10);
+  for (let i = 0; i < n; i++) { const p = new THREE.Mesh(pg, pm), a = (i / n) * TAU; p.scale.set(0.9, 2.5, 0.35); p.position.set(Math.cos(a + Math.PI / 2) * 0.3, Math.sin(a + Math.PI / 2) * 0.3, 0); p.rotation.z = a; g.add(p); }
+  const c = sph(0.14, cm, 20); c.scale.set(1, 1, 0.55); c.position.z = 0.04; g.add(c); g.scale.setScalar(s); return g;
+}
+// バラ: 半球の花びらをうずまき状に重ねる
+function rose(m, s = 1) {
+  const g = new THREE.Group();
+  const bud = sph(0.11, m, 20); bud.scale.set(1, 1.2, 1); bud.position.y = 0.04; g.add(bud);
+  const pg = new THREE.SphereGeometry(0.15, 20, 12, 0, Math.PI, 0, Math.PI * 0.6);
+  for (let ring = 0; ring < 4; ring++) {
+    const n = 3 + ring * 2, r = 0.08 + ring * 0.1;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * TAU + ring * 0.6;
+      const p = new THREE.Mesh(pg, m.clone()); p.material.side = THREE.DoubleSide;
+      p.scale.set(1 + ring * 0.25, 1.1 + ring * 0.2, 0.9);
+      p.position.set(Math.cos(a) * r, -ring * 0.05, Math.sin(a) * r);
+      p.rotation.set(0, -a + Math.PI / 2, 0); p.rotateX(0.12 + ring * 0.2);
+      g.add(p);
+    }
+  }
+  g.scale.setScalar(s); return g;
+}
+// 円形のフリル (水平の輪。r0〜r1 で波打つ)
+function ruffleRing(r0, r1, waves, amp, droop, m, K = 6, M = 240) {
+  const pos = [], idx = [];
+  for (let i = 0; i <= M; i++) { const a = (i / M) * TAU; for (let j = 0; j <= K; j++) { const v = j / K, r = r0 + (r1 - r0) * v;
+    pos.push(Math.cos(a) * r, amp * v * Math.sin(waves * a) - droop * v * v, Math.sin(a) * r); } }
+  for (let i = 0; i < M; i++) for (let j = 0; j < K; j++) { const a = i * (K + 1) + j, b = a + K + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  const mm = m.clone(); mm.side = THREE.DoubleSide; return new THREE.Mesh(geo, mm);
+}
+// ぷっくりリボン (押し出し + ふくらみ)
+function bowShape() {
+  const s = new THREE.Shape();
+  s.moveTo(0, 0.12);
+  s.bezierCurveTo(-0.35, 0.55, -1.25, 0.95, -1.35, 0.35); s.bezierCurveTo(-1.45, -0.25, -0.9, -0.55, -0.4, -0.3); s.bezierCurveTo(-0.2, -0.2, -0.05, -0.12, 0, -0.12);
+  s.bezierCurveTo(0.05, -0.12, 0.2, -0.2, 0.4, -0.3); s.bezierCurveTo(0.9, -0.55, 1.45, -0.25, 1.35, 0.35); s.bezierCurveTo(1.25, 0.95, 0.35, 0.55, 0, 0.12);
+  return s;
+}
+function tailShape(sd) {
+  const s = new THREE.Shape();
+  s.moveTo(sd * 0.1, 0); s.lineTo(sd * 0.75, -1.1); s.lineTo(sd * 0.52, -1.0); s.lineTo(sd * 0.42, -1.25); s.lineTo(sd * -0.2, -0.05); s.closePath();
+  return s;
+}
+function bigBow(m, s = 1, withTails = true) {
+  const g = new THREE.Group();
+  const wings = puffy(bowShape(), m, 0.1, 0.16); g.add(wings);
+  if (withTails) for (const sd of [-1, 1]) { const t = puffy(tailShape(sd), m, 0.04, 0.08); t.position.set(sd * 0.25, -0.62, -0.12); t.rotation.z = sd * 0.08; g.add(t); g.userData['tail' + sd] = t; }
+  const knot = sph(0.26, m, 28); knot.scale.set(1, 1.05, 0.8); knot.position.z = 0.14; outline(knot, 1.08); g.add(knot);
+  // ひだの線 (白)
+  for (const sd of [-1, 1]) for (const k of [0.45, 0.8]) { const tube = new THREE.Mesh(new THREE.TorusGeometry(k * 0.5, 0.025, 8, 24, 1.2), WHITE); tube.position.set(sd * (0.35 + k * 0.3), 0.08, 0.28); tube.rotation.z = sd > 0 ? 2.2 : -0.9 + Math.PI; g.add(tube); }
+  g.scale.setScalar(s); return g;
+}
+function tiara(s = 1) {
+  const g = new THREE.Group();
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.16, 48, 1, true), GOLD.clone()); band.material.side = THREE.DoubleSide; g.add(band);
+  for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU, big = i % 2 === 0;
+    const sp = new THREE.Mesh(new THREE.ConeGeometry(0.075, big ? 0.36 : 0.22, 12), GOLD); sp.position.set(Math.cos(a) * 0.42, 0.08 + (big ? 0.18 : 0.11), Math.sin(a) * 0.42); g.add(sp);
+    const pr = sph(big ? 0.07 : 0.05, PEARL, 14); pr.position.set(Math.cos(a) * 0.42, 0.08 + (big ? 0.37 : 0.23), Math.sin(a) * 0.42); g.add(pr);
+    const gem = sph(0.05, big ? PINK : GRN, 12); gem.position.set(Math.cos(a) * 0.47, 0, Math.sin(a) * 0.47); g.add(gem); }
+  g.scale.setScalar(s); return g;
+}
+function pearlRing(r, n, size = 0.06) { const g = new THREE.Group(); for (let i = 0; i < n; i++) { const a = (i / n) * TAU, p = sph(i % 4 ? size : size * 1.4, PEARL, 14); p.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); g.add(p); } return g; }
+function canvasTex(w, h, draw) { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t; }
+function sparkTex(color) { return canvasTex(128, 128, (g) => { const star = () => { g.beginPath(); g.moveTo(64, 6); g.quadraticCurveTo(70, 58, 122, 64); g.quadraticCurveTo(70, 70, 64, 122); g.quadraticCurveTo(58, 70, 6, 64); g.quadraticCurveTo(58, 58, 64, 6); g.closePath(); };
+  g.lineJoin = 'round'; star(); g.lineWidth = 12; g.strokeStyle = '#fff'; g.stroke(); star(); g.fillStyle = color; g.fill(); }); }
+const sparks = [[-2.5, 2.2, '#ffe46b', 0.55, 0], [2.6, 1.8, '#ffffff', 0.5, 1.7], [2.3, -1.9, '#c9f07e', 0.5, 3.1], [-2.4, -1.6, '#ff9cc4', 0.45, 4.4], [0.3, 2.8, '#ffffff', 0.4, 2.2], [-2.8, 0.4, '#e9dcff', 0.4, 5.2]]
+  .map(([x, y, col, s, ph]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(s, s), new THREE.MeshBasicMaterial({ map: sparkTex(col), transparent: true, depthWrite: false })); m.position.set(x, y, 1); scene.add(m); return { m, ph }; });
+
+const root = new THREE.Group(); scene.add(root);
+let anim = () => {};
+
+// ================= 羊 =================
+function makeSheep() {
+  const g = new THREE.Group();
+  const body = new THREE.Group(); g.add(body);
+  const core = sph(0.85, WOOL, 32); core.scale.set(1.05, 0.85, 1.15); body.add(core);
+  const R = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+  for (let i = 0; i < 46; i++) { const u = R() * 2 - 1, a = R() * TAU, k = Math.sqrt(1 - u * u);
+    const p = sph(0.3 + R() * 0.12, WOOL, 20); p.position.set(Math.cos(a) * k * 0.95, u * 0.72, Math.sin(a) * k * 1.05); body.add(p); }
+  for (const [x, z] of [[-0.45, -0.5], [0.45, -0.5], [-0.45, 0.5], [0.45, 0.5]]) { const l = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.4, 8, 16), mat(0xd9b3b9)); l.position.set(x, -0.85, z); g.add(l);
+    const hoof = sph(0.16, mat(0xb98a95), 16); hoof.scale.set(1, 0.6, 1); hoof.position.set(x, -1.1, z); g.add(hoof); }
+  const tail = sph(0.2, WOOL); tail.position.set(0, 0.15, -1.15); g.add(tail);
+  // 頭
+  const head = new THREE.Group(); head.position.set(0, 0.55, 0.95); g.add(head);
+  const face = sph(0.55, CREAM, 32); face.scale.set(1, 0.92, 0.85); head.add(face);
+  for (const sd of [-1, 1]) {
+    const ear = sph(0.2, CREAM, 20); ear.scale.set(1.6, 0.6, 0.6); ear.position.set(sd * 0.6, 0.05, -0.05); ear.rotation.z = sd * -0.5; head.add(ear);
+    const inner = sph(0.14, PINK_L, 16); inner.scale.set(1.5, 0.45, 0.3); inner.position.set(sd * 0.63, 0.04, 0.05); inner.rotation.z = sd * -0.5; head.add(inner);
+    const eye = sph(0.085, DARK, 20); eye.scale.set(0.85, 1.1, 0.5); eye.position.set(sd * 0.2, 0.0, 0.45); head.add(eye);
+    const hi = sph(0.03, new THREE.MeshBasicMaterial({ color: 0xffffff }), 10); hi.position.set(sd * 0.2 - 0.025, 0.04, 0.5); head.add(hi);
+    const ck = sph(0.08, new THREE.MeshBasicMaterial({ color: 0xffa6c8 }), 14); ck.scale.set(1.2, 0.6, 0.3); ck.position.set(sd * 0.33, -0.15, 0.4); head.add(ck);
+  }
+  const nose = sph(0.05, PINK, 14); nose.scale.set(1.3, 0.8, 0.6); nose.position.set(0, -0.14, 0.47); head.add(nose);
+  for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI; const p = sph(0.17, WOOL, 18); p.position.set(Math.cos(a) * 0.28, 0.42 + Math.sin(a) * 0.06, -0.02); head.add(p); }
+  // レースのボンネット (顔のまわりのフリル)
+  const bon = ruffleRing(0.5, 0.8, 22, 0.09, 0, WHITE); bon.rotation.x = Math.PI / 2 - 0.15; bon.position.z = -0.12; head.add(bon);
+  const bon2 = ruffleRing(0.48, 0.68, 26, 0.06, 0, PINK_L); bon2.rotation.x = Math.PI / 2 - 0.15; bon2.position.z = -0.08; head.add(bon2);
+  const bw = bigBow(PINK, 0.32, false); bw.position.set(0.32, 0.58, 0.05); bw.rotation.z = -0.35; head.add(bw);
+  const fl = daisy(WHITE, YEL, 0.35); fl.position.set(-0.4, 0.48, 0.15); head.add(fl);
+  const cl = clover(4, 0.3); cl.position.set(-0.6, 0.25, 0.1); head.add(cl);
+  // パールのネックレス
+  const nk = pearlRing(0.55, 26, 0.045); nk.position.set(0, 0.1, 0.72); nk.rotation.x = 0.5; g.add(nk);
+  const ch = miniHeart(HOLO, 0.55); ch.position.set(0, -0.15, 1.18); g.add(ch);
+  g.userData = { head, ch }; return g;
+}
+
+// ================= ミルク瓶 =================
+function makeMilk() {
+  const g = new THREE.Group();
+  const prof = [[0, -1.35], [0.55, -1.35], [0.68, -1.25], [0.72, -1.0], [0.72, 0.15], [0.66, 0.42], [0.48, 0.72], [0.38, 0.95], [0.36, 1.12], [0.4, 1.18], [0.4, 1.24], [0, 1.24]].map(([r, y]) => new THREE.Vector2(r, y));
+  const milk = new THREE.Mesh(new THREE.LatheGeometry(prof, 64), mat(0xfffdf8, { roughness: 0.2, clearcoat: 1, sheen: 0.3 })); g.add(milk);
+  const glass = new THREE.Mesh(new THREE.LatheGeometry(prof.map((v) => new THREE.Vector2(v.x * 1.04 + 0.01, v.y * 1.01)), 64), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, roughness: 0.05, clearcoat: 1, iridescence: 0.6, depthWrite: false }));
+  g.add(glass);
+  // ラベル
+  const tex = canvasTex(1024, 320, (c, w, h) => {
+    c.fillStyle = '#ffe6f0'; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#ffffff'; for (let x = 0; x < w; x += 40) for (let y = 0; y < h; y += 40) if (((x + y) / 40) % 2 === 0) c.fillRect(x, y, 40, 40);
+    c.fillStyle = 'rgba(255,170,205,0.35)'; for (let x = 0; x < w; x += 40) c.fillRect(x, 0, 20, h);
+    c.fillStyle = '#ff86b6'; c.fillRect(0, 0, w, 34); c.fillRect(0, h - 34, w, 34);
+    c.fillStyle = '#fff'; for (let x = 0; x < w; x += 34) { c.beginPath(); c.arc(x + 17, 34, 13, 0, Math.PI); c.fill(); c.beginPath(); c.arc(x + 17, h - 34, 13, Math.PI, 0); c.fill(); }
+    for (let k = 0; k < 2; k++) { const cx = 256 + k * 512;
+      c.fillStyle = '#ff86b6'; c.beginPath(); c.moveTo(cx, 120); c.bezierCurveTo(cx - 20, 80, cx - 120, 80, cx - 120, 150); c.bezierCurveTo(cx - 120, 200, cx - 40, 230, cx, 260); c.bezierCurveTo(cx + 40, 230, cx + 120, 200, cx + 120, 150); c.bezierCurveTo(cx + 120, 80, cx + 20, 80, cx, 120); c.fill();
+      c.strokeStyle = '#fff'; c.lineWidth = 8; c.stroke();
+      c.fillStyle = '#fff'; c.font = 'bold 54px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('MILK', cx, 172);
+      c.fillStyle = '#a4de55'; for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; c.beginPath(); c.arc(cx + 170 + Math.cos(a) * 18, 160 + Math.sin(a) * 18, 16, 0, Math.PI * 2); c.fill(); }
+      c.fillStyle = '#ffe27a'; c.beginPath(); c.arc(cx - 175, 165, 26, 0, Math.PI * 2); c.fill(); c.fillStyle = '#fff'; c.beginPath(); c.arc(cx - 175, 165, 10, 0, Math.PI * 2); c.fill(); }
+  });
+  const label = new THREE.Mesh(new THREE.CylinderGeometry(0.735, 0.735, 0.9, 64, 1, true), new THREE.MeshPhysicalMaterial({ map: tex, roughness: 0.4, clearcoat: 0.6 }));
+  label.position.y = -0.5; g.add(label);
+  // キャップ + 紙のフリル
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.43, 0.43, 0.14, 48), PINK); cap.position.y = 1.28; g.add(cap);
+  const capTex = canvasTex(256, 256, (c) => { c.fillStyle = '#fff'; c.fillRect(0, 0, 256, 256); c.fillStyle = 'rgba(255,134,182,0.55)'; for (let i = 0; i < 256; i += 32) { c.fillRect(i, 0, 16, 256); c.fillRect(0, i, 256, 16); } });
+  const paper = ruffleRing(0.3, 0.72, 18, 0.07, 0.38, new THREE.MeshPhysicalMaterial({ map: capTex, roughness: 0.6 })); paper.position.y = 1.36; g.add(paper);
+  const top = new THREE.Mesh(new THREE.CircleGeometry(0.31, 40), new THREE.MeshPhysicalMaterial({ map: capTex, roughness: 0.6 })); top.rotation.x = -Math.PI / 2; top.position.y = 1.37; g.add(top);
+  const string = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.035, 12, 48), PINK_D); string.rotation.x = Math.PI / 2; string.position.y = 1.05; g.add(string);
+  const bw = bigBow(PINK, 0.26); bw.position.set(0, 0.86, 0.5); bw.rotation.x = -0.35; g.add(bw);
+  const pr = pearlRing(0.7, 30, 0.045); pr.position.y = 0.05; g.add(pr);
+  const cl = clover(4, 0.55); cl.position.set(0.5, -1.15, 0.6); cl.rotation.y = 0.4; g.add(cl);
+  g.userData = { bw }; return g;
+}
+
+// ================= ブーケ =================
+function makeBouquet() {
+  const g = new THREE.Group();
+  const paperTex = canvasTex(512, 512, (c) => { c.fillStyle = '#ffe3ee'; c.fillRect(0, 0, 512, 512); c.fillStyle = 'rgba(255,255,255,0.8)'; for (let y = 16; y < 512; y += 32) for (let x = 16; x < 512; x += 32) { c.beginPath(); c.arc(x + ((y / 32) % 2 ? 16 : 0), y, 6, 0, Math.PI * 2); c.fill(); } });
+  paperTex.wrapS = paperTex.wrapT = THREE.RepeatWrapping; paperTex.repeat.set(3, 2);
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(1.15, 2.1, 48, 1, true), new THREE.MeshPhysicalMaterial({ map: paperTex, side: THREE.DoubleSide, roughness: 0.6, sheen: 0.4 }));
+  cone.rotation.x = Math.PI; cone.position.y = -0.75; g.add(cone);
+  const lace = ruffleRing(1.0, 1.5, 24, 0.12, 0.35, WHITE); lace.position.y = 0.3; g.add(lace);
+  const lace2 = ruffleRing(0.95, 1.3, 30, 0.08, 0.25, PINK_L); lace2.position.y = 0.32; g.add(lace2);
+  const flowers = [[0, 1.3, 0.1, 'R'], [-0.6, 1.0, 0.3, 'Y'], [0.6, 1.02, 0.25, 'r'], [-0.3, 0.85, 0.75, 'd'], [0.35, 0.85, 0.75, 'd2'], [0.0, 0.7, 0.95, 'c'], [-0.85, 0.7, -0.2, 'c'], [0.85, 0.75, -0.15, 'r'], [0, 1.05, -0.6, 'Y'], [-0.5, 1.1, -0.4, 'd'], [0.5, 1.1, -0.45, 'R'], [-0.85, 0.75, 0.45, 'r'], [0.85, 0.72, 0.45, 'Y']];
+  const items = [];
+  flowers.forEach(([x, y, z, k], i) => {
+    let o;
+    if (k === 'R') o = rose(PINK, 1.35); else if (k === 'r') o = rose(PINK_L, 1.1); else if (k === 'Y') o = rose(YEL, 1.2);
+    else if (k === 'd') { o = daisy(WHITE, YEL, 1.0); o.rotation.x = -0.6; } else if (k === 'd2') { o = daisy(YEL, PINK, 0.95); o.rotation.x = -0.6; } else { o = clover(4, 0.95); o.rotation.x = -0.7; }
+    o.position.set(x, y, z); o.lookAt(o.position.clone().multiplyScalar(2).add(new THREE.Vector3(0, 1.5, 0))); if (k === 'R' || k === 'r' || k === 'Y') o.rotateX(Math.PI / 2); g.add(o); items.push({ o, i });
+  });
+  // かすみ草
+  const R = (() => { let s = 3; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+  for (let i = 0; i < 40; i++) { const a = R() * TAU, r = 0.4 + R() * 0.7; const p = sph(0.045, i % 5 ? WHITE : YEL, 10); p.position.set(Math.cos(a) * r, 0.9 + R() * 0.45, Math.sin(a) * r); g.add(p); }
+  const bw = bigBow(PINK, 0.42); bw.position.set(0, -0.62, 0.74); bw.rotation.x = -0.3; g.add(bw);
+  const pr = pearlRing(0.68, 28, 0.04); pr.position.y = -0.55; g.add(pr);
+  g.userData = { items, bw }; return g;
+}
+
+// ================= ぷっくりリボン =================
+function makeBow() {
+  const g = new THREE.Group();
+  const bw = bigBow(PINK, 1.35); g.add(bw);
+  // ふちのパール
+  const pts = bowShape().getSpacedPoints(70);
+  for (const [i, pt] of pts.entries()) if (i % 2 === 0) { const p = sph(0.045, PEARL, 12); p.position.set(pt.x * 1.35 * 0.98, pt.y * 1.35 * 0.98, 0.32); bw.add(p); }
+  const gem = miniHeart(HOLO, 0.75); gem.position.set(0, 0.0, 0.42); g.add(gem);
+  // たれ下がるパール + チャーム
+  const chain = new THREE.Group(); chain.position.set(0, -0.3, 0.3); g.add(chain);
+  for (let i = 0; i < 8; i++) { const p = sph(0.05, PEARL, 12); p.position.set(Math.sin(i * 0.3) * 0.05, -i * 0.11, 0); chain.add(p); }
+  const cl = clover(4, 0.55); cl.position.set(0, -1.05, 0); chain.add(cl);
+  const t1 = tiara(0.55); t1.position.set(0, 0.42, 0.05); t1.rotation.x = 0.25; g.add(t1);
+  for (const [x, y, k] of [[-1.25, 0.8, 'd'], [1.3, 0.75, 'r'], [-1.45, -0.05, 'c']]) { const o = k === 'd' ? daisy(WHITE, YEL, 0.6) : k === 'r' ? rose(YEL, 0.9) : clover(4, 0.45); o.position.set(x, y, 0.35); if (k === 'r') o.rotation.x = 1.2; g.add(o); }
+  g.userData = { bw, chain }; return g;
+}
+
+// ================= 牧場の小屋 =================
+function makeHouse() {
+  const g = new THREE.Group();
+  const ground = new THREE.Mesh(new THREE.CylinderGeometry(1.75, 1.8, 0.24, 64), GRN); ground.position.y = -0.95; g.add(ground);
+  const gl = ruffleRing(1.72, 2.05, 36, 0.06, 0.18, WHITE); gl.position.y = -0.86; g.add(gl);
+  const gp = ruffleRing(1.7, 1.92, 44, 0.05, 0.1, PINK_L); gp.position.y = -0.85; g.add(gp);
+  // 家
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.0, 1.0), PINK); wall.position.y = -0.33; g.add(wall);
+  const roofSh = new THREE.Shape(); roofSh.moveTo(-0.85, 0); roofSh.lineTo(0, 0.68); roofSh.lineTo(0.85, 0); roofSh.lineTo(0.72, 0); roofSh.lineTo(0, 0.56); roofSh.lineTo(-0.72, 0); roofSh.closePath();
+  const roofGeo = new THREE.ExtrudeGeometry(roofSh, { depth: 1.25, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.04, bevelSegments: 4 }); roofGeo.translate(0, 0, -0.625);
+  const roof = new THREE.Mesh(roofGeo, YEL); roof.position.y = 0.17; g.add(roof);
+  const gableSh = new THREE.Shape(); gableSh.moveTo(-0.65, 0); gableSh.lineTo(0, 0.55); gableSh.lineTo(0.65, 0); gableSh.closePath();
+  for (const z of [0.5, -0.5]) { const gb = new THREE.Mesh(new THREE.ShapeGeometry(gableSh), PINK_L.clone()); gb.material.side = THREE.DoubleSide; gb.position.set(0, 0.17, z); g.add(gb); }
+  // ひさしのレース玉
+  for (const sd of [-1, 1]) for (let i = 0; i <= 9; i++) { const u = i / 9; const p = sph(0.055, WHITE, 12); p.position.set(sd * 0.85 * (1 - u), 0.15 + 0.68 * u, 0.66); g.add(p); }
+  // ハートの窓
+  const win = puffy(heartShape(0.17), HOLO, 0.02, 0.04); win.position.set(0, 0.42, 0.52); g.add(win);
+  // 扉
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.6, 0.05), WHITE); door.position.set(0, -0.53, 0.51); g.add(door);
+  for (const r of [0.86, -0.86]) { const bar = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.66, 0.03), PINK_D); bar.position.set(0, -0.53, 0.54); bar.rotation.z = r * 0.7; g.add(bar); }
+  for (const sd of [-1, 1]) { const w = puffy(heartShape(0.11), YEL, 0.02, 0.03); w.position.set(0.66 * sd, -0.25, 0); w.rotation.y = sd * Math.PI / 2; g.add(w); }
+  // 屋根の上の風見ハート
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.4, 8), GOLD); pole.position.y = 1.05; g.add(pole);
+  const vane = miniHeart(PINK, 0.6); vane.position.y = 1.3; g.add(vane);
+  // 柵
+  for (let i = 0; i < 22; i++) { const a = (i / 22) * TAU; if (Math.abs(((a - Math.PI / 2) + TAU) % TAU) < 0.35 || Math.abs(a - Math.PI / 2) < 0.35) continue;
+    const pk = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.36, 0.05), WHITE); pk.position.set(Math.cos(a) * 1.5, -0.66, Math.sin(a) * 1.5); pk.rotation.y = -a + Math.PI / 2; g.add(pk);
+    const tp = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.1, 4), WHITE); tp.position.set(Math.cos(a) * 1.5, -0.43, Math.sin(a) * 1.5); tp.rotation.y = -a + Math.PI / 4; g.add(tp); }
+  const rail = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.025, 8, 96, TAU - 0.9), PEARL); rail.rotation.x = Math.PI / 2; rail.rotation.z = Math.PI / 2 + 0.45; rail.position.y = -0.62; g.add(rail);
+  // 草の上
+  const R = (() => { let s = 11; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+  for (let i = 0; i < 16; i++) { const a = R() * TAU, r = 0.95 + R() * 0.45; if (Math.abs(Math.sin(a)) < 0.5 && r < 1.1) continue; const k = i % 4;
+    const o = k === 0 ? clover(4, 0.32) : k === 1 ? daisy(WHITE, YEL, 0.3) : k === 2 ? clover(3, 0.28) : rose(PINK, 0.5);
+    o.position.set(Math.cos(a) * r, -0.78, Math.sin(a) * r); if (k !== 3) o.rotation.x = -1.2; g.add(o); }
+  const sh = makeSheep(); sh.scale.setScalar(0.28); sh.position.set(0.95, -0.55, 0.75); sh.rotation.y = 0.5; g.add(sh);
+  const bw = bigBow(PINK, 0.3); bw.position.set(0, 0.9, 0.55); g.add(bw);
+  g.userData = { sh, vane }; return g;
+}
+
+const BUILD = { sheep: makeSheep, milk: makeMilk, bouquet: makeBouquet, bow: makeBow, house: makeHouse };
+const obj = BUILD[item](); root.add(obj);
+const U = obj.userData;
+if (item === 'sheep') { obj.scale.setScalar(1.15); anim = (u) => {
+  const hop = Math.abs(Math.sin(u * TAU * 2)), land = Math.max(0, 1 - hop * 5);
+  obj.position.y = -0.3 + hop * 0.7; obj.scale.set(1.15 * (1 + land * 0.08), 1.15 * (1 - land * 0.1), 1.15);
+  obj.rotation.y = Math.sin(u * TAU) * 0.65; obj.rotation.z = Math.sin(u * TAU * 2) * 0.05;
+  U.head.rotation.z = Math.sin(u * TAU * 2 + 0.5) * 0.1; U.ch.rotation.z = Math.sin(u * TAU * 2) * 0.3; }; }
+if (item === 'milk') { obj.scale.setScalar(1.25); anim = (u) => { obj.rotation.y = u * TAU; obj.rotation.z = Math.sin(u * TAU * 2) * 0.06; obj.position.y = -0.1 + Math.sin(u * TAU * 2) * 0.1; }; }
+if (item === 'bouquet') { obj.scale.setScalar(1.18); obj.position.y = -0.2; anim = (u) => { obj.rotation.y = Math.sin(u * TAU) * 0.7; obj.rotation.x = 0.3; obj.rotation.z = Math.sin(u * TAU * 2) * 0.06; obj.position.y = -0.2 + Math.sin(u * TAU * 2) * 0.08;
+  U.items.forEach(({ o, i }) => { o.rotation.z += 0; o.position.y += Math.sin(u * TAU * 2 + i) * 0.0; }); }; }
+if (item === 'bow') { anim = (u) => { obj.rotation.y = Math.sin(u * TAU) * 0.75; obj.rotation.x = Math.sin(u * TAU * 2) * 0.08; obj.position.y = 0.15 + Math.sin(u * TAU * 2) * 0.1;
+  const fl = 1 + 0.04 * Math.sin(u * TAU * 4); U.bw.scale.set(1.35 * fl, 1.35 / fl, 1.35); U.chain.rotation.z = Math.sin(u * TAU * 2) * 0.25; }; }
+if (item === 'house') { obj.scale.setScalar(1.15); obj.position.y = -0.05; obj.rotation.x = 0.12; anim = (u) => { obj.rotation.y = u * TAU; obj.position.y = -0.05 + Math.sin(u * TAU * 2) * 0.06;
+  U.sh.position.y = -0.55 + Math.abs(Math.sin(u * TAU * 4)) * 0.12; U.vane.rotation.y = Math.sin(u * TAU * 2) * 0.8; }; }
+
+window.renderFrame = (t) => {
+  const u = (t % DUR) / DUR;
+  anim(u);
+  sparks.forEach(({ m, ph }) => { const k = 0.3 + 0.7 * Math.pow(Math.abs(Math.sin(u * TAU * 2 + ph)), 2); m.scale.setScalar(k); m.rotation.z = u * TAU * 0.5; });
+  renderer.render(scene, camera);
+};
+window.renderFrame(0.5);
+</script></body></html>
