@@ -1,0 +1,23 @@
+{
+  "title_top": "在りし日を偲んで",
+  "name": "山田 花子",
+  "dates": "1940年4月1日 ― 2026年11月10日",
+  "title_bottom": "",
+
+  "photo_dir": "photos",
+  "photos": [
+    {"file": "01.jpg", "caption": "幼い頃"},
+    {"file": "02.jpg", "caption": "結婚式の日に"},
+    {"file": "03.jpg"},
+    {"file": "04.jpg", "caption": "家族旅行で", "seconds": 8}
+  ],
+
+  "seconds_per_photo": 6.0,
+  "fade_seconds": 1.5,
+  "title_seconds": 7.0,
+  "ending_seconds": 8.0,
+  "ending_lines": ["たくさんの思い出を", "ありがとう"],
+
+  "music": "",
+  "music_volume": 0.9
+}

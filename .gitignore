@@ -24,3 +24,8 @@ melochoco/chara_out/
 melochoco/nyan_out/
 melochoco/stripe_out/
 melochoco/frame_out/
+memorial/photos/
+memorial/config.json
+memorial/*.mp3
+memorial/*.m4a
+memorial/*.wav
