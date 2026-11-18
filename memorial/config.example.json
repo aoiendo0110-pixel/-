@@ -1,22 +1,32 @@
 {
   "title_top": "在りし日を偲んで",
   "name": "山田 花子",
-  "dates": "1940年4月1日 ― 2026年11月10日",
-  "title_bottom": "",
+  "dates": "1951 ― 2026.11.15",
 
   "photo_dir": "photos",
-  "photos": [
-    {"file": "01.jpg", "caption": "幼い頃"},
-    {"file": "02.jpg", "caption": "結婚式の日に"},
-    {"file": "03.jpg"},
-    {"file": "04.jpg", "caption": "家族旅行で", "seconds": 8}
+  "sections": [
+    {
+      "heading": "ふたりの門出",
+      "lines": ["お父さんと結ばれた日", "ここから 私たち家族の物語がはじまりました"],
+      "photos": ["01.jpg", "02.jpg"]
+    },
+    {
+      "heading": "花を愛して",
+      "lines": ["若い頃から 今までずっと", "お花が大好きでした"],
+      "lavish": true,
+      "photos": ["03.jpg", {"file": "04.jpg", "caption": "バラ園にて"}]
+    },
+    {
+      "photos": ["05.jpg", {"file": "06.jpg", "seconds": 8}]
+    }
   ],
 
   "seconds_per_photo": 6.0,
-  "fade_seconds": 1.5,
-  "title_seconds": 7.0,
-  "ending_seconds": 8.0,
-  "ending_lines": ["たくさんの思い出を", "ありがとう"],
+  "chapter_seconds": 6.5,
+  "fade_seconds": 1.6,
+  "title_seconds": 8.0,
+  "ending_seconds": 9.0,
+  "ending_lines": ["たくさんの愛と笑顔を", "ほんとうに ありがとう"],
 
   "music": "",
   "music_volume": 0.9
