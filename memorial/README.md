@@ -14,6 +14,7 @@ python3 make_memorial.py --config config.json --out memorial.mp4
 
 - `sections` で章を分ける。`heading`（見出し）と `lines`（本文）を書くと章の扉が入る。書かなければ写真だけ流れる
 - `"lavish": true` の章はお花を増やし、紫陽花の小花や桜も舞う、いちばん華やかな演出になる
+- 章に `text` を書くと、その章の写真が出ている間、写真の下に文を通しで表示する（扉の画面は入らない）
 - `--timeline` で各場面の開始秒を確認できる
 
 - `sections` も `photos` も書かなければ `photos/` フォルダの画像を名前順に全部使う

@@ -72,6 +72,7 @@ def load_config(path):
     n = 0
     for sec in sections:
         lavish = bool(sec.get("lavish"))
+        group = len(seq)  # この章の文（text）を写真の下に通しで出すための目印
         if sec.get("heading") or sec.get("lines"):
             seq.append({"type": "chapter", "heading": sec.get("heading", ""), "lines": sec.get("lines", []),
                         "lavish": lavish, "seconds": sec.get("seconds", cfg["chapter_seconds"])})
@@ -83,6 +84,8 @@ def load_config(path):
                 cand = os.path.join(photo_dir, p["file"])
                 p["file"] = cand if os.path.exists(cand) else os.path.join(base, p["file"])
             p.update(type="photo", index=n, lavish=p.get("lavish", lavish))
+            if sec.get("text"):
+                p.update(text=sec["text"], group=group)
             p.setdefault("seconds", cfg["seconds_per_photo"] + (0.5 if lavish else 0))
             seq.append(p)
             n += 1
@@ -158,7 +161,7 @@ def corner_flowers(img, specs, kinds=KINDS_NORMAL):
         paste_clip(img, lay, x - ox, y - oy)
 
 
-def make_slide(path, scale, idx, lavish=False):
+def make_slide(path, scale, idx, lavish=False, has_text=False):
     """写真1枚分の画面を、ズーム用に少し大きめのサイズで作る。"""
     sw, sh = int(W * scale), int(H * scale)
     im = Image.open(path)
@@ -170,13 +173,14 @@ def make_slide(path, scale, idx, lavish=False):
     bg = Image.blend(bg, paper(sw, sh).convert("RGB"), 0.70).convert("RGBA")
 
     # 前景：写真を画面内に収める
-    max_w, max_h = int(sw * 0.80), int(sh * 0.76)
+    # 下に文を出す写真は、文の場所を空けるため少し小さくして上に寄せる
+    max_w, max_h = int(sw * 0.80), int(sh * (0.68 if has_text else 0.76))
     r = min(max_w / im.width, max_h / im.height)
     fg = im.resize((max(1, int(im.width * r)), max(1, int(im.height * r))), Image.LANCZOS)
     # ほんの少しだけ明るく柔らかく（ソフトフォーカス）
     soft = fg.filter(ImageFilter.GaussianBlur(6))
     fg = Image.blend(fg, Image.blend(soft, Image.new("RGB", fg.size, (255, 250, 254)), 0.15), 0.16)
-    fx, fy = (sw - fg.width) // 2, int((sh - fg.height) / 2 - sh * 0.02)
+    fx, fy = (sw - fg.width) // 2, int((sh - fg.height) / 2 - sh * (0.05 if has_text else 0.02))
 
     # やわらかい影
     shadow = Image.new("L", (sw, sh), 0)
@@ -195,6 +199,8 @@ def make_slide(path, scale, idx, lavish=False):
         kinds = KINDS_LAVISH
     else:
         corners = [[("bl", 1.0), ("tr", 0.6)], [("br", 1.0), ("tl", 0.6)]][idx % 2]
+        if has_text and fg.width < sw * 0.6:  # 縦長写真は下の角のお花が文に重なるので上へ
+            corners = [[("tl", 1.0)], [("tr", 1.0)]][idx % 2]
         kinds = KINDS_NORMAL
     for k, (corner, sz) in enumerate(corners):
         cx = fx - b if corner[1] == "l" else fx + fg.width + b
@@ -316,8 +322,8 @@ def render(cfg, out, font_path, preview=None):
     F = lambda s: ImageFont.truetype(font_path, s)
     fonts = dict(big=F(96), mid=F(54), small=F(36), head=F(44), body=F(52), cap=F(46))
     fade = cfg["fade_seconds"]
-    field = PetalField(W, H)
-    florets = PetalField(W, H, n_petals=26, n_bokeh=10, seed=21, kind="floret")
+    field = PetalField(W, H, n_petals=24)
+    florets = PetalField(W, H, n_petals=18, n_bokeh=10, seed=21, kind="floret")
     vignette = soft_vignette()
 
     items, total = build_timeline(cfg)
@@ -345,7 +351,8 @@ def render(cfg, out, font_path, preview=None):
                 cache[key] = chapter_card(data, fonts, seed=100 + data["key"] * 5)
             else:
                 print(f"  写真 {data['index'] + 1}/{cfg['n_photos']}: {os.path.basename(data['file'])}", flush=True)
-                cache[key] = (make_slide(data["file"], ZOOM + 0.02, data["index"], data["lavish"]),
+                cache[key] = (make_slide(data["file"], ZOOM + 0.02, data["index"], data["lavish"],
+                                         bool(data.get("text") or data.get("caption"))),
                               caption_layer(data.get("caption", ""), fonts["cap"]))
         return cache[key]
 
@@ -370,6 +377,33 @@ def render(cfg, out, font_path, preview=None):
             return fade_white(img, (start + dur - t) / 3.0)
         return img
 
+    # 章の文：その章の写真が出ている間、画面下に通しで表示する
+    groups = {}
+    for it in items:
+        d = it[3]
+        if d and d.get("text"):
+            g = groups.setdefault(d["group"], [it[0], it[0] + it[1], d["text"]])
+            g[1] = it[0] + it[1]
+    text_layers = []
+    for a, b, text in groups.values():
+        lay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        lines = text if isinstance(text, list) else [text]
+        y = H - 64 - len(lines) * fonts["cap"].size * 1.6
+        for line in lines:
+            text_layer(lay, line, fonts["cap"], y, spacing=4)
+            y += fonts["cap"].size * 1.6
+        text_layers.append((a + fade + 0.2, b - fade, lay))
+
+    def draw_texts(img, t):
+        for a, b, lay in text_layers:
+            k = max(0.0, min(1.0, (t - a) / 1.0, (b - t) / 1.0))
+            if k <= 0:
+                continue
+            if k < 1:
+                lay = lay.copy()
+                lay.putalpha(lay.getchannel("A").point(lambda v: int(v * k)))
+            img.alpha_composite(lay)
+
     def compose(t):
         active = [it for it in items if it[0] <= t < it[0] + it[1]] or [items[-1]]
         if len(active) == 1:
@@ -380,6 +414,7 @@ def render(cfg, out, font_path, preview=None):
             base = Image.blend(frame_of(a, t), frame_of(b, t), x)
         img = base.convert("RGBA")
         img.alpha_composite(vignette)
+        draw_texts(img, t)
         # 花びらは最後の数秒で静かに消えていく
         s = min(1.0, t / 1.5, max(0.0, (total - t - 0.5) / 2.5))
         field.draw(img, t, strength=s, petals=cfg["petals"])
