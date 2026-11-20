@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>しょこら コラージュ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Great+Vibes&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<!--
+  しょこら 設定シート「スクラップ・コラージュ」版（16:9 / 1920x1080、2倍で書き出し）
+  溶けたチョコが流れ込む背景、傾いたキャラ、特大の傾いたロゴ、形も角度もバラバラなステッカー。
+  編集はこのファイル → python3 build_collage.py → shokora_collage_16x9.html → node render.js
+-->
+<style>
+:root{
+  --choco:#5a3426; --choco-d:#3e2219; --milk:#8b5a44;
+  --pink:#f5b8cb; --pink-l:#fde3ec; --pink-m:#f09bb6; --hot:#e8789d; --deep:#c94d7b; --cream:#fff8f0; --wine:#a14767;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden}
+body{font-family:"Zen Maru Gothic",sans-serif;color:var(--choco-d)}
+.stage{position:relative;width:1920px;height:1080px;overflow:hidden;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.12) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(90deg, transparent 0 40px, rgba(232,120,157,.28) 40px 72px, transparent 72px 110px, rgba(255,255,255,.7) 110px 118px, transparent 118px 150px),
+    repeating-linear-gradient(0deg, transparent 0 40px, rgba(232,120,157,.28) 40px 72px, transparent 72px 110px, rgba(255,255,255,.7) 110px 118px, transparent 118px 150px),
+    #fbd0de;}
+.abs{position:absolute}
+.u{position:absolute;pointer-events:none;overflow:visible}
+.burst{position:absolute;left:1260px;top:540px;width:2400px;height:2400px;margin:-1200px 0 0 -1200px;z-index:1;border-radius:50%;
+  background:conic-gradient(from 0deg, rgba(255,255,255,.75) 0 6deg, transparent 6deg 15deg);
+  -webkit-mask:radial-gradient(circle, #000 0 18%, rgba(0,0,0,.6) 30%, transparent 46%);mask:radial-gradient(circle, #000 0 18%, rgba(0,0,0,.6) 30%, transparent 46%)}
+.glow{position:absolute;left:1260px;top:520px;width:1100px;height:1000px;margin:-500px 0 0 -550px;z-index:1;border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,.95) 0 30%, rgba(255,255,255,0) 70%)}
+
+/* キャラ */
+.illust{position:absolute;z-index:20;left:612px;top:38px;width:1270px;transform:rotate(-5deg)}
+.illust img{width:100%;display:block;
+  filter:drop-shadow(9px 0 0 #fff) drop-shadow(-9px 0 0 #fff) drop-shadow(0 9px 0 #fff) drop-shadow(0 -9px 0 #fff)
+         drop-shadow(0 0 0 #fff) drop-shadow(5px 0 0 var(--hot)) drop-shadow(-5px 0 0 var(--hot)) drop-shadow(0 5px 0 var(--hot)) drop-shadow(0 -5px 0 var(--hot))
+         drop-shadow(16px 22px 0 rgba(90,40,50,.28))}
+.illust i{position:absolute;width:1px;height:1px}
+
+/* 特大ロゴ */
+.logo{position:absolute;z-index:40;left:24px;top:770px;width:900px;transform:rotate(-8deg);transform-origin:left center}
+.logo .script{position:absolute;left:250px;top:-58px;font-family:"Great Vibes";font-size:76px;color:var(--hot);white-space:nowrap;transform:rotate(-4deg);
+  -webkit-text-stroke:10px #fff;paint-order:stroke fill;filter:drop-shadow(3px 4px 0 rgba(90,40,50,.3));z-index:3}
+.logo h1{position:relative;font-family:"Mochiy Pop One";font-weight:400;font-size:200px;line-height:1;white-space:nowrap;letter-spacing:-.02em}
+.logo h1 span{display:inline-block}
+.logo h1 .l1{position:absolute;left:0;top:0;color:#fff;-webkit-text-stroke:46px #fff;filter:drop-shadow(10px 14px 0 rgba(90,40,50,.3))}
+.logo h1 .l2{position:absolute;left:0;top:0;color:var(--hot);-webkit-text-stroke:24px var(--hot)}
+.logo h1 .l3{position:relative;background:linear-gradient(180deg,#9a6650 0%,#6b3f2e 45%,#3e2219 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:3px #3e2219}
+.logo h1 .l3::after{content:"";}
+.logo .shine{position:absolute;left:0;top:0;font-family:"Mochiy Pop One";font-size:200px;line-height:1;white-space:nowrap;letter-spacing:-.02em;color:transparent;
+  background:linear-gradient(170deg,rgba(255,255,255,.55) 0 22%,transparent 23%);-webkit-background-clip:text;background-clip:text;pointer-events:none}
+.logo .tagline{position:absolute;left:150px;top:200px;font-family:"Hachi Maru Pop";font-size:24px;color:#fff;white-space:nowrap;padding:8px 40px;transform:rotate(3deg);
+  background:radial-gradient(rgba(255,255,255,.45) 2.2px,transparent 2.8px) 0 0/13px 13px,linear-gradient(180deg,#ff9fc0,#ec6f99 55%,#c94d7b);
+  clip-path:polygon(0 0,100% 0,calc(100% - 22px) 50%,100% 100%,0 100%,22px 50%);text-shadow:0 2px 0 #a8355f}
+.logo .tagline::after{content:"";position:absolute;inset:5px 24px;border-top:2px dashed rgba(255,255,255,.85);border-bottom:2px dashed rgba(255,255,255,.85)}
+
+/* マステ */
+.tape{position:absolute;width:120px;height:34px;z-index:5;opacity:.88;
+  background:repeating-linear-gradient(90deg,#f7a5c1 0 10px,#fde3ec 10px 20px);
+  -webkit-mask:radial-gradient(circle at 0 50%,transparent 4px,#000 4.5px) 0 0/100% 8px,radial-gradient(circle at 100% 50%,transparent 4px,#000 4.5px) 0 0/100% 8px;
+  box-shadow:0 2px 4px rgba(0,0,0,.08)}
+.tape.dot{background:radial-gradient(#fff 3px,transparent 3.6px) 0 0/12px 12px,#a8dcc0}
+.tape.choco{background:radial-gradient(#f6c4d4 3px,transparent 3.6px) 0 0/12px 12px,#6b3f2e}
+
+/* 免許証（プロフィール） */
+.lic{position:absolute;z-index:30;left:54px;top:54px;width:566px;transform:rotate(-6deg);background:var(--cream);border-radius:18px;
+  box-shadow:0 0 0 5px #fff,0 0 0 8px var(--pink-m),14px 18px 0 rgba(62,34,25,.35);overflow:visible}
+.lic .top{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-radius:18px 18px 0 0;color:#fff;
+  background:radial-gradient(rgba(246,196,212,.5) 2px,transparent 2.6px) 0 0/12px 12px,linear-gradient(180deg,#7a4a36,#4a291f)}
+.lic .top b{font-family:"Mochiy Pop One";font-weight:400;font-size:22px;letter-spacing:.1em}
+.lic .top span{font-family:"Great Vibes";font-size:28px;color:var(--pink)}
+.lic .body{display:grid;grid-template-columns:auto 1fr auto 1.3fr;gap:8px 10px;padding:14px 22px 16px;font-size:23px;font-weight:900;line-height:1.25;
+  background:repeating-linear-gradient(0deg,transparent 0 45px,rgba(240,155,182,.25) 45px 46.5px)}
+.lic dt{font-family:"Hachi Maru Pop";font-weight:400;font-size:16px;color:#fff;background:var(--hot);border-radius:999px;width:70px;text-align:center;align-self:center;padding:2px 0}
+.lic dd.w{grid-column:2 / span 3}
+.lic .stamp{position:absolute;right:-70px;top:-46px;width:130px;height:130px;transform:rotate(16deg)}
+
+/* 性格（もこもこ吹き出し） */
+.say{position:absolute;z-index:31;left:50px;top:410px;width:560px;height:320px;transform:rotate(2deg)}
+.say svg{position:absolute;left:-30px;top:-30px;width:620px;height:380px;overflow:visible}
+.say .t{position:absolute;inset:18px 34px 6px 34px;text-align:center}
+.say h3{font-family:"Mochiy Pop One";font-weight:400;font-size:22px;letter-spacing:.14em;color:var(--deep);margin-bottom:4px}
+.say h3 small{font-family:"Great Vibes";font-size:28px;letter-spacing:0;color:var(--hot);margin-left:6px}
+.say p{font-size:17.5px;line-height:1.5;font-weight:700;text-align:left}
+.say em{font-style:normal;font-weight:900;color:var(--wine);background:linear-gradient(transparent 55%,var(--pink) 55%)}
+.say .gauge{display:flex;align-items:center;gap:8px;margin-top:6px;font-family:"Hachi Maru Pop";font-size:16px;color:var(--choco)}
+.say .gauge i{flex:1;height:12px;border-radius:999px;background:linear-gradient(90deg,#fff,var(--pink) 35%,var(--milk) 68%,var(--choco-d));box-shadow:0 0 0 2px #fff,0 0 0 4px var(--pink-m)}
+.kw{position:absolute;z-index:33;font-family:"Hachi Maru Pop";font-size:19px;color:#fff;padding:6px 16px;border-radius:999px;white-space:nowrap;
+  background:var(--hot);box-shadow:0 0 0 3px #fff,4px 5px 0 rgba(120,40,70,.3)}
+.kw.c{background:var(--choco)}.kw.w{background:var(--wine)}
+
+/* カセット（イメージソング） */
+.tapeC{position:absolute;z-index:33;left:1590px;top:850px;width:330px;height:206px;transform:rotate(-7deg)}
+.tapeC svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.tapeC .lab{position:absolute;left:30px;right:30px;top:24px;text-align:center;font-family:"Hachi Maru Pop";color:var(--choco)}
+.tapeC .lab b{display:block;font-family:"Mochiy Pop One";font-weight:400;font-size:14px;letter-spacing:.18em;color:var(--deep)}
+.tapeC .lab p{font-size:19px;line-height:1.25;white-space:nowrap}
+.tapeC .lab p small{font-size:14px;color:var(--milk)}
+
+/* カラー板チョコ */
+.bar{position:absolute;z-index:34;left:1160px;top:830px;width:450px;transform:rotate(5deg)}
+.bar svg{display:block;width:100%;overflow:visible}
+
+/* パーツタグ */
+.tg{position:absolute;z-index:36;display:flex;align-items:center;gap:7px;padding:4px 16px 4px 5px;background:#fff;border-radius:16px;white-space:nowrap;
+  box-shadow:0 0 0 3px var(--hot),4px 6px 0 3px rgba(120,40,70,.28)}
+.tg.alt{background:var(--pink-l)}
+.tg.ch{background:var(--choco);box-shadow:0 0 0 3px #fff,4px 6px 0 3px rgba(62,34,25,.35)}
+.tg.ch b{color:#fff}.tg.ch small{color:var(--pink)}
+.tg .n{position:relative;flex:none;width:42px;height:39px;display:grid;place-items:center;font-family:"Mochiy Pop One";font-size:17px;color:#fff;padding-bottom:4px;isolation:isolate}
+.tg .n svg{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.tg b{display:block;font-size:20px;font-weight:900;line-height:1.15;color:var(--choco)}
+.tg small{display:block;font-size:13.5px;font-weight:700;line-height:1.2;color:var(--deep)}
+.lines{position:absolute;left:0;top:0;width:1920px;height:1080px;z-index:35;pointer-events:none}
+.blur{filter:blur(7px) drop-shadow(0 0 0 #fff)}
+</style>
+</head>
+<body>
+{{DEFS}}
+
+<div class="stage" id="stage">
+  <svg class="u" id="flow" style="left:0;top:0;width:1920px;height:1080px;z-index:0" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+  <div class="glow"></div>
+  <div class="burst"></div>
+  <svg class="u" id="ribbon" style="left:0;top:0;width:1920px;height:1080px;z-index:3" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+  <svg class="u" id="medal" style="left:820px;top:60px;width:900px;height:860px;z-index:4;transform:rotate(6deg)" viewBox="0 0 1000 920" aria-hidden="true"></svg>
+
+  <div class="illust" id="illust"><img id="img" src="img/shokora.png" alt="しょこら 全身"></div>
+  <svg class="lines" id="lines" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+  <div id="tags"></div>
+
+  <!-- 免許証 -->
+  <div class="lic">
+    <div class="top"><b>CHOCOLATIER LICENSE</b><span>No.0214</span></div>
+    <dl class="body">
+      <dt>年齢</dt><dd>19歳</dd><dt>職業</dt><dd>ショコラティエ</dd>
+      <dt>身長</dt><dd>160cm</dd><dt>体重</dt><dd>47kg</dd>
+      <dt>MBTI</dt><dd>INFJ</dd><dt>バスト</dt><dd>Eカップ</dd>
+      <dt>特技</dt><dd class="w">お菓子作り、人に合わせること</dd>
+    </dl>
+    <svg class="stamp" viewBox="0 0 130 130" id="stamp"></svg>
+  </div>
+  <div class="tape" style="left:40px;top:44px;transform:rotate(-40deg);z-index:32"></div>
+  <div class="tape dot" style="left:250px;top:24px;transform:rotate(28deg);z-index:32"></div>
+
+  <!-- 性格 -->
+  <div class="say">
+    <svg id="cloud" viewBox="0 0 620 380" aria-hidden="true"></svg>
+    <div class="t">
+      <h3>PERSONALITY<small>sweet &amp; bitter</small></h3>
+      <p>普段はおっとりしていて、人の機嫌をよく伺っている。でも<em>完璧主義</em>で、自分のやることには妥協したくない。意外と戦略家気質で、冷静に相手を観察できる。恋をすると印象が一変、好きな人には<em>独占的で執着深い</em>。</p>
+      <div class="gauge"><span>表は甘い</span><i></i><span>中は苦い</span></div>
+    </div>
+  </div>
+  <span class="kw" style="left:40px;top:396px;transform:rotate(-8deg)">♡ 明るく穏やか</span>
+  <span class="kw c" style="left:450px;top:394px;transform:rotate(7deg)">♡ 完璧主義</span>
+  <span class="kw w" style="left:250px;top:612px;transform:rotate(-4deg)">♡ 独占欲つよめ</span>
+  <span class="kw" style="left:250px;top:386px;transform:rotate(4deg)">♡ 愛され上手</span>
+
+  <!-- ロゴ -->
+  <div class="logo">
+    <div class="script">Sweet Chocolatier</div>
+    <h1><span class="l1">しょこら</span><span class="l2">しょこら</span><span class="l3">しょこら</span></h1>
+    <div class="shine">しょこら</div>
+    <div class="tagline">19歳のショコラティエのお姉さん♡ いつも甘い匂いがする。</div>
+  </div>
+
+  <!-- カラー板チョコ -->
+  <div class="bar"><svg id="bar" viewBox="0 0 500 250" aria-hidden="true"></svg></div>
+  <!-- カセット -->
+  <div class="tapeC">
+    <svg id="cas" viewBox="0 0 330 206" aria-hidden="true"></svg>
+    <div class="lab"><b>♡ IMAGE SONG ♡</b>
+      <p>A 毒チョコ <small>／ザアザア</small></p>
+      <p>B 妄想日記2 <small>／シド</small></p></div>
+  </div>
+  <div class="tape choco" style="left:1820px;top:812px;transform:rotate(40deg);z-index:33"></div>
+
+  <div id="deco"></div>
+</div>
+
+<script>
+{{HELPERS}}
+
+/* ---- 溶けたチョコが流れ込む背景（左上） ---- */
+(() => {
+  // 境界線 A(0,800) → B(1240,0) に沿って、右下向きに丸いチョコの垂れ
+  const A = [0, 800], B = [1240, 0], len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+  const tx = (A[0] - B[0]) / len, ty = (A[1] - B[1]) / len;   // B→A 方向
+  const nx = -ty, ny = tx;                                      // 右下向きの法線
+  let d = `M0 0L${B[0]} ${B[1]}`, pos = 30, i = 0;
+  while (pos < len - 40) {
+    const w = 15 + (i * 7) % 12, L = 26 + ((i * 53) % 9) * 15, gap = 34 + (i * 31) % 40;
+    const px = B[0] + tx * pos, py = B[1] + ty * pos;
+    const x1 = px - tx * w, y1 = py - ty * w, x2 = px + tx * w, y2 = py + ty * w;
+    d += `L${x1} ${y1}L${x1 + nx * L} ${y1 + ny * L}A${w} ${w} 0 0 0 ${x2 + nx * L} ${y2 + ny * L}L${x2} ${y2}`;
+    pos += w * 2 + gap; i++;
+  }
+  d += `L${A[0]} ${A[1]}Z`;
+  document.getElementById('flow').innerHTML = `
+    <defs><clipPath id="fc"><path d="${d}"/></clipPath></defs>
+    <path d="${d}" fill="#3e2219" transform="translate(6 12)" opacity=".35"/>
+    <path d="${d}" fill="url(#chocoG)"/>
+    <g clip-path="url(#fc)">
+      <rect width="1920" height="1080" fill="url(#bdots)" opacity=".55"/>
+      <path d="M-20 700Q300 420 1100 -20" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="22" stroke-linecap="round"/>
+    </g>`;
+})();
+
+/* ---- 斜めのサテンリボン ---- */
+(() => {
+  const d = 'M-60 1010C300 900 420 1000 640 860S980 520 1240 600S1560 820 1980 300';
+  document.getElementById('ribbon').innerHTML = `
+    <path d="${d}" fill="none" stroke="#c94d7b" stroke-width="74" stroke-linecap="round" opacity=".35" transform="translate(6 12)"/>
+    <path d="${d}" fill="none" stroke="#fff" stroke-width="78" stroke-linecap="round" stroke-dasharray="0 11"/>
+    <path d="${d}" fill="none" stroke="#f2a9c0" stroke-width="66"/>
+    <path d="${d}" fill="none" stroke="url(#satinH)" stroke-width="60"/>
+    <path d="${d}" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="6 6" transform="translate(0 -22)"/>
+    <path d="${d}" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="6 6" transform="translate(0 22)"/>`;
+})();
+
+/* ---- キャラの後ろのレースハート ---- */
+(() => {
+  const outer = heartPath(500, 30, 960, 880), inner = heartPath(500, 90, 820, 760);
+  const pts = along(outer, 44);
+  document.getElementById('medal').innerHTML = `
+    <g fill="#fff">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="26"/>`).join('')}<path d="${outer}"/></g>
+    <g fill="#f5b8cb">${pts.map(p => `<path transform="translate(${p.x - 8} ${p.y - 9}) scale(.16)" d="${HEART}"/>`).join('')}</g>
+    <path d="${inner}" fill="url(#quilt)"/>
+    <path d="${inner}" fill="url(#printP)" opacity=".3"/>
+    ${pearls(inner, 7)}`;
+})();
+
+/* ---- 免許証のハンコ ---- */
+document.getElementById('stamp').innerHTML = `
+  <circle cx="65" cy="65" r="56" fill="none" stroke="#e8789d" stroke-width="5" opacity=".9"/>
+  <circle cx="65" cy="65" r="46" fill="none" stroke="#e8789d" stroke-width="2" stroke-dasharray="4 3" opacity=".9"/>
+  <path transform="translate(42 40) scale(.46)" d="${HEART}" fill="#e8789d" opacity=".9"/>
+  <text x="65" y="104" text-anchor="middle" font-family="Mochiy Pop One" font-size="12" fill="#e8789d" letter-spacing="2">SWEET</text>
+  <text x="65" y="34" text-anchor="middle" font-family="Mochiy Pop One" font-size="12" fill="#e8789d" letter-spacing="2">APPROVED</text>`;
+
+/* ---- もこもこ吹き出し ---- */
+(() => {
+  const rr = 'M70 30H550A40 40 0 0 1 590 70V300A40 40 0 0 1 550 340H70A40 40 0 0 1 30 300V70A40 40 0 0 1 70 30Z';
+  const pts = along(rr, 46);
+  const bumps = pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="30"/>`).join('');
+  document.getElementById('cloud').innerHTML = `
+    <g transform="translate(10 14)" fill="#c94d7b" opacity=".3">${bumps}<path d="${rr}"/><path d="M560 270L640 320L540 320Z"/></g>
+    <g fill="#e8789d">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="35"/>`).join('')}<path d="M556 256L650 324L530 326Z"/></g>
+    <g fill="#fff">${bumps}<path d="${rr}"/><path d="M560 270L636 318L540 320Z"/></g>
+    <path d="${rr}" fill="url(#printP)" opacity=".12"/>`;
+})();
+
+/* ---- カラー板チョコ（一粒ずつ色） ---- */
+(() => {
+  const C = [['#a14767','髪・服'],['#876396','瞳'],['#fbf5f6','白'],['#f2ccdf','透けパネル'],['#663343','チョコ'],['#7a4a4f','靴'],['#e75b93','差し色'],['#d3a583','金ライン']];
+  let g = '';
+  C.forEach(([c, n], i) => {
+    const x = 26 + (i % 4) * 94, y = 30 + Math.floor(i / 4) * 96;
+    const dark = ['#a14767','#876396','#663343','#7a4a4f','#e75b93'].includes(c);
+    g += `<rect x="${x}" y="${y}" width="86" height="88" rx="8" fill="${c}"/>
+      <path d="M${x} ${y + 8}a8 8 0 0 1 8 -8H${x + 78}l-8 8H${x + 8}V${y + 80}l-8 8Z" fill="#fff" opacity=".35"/>
+      <path d="M${x + 86} ${y + 8}V${y + 80}a8 8 0 0 1 -8 8H${x + 8}l8 -8H${x + 78}V${y}Z" fill="#000" opacity=".2"/>
+      <path transform="translate(${x + 31} ${y + 14}) scale(.24)" d="${HEART}" fill="#000" opacity=".15"/>
+      <text x="${x + 43}" y="${y + 60}" text-anchor="middle" font-family="Zen Maru Gothic" font-weight="900" font-size="15" fill="${dark ? '#fff' : '#5a3426'}">${n}</text>
+      <text x="${x + 43}" y="${y + 77}" text-anchor="middle" font-family="Zen Maru Gothic" font-weight="700" font-size="11" fill="${dark ? '#fde3ec' : '#8b5a44'}">${c.toUpperCase()}</text>`;
+  });
+  document.getElementById('bar').innerHTML = `
+    <rect x="14" y="18" width="472" height="216" rx="16" fill="#3e2219" transform="translate(10 14)" opacity=".35"/>
+    <rect x="14" y="18" width="472" height="216" rx="16" fill="url(#chocoG)" stroke="#fff" stroke-width="5"/>
+    ${g}
+    <path d="M400 18H486V234H430L410 214L426 196L404 176L422 156L400 136L418 116L396 96L414 76L392 56L408 36Z" fill="#f5b8cb" stroke="#fff" stroke-width="4"/>
+    <path d="M400 18H486V234H430L410 214L426 196L404 176L422 156L400 136L418 116L396 96L414 76L392 56L408 36Z" fill="url(#printP)" opacity=".6"/>
+    <rect x="446" y="18" width="20" height="216" fill="#e8789d"/><rect x="446" y="18" width="20" height="216" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="5 4"/>
+    <text x="456" y="130" text-anchor="middle" font-family="Mochiy Pop One" font-size="15" fill="#fff" transform="rotate(90 456 126)" letter-spacing="4">COLOR</text>`;
+})();
+
+/* ---- カセット ---- */
+document.getElementById('cas').innerHTML = `
+  <rect x="6" y="6" width="318" height="194" rx="18" fill="#c94d7b" transform="translate(8 12)" opacity=".3"/>
+  <rect x="6" y="6" width="318" height="194" rx="18" fill="#f5b8cb" stroke="#fff" stroke-width="5"/>
+  <rect x="6" y="6" width="318" height="194" rx="18" fill="url(#printP)" opacity=".35"/>
+  <rect x="24" y="18" width="282" height="118" rx="10" fill="#fff8f0"/>
+  <rect x="24" y="18" width="282" height="22" rx="10" fill="#e8789d"/>
+  <rect x="90" y="140" width="150" height="50" rx="8" fill="#5a3426"/>
+  <circle cx="125" cy="165" r="15" fill="#fff"/><circle cx="205" cy="165" r="15" fill="#fff"/>
+  <circle cx="125" cy="165" r="6" fill="#5a3426"/><circle cx="205" cy="165" r="6" fill="#5a3426"/>
+  <circle cx="20" cy="186" r="5" fill="#fff"/><circle cx="310" cy="186" r="5" fill="#fff"/><circle cx="20" cy="20" r="5" fill="#fff"/><circle cx="310" cy="20" r="5" fill="#fff"/>`;
+
+/* ---- パーツタグ [番号, 見出し, 補足, x, y, 回転, 指す場所fx, fy, スタイル] ---- */
+const TAGS = [
+  [1, '白ベレー', 'チョコハート＆金ボタン', 1010, 40, -6, .575, .05, ''],
+  [2, '縦ロール', '両サイドのドリルツイン', 730, 232, 5, .42, .25, 'alt'],
+  [5, 'チョコつき泡立て器', '持ち手にもリボン', 1600, 64, 6, .93, .16, 'ch'],
+  [3, 'スタンドカラー', 'ワイン×ハートボタン', 1640, 500, -4, .665, .37, ''],
+  [6, 'ワインの手袋', '腕にピンクのリボン巻き', 1700, 624, 5, .86, .47, 'alt'],
+  [4, 'チョコ色リボン', '胸元に垂れチョコ＆ハート', 1600, 742, -3, .57, .46, 'ch'],
+  [8, '片脚だけ網タイツ', '白のフィッシュネット', 640, 410, -5, .25, .43, ''],
+  [9, 'ストライプのガーター', 'もう片脚にぐるぐる', 960, 690, 4, .46, .64, 'ch'],
+  [7, 'ハート窓の透けパネル', 'フリルつきのピンク', 1220, 762, -5, .62, .86, 'alt'],
+  [10, '厚底ストラップ靴', 'ブラウン＋リボン', 930, 990, 3, .2, .87, ''],
+];
+const img = document.getElementById('img'), il = document.getElementById('illust');
+function drawTags() {
+  const host = document.getElementById('tags');
+  host.innerHTML = TAGS.map(([n, t, s, x, y, r, , , st]) =>
+    `<div class="tg ${st}" style="left:${x}px;top:${y}px;transform:rotate(${r}deg)"><span class="n"><svg viewBox="0 0 100 92"><use href="#hp" fill="${st === 'ch' ? '#f09bb6' : '#e8789d'}" stroke="#fff" stroke-width="6"/></svg>${n}</span><span><b>${t}</b><small>${s}</small></span></div>`).join('');
+  il.querySelectorAll('i').forEach(e => e.remove());
+  let g = '';
+  [...host.children].forEach((el, i) => {
+    const [, , , , , , fx, fy] = TAGS[i];
+    const m = document.createElement('i'); m.style.left = fx * 100 + '%'; m.style.top = fy * 100 + '%'; il.appendChild(m);
+    const p = m.getBoundingClientRect(), r = el.getBoundingClientRect();
+    const tx = p.left, ty = p.top;
+    const cx = Math.min(Math.max(tx, r.left + 24), r.right - 24), cy = Math.min(Math.max(ty, r.top + 6), r.bottom - 6);
+    const ex = tx < r.left ? r.left + 6 : tx > r.right ? r.right - 6 : cx;
+    const ey = (tx < r.left || tx > r.right) ? r.top + r.height / 2 : cy;
+    const k = (i % 2 ? 1 : -1) * 40;
+    const d = `M${ex} ${ey}C${ex + k} ${ey - 50} ${tx - k} ${ty + 40} ${tx} ${ty}`;
+    g += `<path d="${d}" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+      <path d="${d}" fill="none" stroke="#c94d7b" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="1 7"/>
+      <path transform="translate(${tx - 11} ${ty - 11}) scale(.22)" d="${HEART}" fill="#e8789d" stroke="#fff" stroke-width="16"/>`;
+  });
+  document.getElementById('lines').innerHTML = g;
+}
+
+/* ---- 飾り [種類, x, y, 幅, 回転, 色, z, ぼかし] ---- */
+const VB = { bigbow:'0 0 240 230', bowS:'0 0 120 94', bowP:'0 0 120 94', bellS:'0 0 120 116', bellP:'0 0 120 116', bellC:'0 0 120 116',
+  heart:'0 0 100 92', chocoheart:'0 0 100 92', truffle:'0 0 100 100', cookie:'0 0 100 100', macaron:'0 0 100 80',
+  btnB:'0 0 100 100', btnP:'0 0 100 100', spark:'0 0 100 100', cream:'0 0 100 100', berryS:'0 0 80 92', cherry:'0 0 100 100',
+  candy:'0 0 120 60', lolli:'0 0 100 140', rose:'0 0 100 100', star:'0 0 100 100' };
+const D = [
+  // 手前のぼかし（奥行き）
+  ['macaron', -100, -60, 200, -20, '#f78fb2', 60, 1], ['berryS', 1830, -40, 150, 24, '', 60, 1], ['chocoheart', 1830, 1000, 170, -18, '', 60, 1],
+  ['rose', -50, 980, 170, 0, '#f78fb2', 60, 1],
+  // リボンの結び目
+  ['bigbow', 548, 236, 170, 14, '', 34],
+  // ロゴまわり
+  ['cherry', 760, 700, 90, 12, '', 42], ['star', 30, 770, 70, -12, '#ffd36e', 42], ['heart', 850, 940, 54, 16, '#e8789d', 42],
+  
+  // 免許証・吹き出しまわり
+  ['chocoheart', 40, 640, 80, -12, '', 33], ['rose', 590, 40, 76, 0, '#fbc2d4', 33], ['btnP', 20, 330, 64, 0, '', 33],
+  ['truffle', 600, 690, 70, 0, '', 33], ['candy', 300, 360, 90, -10, '#e8789d', 33],
+  // 右側
+  ['macaron', 1820, 210, 92, 14, '#8b5a44', 30], ['rose', 1840, 400, 70, 0, '#e8789d', 30], ['cream', 1520, 660, 70, 0, '', 30],
+  ['berryS', 1560, 1000, 56, -16, '', 37],
+  // きらきら
+  ['spark', 1200, 40, 40, 0, '', 30], ['spark', 1500, 300, 46, 0, '', 30], ['spark', 900, 860, 40, 0, '', 42], ['spark', 1760, 760, 34, 0, '', 30],
+  ['spark', 660, 300, 34, 0, '', 30], ['spark', 1880, 600, 30, 0, '', 30],
+];
+const deco = document.getElementById('deco');
+for (const [k, x, y, s, r, col, z, bl] of D) {
+  const [, , vw, vh] = VB[k].split(' ').map(Number);
+  deco.insertAdjacentHTML('beforeend', `<svg class="u ${bl ? 'blur' : ''}" viewBox="${VB[k]}" style="left:${x}px;top:${y}px;width:${s}px;height:${s * vh / vw}px;z-index:${z};transform:rotate(${r}deg);color:${col};${bl ? '' : 'filter:drop-shadow(3px 5px 0 rgba(120,40,70,.3))'}"><use href="#${k}"/></svg>`);
+}
+// スプレー（ピンク地の方だけ）
+(() => {
+  let seed = 5; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const cols = ['#ffffff', '#f78fb2', '#8b5a44', '#ffd36e', '#a8dcb4', '#e8789d']; let g = '';
+  for (let i = 0; i < 220; i++) {
+    const x = rnd() * 1920, y = rnd() * 1080; if (x * 0.645 + y * 1 < 800) continue;
+    const c = cols[Math.floor(rnd() * cols.length)], r = rnd() * 180;
+    g += rnd() < .75 ? `<rect x="${x}" y="${y}" width="12" height="4.5" rx="2.2" fill="${c}" transform="rotate(${r} ${x} ${y})"/>` : `<circle cx="${x}" cy="${y}" r="${3 + rnd() * 3}" fill="url(#pearl)"/>`;
+  }
+  deco.insertAdjacentHTML('beforeend', `<svg class="u" style="left:0;top:0;width:1920px;height:1080px;z-index:2" viewBox="0 0 1920 1080">${g}</svg>`);
+})();
+(img.complete ? Promise.resolve() : new Promise(r => img.onload = r)).then(() => document.fonts.ready).then(drawTags);
+</script>
+</body>
+</html>

@@ -34,3 +34,11 @@
 - 編集は `src_patisserie.html` → `python3 build_patisserie.py` で `shokora_sheet_16x9.html` を生成 → `node render.js`
 - `out/shokora_sheet_16x9.png` (3840×2160)
 - 吹き出しの位置は `CALLOUTS`（[番号, 見出し, 補足, x, y, 指す場所fx, fy]）
+
+## コラージュ版 16:9 (`shokora_collage_16x9.html`)
+
+スクラップブック風。溶けたチョコが流れ込む背景、傾いたキャラ、特大ロゴ、
+免許証（プロフィール）・もこもこ吹き出し（性格）・カラー板チョコ（配色）・カセット（イメージソング）・傾いたパーツタグ。
+
+- 編集は `src_collage.html` → `python3 build_collage.py` → `node render.js`
+- `out/shokora_collage_16x9.png` (3840×2160)
