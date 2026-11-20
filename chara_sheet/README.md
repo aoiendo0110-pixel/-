@@ -42,3 +42,10 @@
 
 - 編集は `src_collage.html` → `python3 build_collage.py` → `node render.js`
 - `out/shokora_collage_16x9.png` (3840×2160)
+
+## パーツ素材 (`parts/`)
+
+シートやデザインに使える背景透過 PNG（3倍解像度）61 個。一覧は `parts_catalog.png`。
+リボン・鈴／お菓子／枠・フレーム／見出し・ライン／番号ハート・マステ・角のスカラップ。
+
+- 編集は `src_parts.html` → `python3 build_parts.py` → `node export_parts.js`

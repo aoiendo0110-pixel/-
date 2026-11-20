@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>しょこら パーツ素材</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<!--
+  パーツ素材カタログ。python3 build_parts.py → parts.html → node export_parts.js
+  → parts/*.png（背景透過・3倍）と parts_catalog.png（一覧）
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1800px;font-family:"Zen Maru Gothic",sans-serif;color:#5a3426;padding:40px;
+  background:radial-gradient(#fff 3px,transparent 3.6px) 0 0/28px 28px,#fde3ec}
+:root.export body{background:transparent}
+:root.export .cat{background:none;box-shadow:none}
+:root.export .cat h2,:root.export .lab,:root.export header{display:none}
+header{text-align:center;margin-bottom:24px}
+header h1{font-family:"Mochiy Pop One";font-weight:400;font-size:54px;color:#e8789d;-webkit-text-stroke:10px #fff;paint-order:stroke fill}
+header p{font-family:"Hachi Maru Pop";font-size:20px}
+.cat{margin-bottom:34px;background:rgba(255,255,255,.55);border-radius:30px;padding:18px 24px 24px;box-shadow:0 0 0 4px #fff}
+.cat h2{font-family:"Mochiy Pop One";font-weight:400;font-size:26px;color:#fff;display:inline-block;padding:6px 24px;border-radius:999px;margin-bottom:14px;
+  background:radial-gradient(rgba(255,255,255,.4) 2px,transparent 2.6px) 0 0/12px 12px,linear-gradient(180deg,#7a4a36,#4a291f)}
+.grid{display:flex;flex-wrap:wrap;gap:18px 22px;align-items:flex-end}
+.item{display:flex;flex-direction:column;align-items:center}
+.part{position:relative;padding:14px}
+.part svg{display:block;overflow:visible}
+.lab{font-family:"Zen Maru Gothic";font-weight:900;font-size:14px;color:#c94d7b;margin-top:2px}
+.num{font-family:"Mochiy Pop One"}
+</style>
+</head>
+<body>
+{{DEFS}}
+<header><h1>Sweet Chocolat Parts</h1><p>バレンタイン × チョコ × 鈴リボン のパーツ素材（背景透過PNG）</p></header>
+<div id="root"></div>
+
+<script>
+{{HELPERS}}
+if (location.hash === '#export') document.documentElement.classList.add('export');
+const S = (vb, w, inner) => { const [, , vw, vh] = vb.split(' ').map(Number); return `<svg viewBox="${vb}" width="${w}" height="${Math.round(w * vh / vw)}">${inner}</svg>`; };
+const U = (id, vb, w, color = '') => S(vb, w, `<use href="#${id}" ${color ? `color="${color}"` : ''}/>`);
+const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+const SH = 'filter="drop-shadow(0 6px 0 rgba(120,40,70,.25))"';
+
+/* ===== 枠・フレーム ===== */
+function laceHeart() {
+  const outer = heartPath(250, 20, 460, 420), inner = heartPath(250, 54, 380, 348), pts = along(outer, 30);
+  return S('0 0 500 470', 400, `<g ${SH}><g fill="#fff">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="18"/>`).join('')}<path d="${outer}"/></g></g>
+    <g fill="#f5b8cb">${pts.map(p => `<path transform="translate(${p.x - 6} ${p.y - 7}) scale(.12)" d="${HEART}"/>`).join('')}</g>
+    <path d="${inner}" fill="url(#quilt)"/>${pearls(inner, 5.5)}`);
+}
+function pearlHeart() {
+  const d = heartPath(200, 30, 360, 330);
+  return S('0 0 400 380', 340, `<path d="${d}" fill="url(#quilt)" stroke="#fff" stroke-width="10" ${SH}/>
+    <path d="${heartPath(200, 70, 270, 250)}" fill="#fff8f0" fill-opacity=".85"/>${pearls(d, 8)}
+    <use href="#bowP" x="140" y="8" width="120" height="94"/>`);
+}
+function doily() {
+  let sc = '', ey = '';
+  for (let i = 0; i < 30; i++) { const a = i / 30 * Math.PI * 2;
+    sc += `<circle cx="${160 + Math.cos(a) * 140}" cy="${160 + Math.sin(a) * 140}" r="16"/>`;
+    ey += `<path transform="translate(${160 + Math.cos(a) * 140 - 6} ${160 + Math.sin(a) * 140 - 7}) scale(.12)" d="${HEART}"/>`; }
+  return S('0 0 320 320', 320, `<g ${SH}><g fill="#fff">${sc}<circle cx="160" cy="160" r="140"/></g></g><g fill="#f5b8cb">${ey}</g>
+    <circle cx="160" cy="160" r="112" fill="#5a3426"/><circle cx="160" cy="160" r="104" fill="none" stroke="#f6c4d4" stroke-width="2" stroke-dasharray="4 4"/>
+    <circle cx="160" cy="160" r="96" fill="url(#quilt)" stroke="#fff" stroke-width="4"/><circle cx="160" cy="160" r="86" fill="#fff8f0" fill-opacity=".85"/>${pearls('M160 64A96 96 0 1 1 159.9 64Z', 5)}`);
+}
+function laceLabel() {
+  const d = rr(24, 24, 472, 252, 34), pts = along(d, 30);
+  return S('0 0 520 300', 480, `<g ${SH}><g fill="#fff">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="17"/>`).join('')}<path d="${d}"/></g></g>
+    <g fill="#f09bb6">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4"/>`).join('')}</g>
+    <path d="${rr(44, 44, 432, 212, 22)}" fill="#fffafc"/><path d="${rr(44, 44, 432, 212, 22)}" fill="url(#printP)" opacity=".1"/>
+    <path d="${rr(54, 54, 412, 192, 16)}" fill="none" stroke="#f09bb6" stroke-width="3" stroke-dasharray="7 6"/>`);
+}
+function cloud() {
+  const d = rr(50, 40, 500, 250, 40), pts = along(d, 44), b = pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="28"/>`).join('');
+  return S('0 0 620 360', 480, `<g transform="translate(8 12)" fill="#c94d7b" opacity=".25">${b}<path d="${d}"/><path d="M520 250L600 330L480 290Z"/></g>
+    <g fill="#e8789d">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="33"/>`).join('')}<path d="M512 236L610 336L470 296Z"/></g>
+    <g fill="#fff">${b}<path d="${d}"/><path d="M518 250L598 326L482 290Z"/></g>`);
+}
+function giftTag() {
+  const d = 'M44 8H218L254 44V356Q254 366 244 366H18Q8 366 8 356V44Z';
+  return S('0 0 262 380', 220, `<path d="${d}" fill="#fff8f0" stroke="#fff" stroke-width="6" ${SH}/>
+    <path d="M50 20H212L242 50V350H20V50Z" fill="none" stroke="#f09bb6" stroke-width="2.5" stroke-dasharray="6 5"/>
+    <path d="M8 320H254V356Q254 366 244 366H18Q8 366 8 356Z" fill="url(#stripeV)"/>
+    <circle cx="131" cy="38" r="12" fill="#fff" stroke="#d8b072" stroke-width="5"/>
+    <use href="#bellP" x="76" y="-62" width="110" height="106"/>`);
+}
+function card() {
+  return S('0 0 560 340', 480, `<path d="${rr(10, 10, 540, 320, 22)}" fill="#fff8f0" stroke="#fff" stroke-width="6" ${SH}/>
+    <path d="${rr(10, 10, 540, 320, 22)}" fill="none" stroke="#f09bb6" stroke-width="4" transform="translate(0 0)"/>
+    <path d="M10 70V32A22 22 0 0 1 32 10H528A22 22 0 0 1 550 32V70Z" fill="url(#bdots)"/>
+    ${[110, 160, 210, 260].map(y => `<path d="M40 ${y}H520" stroke="#f5b8cb" stroke-width="2" stroke-dasharray="4 5"/>`).join('')}
+    <g transform="translate(450 230) rotate(14)"><circle r="46" fill="none" stroke="#e8789d" stroke-width="4"/><circle r="38" fill="none" stroke="#e8789d" stroke-width="1.6" stroke-dasharray="3 3"/>
+    <path transform="translate(-17 -16) scale(.34)" d="${HEART}" fill="#e8789d"/></g>`);
+}
+function cassette() {
+  return S('0 0 330 206', 330, `<rect x="6" y="6" width="318" height="194" rx="18" fill="#f5b8cb" stroke="#fff" stroke-width="5" ${SH}/>
+    <rect x="6" y="6" width="318" height="194" rx="18" fill="url(#printP)" opacity=".35"/>
+    <rect x="24" y="18" width="282" height="118" rx="10" fill="#fff8f0"/><rect x="24" y="18" width="282" height="22" rx="10" fill="#e8789d"/>
+    <rect x="90" y="140" width="150" height="50" rx="8" fill="#5a3426"/>
+    <circle cx="125" cy="165" r="15" fill="#fff"/><circle cx="205" cy="165" r="15" fill="#fff"/><circle cx="125" cy="165" r="6" fill="#5a3426"/><circle cx="205" cy="165" r="6" fill="#5a3426"/>
+    <g fill="#fff"><circle cx="20" cy="186" r="5"/><circle cx="310" cy="186" r="5"/><circle cx="20" cy="20" r="5"/><circle cx="310" cy="20" r="5"/></g>`);
+}
+function chocoBar(colors) {
+  let g = '';
+  colors.forEach((c, i) => { const x = 26 + (i % 4) * 94, y = 30 + Math.floor(i / 4) * 96;
+    g += `<rect x="${x}" y="${y}" width="86" height="88" rx="8" fill="${c}"/>
+      <path d="M${x} ${y + 8}a8 8 0 0 1 8 -8H${x + 78}l-8 8H${x + 8}V${y + 80}l-8 8Z" fill="#fff" opacity=".35"/>
+      <path d="M${x + 86} ${y + 8}V${y + 80}a8 8 0 0 1 -8 8H${x + 8}l8 -8H${x + 78}V${y}Z" fill="#000" opacity=".2"/>
+      <path transform="translate(${x + 26} ${y + 26}) scale(.34)" d="${HEART}" fill="#000" opacity=".14"/>`; });
+  return S('0 0 500 250', 460, `<rect x="14" y="18" width="472" height="216" rx="16" fill="url(#chocoG)" stroke="#fff" stroke-width="5" ${SH}/>${g}
+    <path d="M400 18H486V234H430L410 214L426 196L404 176L422 156L400 136L418 116L396 96L414 76L392 56L408 36Z" fill="#f5b8cb" stroke="#fff" stroke-width="4"/>
+    <path d="M400 18H486V234H430L410 214L426 196L404 176L422 156L400 136L418 116L396 96L414 76L392 56L408 36Z" fill="url(#printP)" opacity=".6"/>
+    <rect x="446" y="18" width="20" height="216" fill="#e8789d"/><rect x="446" y="18" width="20" height="216" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="5 4"/>`);
+}
+function plate() {
+  const o = rr(10, 10, 680, 400, 60), m = rr(34, 34, 632, 352, 44), sc = along(o, 26);
+  return S('0 0 700 420', 560, `<g ${SH}><g fill="#fff">${sc.map(p => `<circle cx="${p.x}" cy="${p.y}" r="15"/>`).join('')}<path d="${o}"/></g></g>
+    <g fill="#f3b3c8">${sc.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.6"/>`).join('')}</g>
+    <path d="${m}" fill="url(#quilt)"/><path d="${m}" fill="#fff" fill-opacity=".25"/>${pearls(m, 8)}`);
+}
+function banner(c1, c2, c3, dot) {
+  return S('0 0 520 84', 460, `<path d="M0 6H520L496 42L520 78H0L24 42Z" fill="url(#bn${c1.slice(1)})" ${SH}/>
+    <defs><linearGradient id="bn${c1.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset=".55" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/></linearGradient>
+    <pattern id="bd${c1.slice(1)}" width="13" height="13" patternUnits="userSpaceOnUse"><circle cx="6.5" cy="6.5" r="2.2" fill="${dot}"/></pattern></defs>
+    <path d="M0 6H520L496 42L520 78H0L24 42Z" fill="url(#bd${c1.slice(1)})"/>
+    <path d="M28 14H492M28 70H492" stroke="#fff" stroke-opacity=".85" stroke-width="2.5" stroke-dasharray="7 5"/>`);
+}
+
+/* ===== ライン ===== */
+const lineLace = () => `<div style="width:760px;height:44px;background:var(--laceH) 0 0/66px 44px repeat-x;filter:drop-shadow(0 3px 0 rgba(240,155,182,.6))"></div>`;
+function linePearl() { return S('0 0 760 30', 760, `<path d="M15 15H745" stroke="url(#pearl)" stroke-width="22" stroke-linecap="round" stroke-dasharray="0 23"/><path d="M15 15H745" stroke="#d9c3c8" stroke-width="23" stroke-linecap="round" stroke-dasharray="0 23" opacity=".35" transform="translate(0 1.5)"/><path d="M15 15H745" stroke="url(#pearl)" stroke-width="21" stroke-linecap="round" stroke-dasharray="0 23"/>`); }
+function lineDrip() {
+  let d = 'M0 0H760V36', x = 760, i = 0;
+  while (x > 0) { const w = 50 + (i * 37) % 40, l = 18 + (i * 53) % 46; x -= w;
+    d += `C${x + w - 8} 36 ${x + w / 2 + 12} 40 ${x + w / 2 + 10} ${36 + l}C${x + w / 2 + 8} ${48 + l} ${x + w / 2 - 8} ${48 + l} ${x + w / 2 - 10} ${36 + l}C${x + w / 2 - 12} 40 ${x + 8} 36 ${x} 36`; i++; }
+  return S('0 0 760 110', 760, `<path d="${d}Z" fill="url(#chocoG)"/><path d="M14 18H746" stroke="#fff" stroke-opacity=".3" stroke-width="5" stroke-linecap="round" stroke-dasharray="200 30"/>
+    ${[...Array(26)].map((_, k) => `<rect x="${(k * 97) % 740 + 10}" y="${6 + (k * 13) % 20}" width="10" height="4" rx="2" fill="${['#fff', '#f78fb2', '#ffd36e', '#a8dcb4'][k % 4]}" transform="rotate(${k * 47} ${(k * 97) % 740 + 15} ${8 + (k * 13) % 20})"/>`).join('')}`);
+}
+const lineRuffle = () => `<div style="width:760px;height:46px;background:repeating-linear-gradient(90deg,#f7c4d5 0 9px,#ef9fbb 9px 12px,#fbd9e4 12px 20px);
+  -webkit-mask:linear-gradient(#000,#000) 0 0/100% 24px no-repeat,radial-gradient(circle at 20px 24px,#000 20px,transparent 20.5px) 0 0/40px 46px repeat-x;
+  mask:linear-gradient(#000,#000) 0 0/100% 24px no-repeat,radial-gradient(circle at 20px 24px,#000 20px,transparent 20.5px) 0 0/40px 46px repeat-x"></div>`;
+function garland() {
+  const w = 760, n = 3, sw = w / n; let d = '', b = '';
+  for (let i = 0; i < n; i++) d += `M${i * sw} 24Q${i * sw + sw / 2} 120 ${(i + 1) * sw} 24`;
+  for (let i = 0; i <= n; i++) b += `<use href="#${i % 2 ? 'bellP' : 'bellS'}" x="${i * sw - 50}" y="-20" width="100" height="97"/>`;
+  return S(`-60 -30 ${w + 120} 190`, 820, `<path d="${d}" fill="none" stroke="#f2a9c0" stroke-width="20"/><path d="${d}" fill="none" stroke="url(#satinH)" stroke-width="15"/>
+    <path d="${d.replaceAll(' 120 ', ' 90 ')}" fill="none" stroke="url(#pearl)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 15"/>${b}`);
+}
+function flap() {
+  const A = [300, 0], B = [0, 300], pts = []; for (let i = 0; i <= 12; i++) pts.push([A[0] + (B[0] - A[0]) * i / 12, A[1] + (B[1] - A[1]) * i / 12]);
+  return S('-20 -20 340 340', 300, `<g fill="#fff">${pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="18"/>`).join('')}<path d="M300 0L0 300H300Z" transform="translate(-12 -12)"/></g>
+    <path d="M300 0L0 300H300Z" fill="#f07ea4"/><path d="M300 0L0 300H300Z" fill="url(#printP)" opacity=".5"/>
+    <g fill="#fff">${pts.map(([x, y]) => `<circle cx="${x - 8}" cy="${y - 8}" r="3"/>`).join('')}</g>`);
+}
+const tape = (bg) => `<div style="width:170px;height:46px;opacity:.9;background:${bg};
+  -webkit-mask:radial-gradient(circle at 0 50%,transparent 4.5px,#000 5px) 0 0/100% 10px,radial-gradient(circle at 100% 50%,transparent 4.5px,#000 5px) 0 0/100% 10px"></div>`;
+const numHeart = (n, c) => `<div style="position:relative;width:86px;height:80px;display:grid;place-items:center;isolation:isolate">
+  <svg viewBox="0 0 100 92" width="86" height="80" style="position:absolute;inset:0;z-index:-1"><use href="#hp" fill="${c}" stroke="#fff" stroke-width="6" ${SH}/><ellipse cx="26" cy="27" rx="10" ry="5" fill="#fff" opacity=".55" transform="rotate(-35 26 27)"/></svg>
+  <span class="num" style="font-size:${n > 9 ? 28 : 34}px;color:#fff;padding-bottom:8px;text-shadow:0 2px 0 rgba(0,0,0,.15)">${n}</span></div>`;
+
+/* ===== カタログ ===== */
+const CATS = [
+  ['リボン・鈴', [
+    ['ribbon_stripe', 'ストライプリボン', U('bowS', '0 0 120 94', 190)],
+    ['ribbon_satin', 'サテンリボン', U('bowP', '0 0 120 94', 190)],
+    ['ribbon_dot', '水玉リボン', U('bowC', '0 0 120 94', 190)],
+    ['bell_ribbon_stripe', '鈴リボン ストライプ', U('bellS', '0 0 120 116', 180)],
+    ['bell_ribbon_satin', '鈴リボン サテン', U('bellP', '0 0 120 116', 180)],
+    ['bell_ribbon_dot', '鈴リボン 水玉', U('bellC', '0 0 120 116', 180)],
+    ['bell_ribbon_big', '3連鈴の大リボン', U('bigbow', '0 0 240 230', 280)],
+    ['bell', '鈴', U('bell', '0 0 40 46', 80)],
+  ]],
+  ['お菓子', [
+    ['choco_heart', 'ハートチョコ', U('chocoheart', '0 0 100 92', 150)],
+    ['truffle', 'トリュフ', U('truffle', '0 0 100 100', 130)],
+    ['macaron_pink', 'マカロン ピンク', U('macaron', '0 0 100 80', 140, '#f78fb2')],
+    ['macaron_choco', 'マカロン チョコ', U('macaron', '0 0 100 80', 140, '#8b5a44')],
+    ['macaron_white', 'マカロン ミルク', U('macaron', '0 0 100 80', 140, '#fde3ec')],
+    ['macaron_lavender', 'マカロン ラベンダー', U('macaron', '0 0 100 80', 140, '#c9a6e8')],
+    ['strawberry', 'いちご', U('berryS', '0 0 80 92', 110)],
+    ['cherry', 'さくらんぼ', U('cherry', '0 0 100 100', 130)],
+    ['candy_pink', 'キャンディ ピンク', U('candy', '0 0 120 60', 170, '#e8789d')],
+    ['candy_choco', 'キャンディ チョコ', U('candy', '0 0 120 60', 170, '#8b5a44')],
+    ['lollipop', 'ペロペロキャンディ', U('lolli', '0 0 100 140', 110, '#f78fb2')],
+    ['rose_pink', 'バラ ピンク', U('rose', '0 0 100 100', 120, '#f78fb2')],
+    ['rose_pale', 'バラ 淡ピンク', U('rose', '0 0 100 100', 120, '#fbc2d4')],
+    ['whipped_cream', '生クリーム', U('cream', '0 0 100 100', 120)],
+    ['checker_cookie', '市松クッキー', U('cookie', '0 0 100 100', 110)],
+    ['button_choco', 'ボタン チョコ', U('btnB', '0 0 100 100', 100)],
+    ['button_pink', 'ボタン ピンク', U('btnP', '0 0 100 100', 100)],
+    ['heart_pink', 'ハート ピンク', U('heart', '0 0 100 92', 110, '#e8789d')],
+    ['heart_choco', 'ハート チョコ', U('heart', '0 0 100 92', 110, '#6b3f2e')],
+    ['star', '星', U('star', '0 0 100 100', 100, '#ffd36e')],
+    ['sparkle', 'きらきら', `<div style="filter:drop-shadow(0 0 6px #f09bb6)">${U('spark', '0 0 100 100', 90)}</div>`],
+  ]],
+  ['枠・フレーム', [
+    ['frame_lace_heart', 'レースのハート枠', laceHeart()],
+    ['frame_pearl_heart', 'パールのハート枠', pearlHeart()],
+    ['frame_doily', 'ドイリー', doily()],
+    ['frame_name_plate', '名前プレート', plate()],
+    ['frame_lace_label', 'レースのラベル', laceLabel()],
+    ['frame_cloud_bubble', 'もこもこ吹き出し', cloud()],
+    ['frame_gift_tag', 'ギフトタグ', giftTag()],
+    ['frame_card', 'カード（ハンコ付き）', card()],
+    ['frame_cassette', 'カセット', cassette()],
+    ['frame_chocobar', 'カラー板チョコ（空）', chocoBar(['#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e'])],
+    ['frame_chocobar_shokora', 'カラー板チョコ（しょこら配色）', chocoBar(['#a14767', '#876396', '#fbf5f6', '#f2ccdf', '#663343', '#7a4a4f', '#e75b93', '#d3a583'])],
+  ]],
+  ['見出し・ライン', [
+    ['banner_pink', '見出しリボン ピンク', banner('#ff9fc0', '#ec6f99', '#c94d7b', 'rgba(255,255,255,.45)')],
+    ['banner_choco', '見出しリボン チョコ', banner('#8b5a44', '#5a3426', '#3e2219', 'rgba(246,196,212,.55)')],
+    ['line_bell_garland', '鈴リボンのガーランド', garland()],
+    ['line_choco_drip', 'チョコ垂れ', lineDrip()],
+    ['line_lace', 'レースライン', lineLace()],
+    ['line_ruffle', 'フリルライン', lineRuffle()],
+    ['line_pearl', 'パールライン', linePearl()],
+  ]],
+  ['番号・マステ・角', [
+    ...[...Array(10)].map((_, i) => [`number_${String(i + 1).padStart(2, '0')}`, `番号 ${i + 1}`, numHeart(i + 1, i % 2 ? '#6b3f2e' : '#e8789d')]),
+    ['tape_pink_stripe', 'マステ ピンク', tape('repeating-linear-gradient(90deg,#f7a5c1 0 12px,#fde3ec 12px 24px)')],
+    ['tape_mint_dot', 'マステ ミント', tape('radial-gradient(#fff 3.4px,transparent 4px) 0 0/14px 14px,#a8dcc0')],
+    ['tape_choco_dot', 'マステ チョコ', tape('radial-gradient(#f6c4d4 3.4px,transparent 4px) 0 0/14px 14px,#6b3f2e')],
+    ['corner_scallop', '角のスカラップ', flap()],
+  ]],
+];
+document.getElementById('root').innerHTML = CATS.map(([t, items]) =>
+  `<section class="cat"><h2>${t}</h2><div class="grid">${items.map(([id, lab, html]) =>
+    `<div class="item"><div class="part" data-name="${id}">${html}</div><div class="lab">${lab}</div></div>`).join('')}</div></section>`).join('');
+</script>
+</body>
+</html>

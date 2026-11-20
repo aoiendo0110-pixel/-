@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>しょこら パーツ素材</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<!--
+  パーツ素材カタログ。python3 build_parts.py → parts.html → node export_parts.js
+  → parts/*.png（背景透過・3倍）と parts_catalog.png（一覧）
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1800px;font-family:"Zen Maru Gothic",sans-serif;color:#5a3426;padding:40px;
+  background:radial-gradient(#fff 3px,transparent 3.6px) 0 0/28px 28px,#fde3ec}
+:root.export body{background:transparent}
+:root.export .cat{background:none;box-shadow:none}
+:root.export .cat h2,:root.export .lab,:root.export header{display:none}
+header{text-align:center;margin-bottom:24px}
+header h1{font-family:"Mochiy Pop One";font-weight:400;font-size:54px;color:#e8789d;-webkit-text-stroke:10px #fff;paint-order:stroke fill}
+header p{font-family:"Hachi Maru Pop";font-size:20px}
+.cat{margin-bottom:34px;background:rgba(255,255,255,.55);border-radius:30px;padding:18px 24px 24px;box-shadow:0 0 0 4px #fff}
+.cat h2{font-family:"Mochiy Pop One";font-weight:400;font-size:26px;color:#fff;display:inline-block;padding:6px 24px;border-radius:999px;margin-bottom:14px;
+  background:radial-gradient(rgba(255,255,255,.4) 2px,transparent 2.6px) 0 0/12px 12px,linear-gradient(180deg,#7a4a36,#4a291f)}
+.grid{display:flex;flex-wrap:wrap;gap:18px 22px;align-items:flex-end}
+.item{display:flex;flex-direction:column;align-items:center}
+.part{position:relative;padding:14px}
+.part svg{display:block;overflow:visible}
+.lab{font-family:"Zen Maru Gothic";font-weight:900;font-size:14px;color:#c94d7b;margin-top:2px}
+.num{font-family:"Mochiy Pop One"}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="gold" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff6d6"/><stop offset=".45" stop-color="#e9c47a"/><stop offset="1" stop-color="#a8733a"/></radialGradient>
+    <radialGradient id="pearl" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#f7eef0"/><stop offset="1" stop-color="#cdb4ba"/></radialGradient>
+    <linearGradient id="chocoG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8b5a44"/><stop offset=".5" stop-color="#5a3426"/><stop offset="1" stop-color="#3a1f16"/></linearGradient>
+    <radialGradient id="truffleG" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#9a6650"/><stop offset=".6" stop-color="#5a3426"/><stop offset="1" stop-color="#2e1710"/></radialGradient>
+    <linearGradient id="satin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2f6"/><stop offset=".5" stop-color="#fbd2df"/><stop offset="1" stop-color="#f2a9c0"/></linearGradient>
+    <linearGradient id="satinH" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2a9c0"/><stop offset=".25" stop-color="#fde3ec"/><stop offset=".5" stop-color="#f5b8cb"/><stop offset=".8" stop-color="#fbd2df"/><stop offset="1" stop-color="#e68fae"/></linearGradient>
+    <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5a44"/><stop offset=".5" stop-color="#5a3426"/><stop offset="1" stop-color="#3a1f16"/></linearGradient>
+    <pattern id="stripePB" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
+      <rect width="16" height="16" fill="#f7c6d5"/><rect width="7" height="16" fill="#6b3f2e"/><rect x="10" width="1.6" height="16" fill="#fff8f0"/></pattern>
+    <pattern id="stripeV" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(-20)">
+      <rect width="40" height="40" fill="#f7c6d5"/><rect width="16" height="40" fill="#6b3f2e"/><rect x="24" width="3" height="40" fill="#fff8f0"/><rect x="32" width="3" height="40" fill="#fff8f0"/></pattern>
+    <pattern id="pdots" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#f09bb6"/><circle cx="5" cy="5" r="2" fill="#5a3426"/></pattern>
+    <pattern id="bdots" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#7a4a36"/><circle cx="5" cy="5" r="2.1" fill="#f6c4d4"/></pattern>
+    <pattern id="quilt" width="44" height="44" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="44" height="44" fill="#fbd6e2"/><rect x="3" y="3" width="38" height="38" rx="10" fill="#fde8ef"/>
+      <ellipse cx="15" cy="15" rx="9" ry="7" fill="#fff" opacity=".75"/><path d="M0 0H44M0 0V44" stroke="#f3b3c8" stroke-width="2"/><circle r="3" fill="#fff"/></pattern>
+    <pattern id="printP" width="90" height="90" patternUnits="userSpaceOnUse">
+      <path transform="translate(8 8) scale(.3)" d="M50 88C18 66 2 48 2 28A24 24 0 0 1 50 16A24 24 0 0 1 98 28C98 48 82 66 50 88Z" fill="#f78fb2"/>
+      <path transform="translate(53 53) scale(.3)" d="M50 88C18 66 2 48 2 28A24 24 0 0 1 50 16A24 24 0 0 1 98 28C98 48 82 66 50 88Z" fill="#8b5a44"/>
+      <g transform="translate(52 6) scale(.3)" fill="none" stroke="#e8789d" stroke-width="7"><path d="M60 34C44 4 7 0 5 23C3 46 34 52 60 34ZM60 34C76 4 113 0 115 23C117 46 86 52 60 34ZM55 36L31 84M65 36L89 84"/></g>
+      <g transform="translate(6 52) scale(.3)" fill="none" stroke="#fff" stroke-width="7"><path d="M60 34C44 4 7 0 5 23C3 46 34 52 60 34ZM60 34C76 4 113 0 115 23C117 46 86 52 60 34ZM55 36L31 84M65 36L89 84"/></g>
+    </pattern>
+    <pattern id="quiltC" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <path d="M0 0H22M0 0V22" stroke="#3a1f16" stroke-opacity=".55" stroke-width="2"/><path d="M2 2H22M2 2V22" stroke="#fff" stroke-opacity=".12" stroke-width="1.5"/></pattern>
+
+    <g id="bowL">
+      <path d="M55 36L31 84L44 78L52 90L63 40Z"/><path d="M65 36L89 84L76 78L68 90L57 40Z"/>
+      <path d="M60 34C44 4 7 0 5 23C3 46 34 52 60 34Z"/><path d="M60 34C76 4 113 0 115 23C117 46 86 52 60 34Z"/>
+    </g>
+    <symbol id="bowS" viewBox="0 0 120 94">
+      <use href="#bowL" fill="#fff" stroke="#fff" stroke-width="9" stroke-dasharray="0 7.5" stroke-linecap="round"/>
+      <use href="#bowL" fill="url(#stripePB)" stroke="#fff" stroke-width="3"/>
+      <path d="M60 34C48 18 22 12 18 25C30 21 46 27 60 34Z M60 34C72 18 98 12 102 25C90 21 74 27 60 34Z" fill="#2e1710" fill-opacity=".28"/>
+      <rect x="49" y="22" width="22" height="25" rx="8" fill="#6b3f2e" stroke="#fff" stroke-width="3"/>
+      <path d="M53 28H67M53 34H67M53 40H67" stroke="#f7c6d5" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="bowP" viewBox="0 0 120 94">
+      <use href="#bowL" fill="#fff" stroke="#fff" stroke-width="9" stroke-dasharray="0 7.5" stroke-linecap="round"/>
+      <use href="#bowL" fill="url(#satin)" stroke="#f2a9c0" stroke-width="2"/>
+      <path d="M60 34C48 18 22 12 18 25C30 21 46 27 60 34Z M60 34C72 18 98 12 102 25C90 21 74 27 60 34Z" fill="#e8789d" fill-opacity=".25"/>
+      <path d="M22 12C30 8 42 12 48 20M98 12C90 8 78 12 72 20" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".9"/>
+      <rect x="49" y="22" width="22" height="25" rx="9" fill="url(#satin)" stroke="#f2a9c0" stroke-width="2"/>
+    </symbol>
+    <symbol id="bowC" viewBox="0 0 120 94">
+      <use href="#bowL" fill="#fff" stroke="#fff" stroke-width="9" stroke-dasharray="0 7.5" stroke-linecap="round"/>
+      <use href="#bowL" fill="url(#bdots)" stroke="#fff" stroke-width="3"/>
+      <path d="M60 34C48 18 22 12 18 25C30 21 46 27 60 34Z M60 34C72 18 98 12 102 25C90 21 74 27 60 34Z" fill="#000" fill-opacity=".25"/>
+      <rect x="49" y="22" width="22" height="25" rx="8" fill="#f09bb6" stroke="#fff" stroke-width="3"/>
+    </symbol>
+    <symbol id="bell" viewBox="0 0 40 46">
+      <circle cx="20" cy="6" r="4.5" fill="none" stroke="#b8864e" stroke-width="3"/>
+      <circle cx="20" cy="27" r="16" fill="url(#gold)" stroke="#94622f" stroke-width="1.6"/>
+      <path d="M5.5 23.5Q20 27 34.5 23.5" fill="none" stroke="#94622f" stroke-width="2"/>
+      <circle cx="20" cy="33" r="3.6" fill="#5b3a1e"/><path d="M20 34V42" stroke="#5b3a1e" stroke-width="2.6" stroke-linecap="round"/>
+      <ellipse cx="13" cy="19" rx="4.5" ry="2.6" fill="#fff" opacity=".85" transform="rotate(-30 13 19)"/>
+    </symbol>
+    <symbol id="bellS" viewBox="0 0 120 116"><path d="M60 44V62" stroke="#b8864e" stroke-width="3"/><use href="#bowS" width="120" height="94"/><use href="#bell" x="42" y="46" width="36" height="42"/></symbol>
+    <symbol id="bellP" viewBox="0 0 120 116"><path d="M60 44V62" stroke="#b8864e" stroke-width="3"/><use href="#bowP" width="120" height="94"/><use href="#bell" x="42" y="46" width="36" height="42"/></symbol>
+    <symbol id="bellC" viewBox="0 0 120 116"><path d="M60 44V62" stroke="#b8864e" stroke-width="3"/><use href="#bowC" width="120" height="94"/><use href="#bell" x="42" y="46" width="36" height="42"/></symbol>
+    <!-- 鈴3つの大リボン -->
+    <symbol id="bigbow" viewBox="0 0 240 230">
+      <path d="M120 70Q100 120 84 168M120 70V190M120 70Q140 120 156 168" stroke="#b8864e" stroke-width="3.5" fill="none"/>
+      <use href="#bowS" width="240" height="188"/>
+      <use href="#bell" x="64" y="150" width="40" height="46"/><use href="#bell" x="136" y="150" width="40" height="46"/>
+      <use href="#bell" x="98" y="176" width="44" height="52"/>
+    </symbol>
+    <path id="hp" d="M50 88C18 66 2 48 2 28A24 24 0 0 1 50 16A24 24 0 0 1 98 28C98 48 82 66 50 88Z"/>
+    <symbol id="heart" viewBox="0 0 100 92"><use href="#hp" fill="currentColor" stroke="#fff" stroke-width="5"/><ellipse cx="25" cy="27" rx="10" ry="5.5" fill="#fff" opacity=".6" transform="rotate(-35 25 27)"/></symbol>
+    <symbol id="chocoheart" viewBox="0 0 100 92">
+      <use href="#hp" fill="url(#chocoG)" stroke="#fff" stroke-width="5"/>
+      <use href="#hp" fill="url(#quiltC)" transform="translate(9 8) scale(.82)"/>
+      <use href="#hp" fill="none" stroke="#2e1710" stroke-opacity=".5" stroke-width="3" transform="translate(9 8) scale(.82)"/>
+      <use href="#hp" fill="#f6b3c8" stroke="#fff" stroke-width="4" transform="translate(31 27) scale(.38)"/>
+      <ellipse cx="24" cy="26" rx="9" ry="4.5" fill="#fff" opacity=".35" transform="rotate(-30 24 26)"/>
+    </symbol>
+    <symbol id="truffle" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="40" fill="url(#truffleG)" stroke="#fff" stroke-width="4"/>
+      <path d="M18 40L28 32L36 42L46 30L56 42L66 30L74 40L84 34" fill="none" stroke="#f6b3c8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M20 56L30 48L40 58L50 46L60 58L70 46L82 54" fill="none" stroke="#f6b3c8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+      <ellipse cx="34" cy="26" rx="10" ry="5" fill="#fff" opacity=".35" transform="rotate(-30 34 26)"/>
+    </symbol>
+    <symbol id="cookie" viewBox="0 0 100 100">
+      <rect x="6" y="6" width="88" height="88" rx="12" fill="#f3dcc0" stroke="#fff" stroke-width="5"/>
+      <rect x="14" y="14" width="36" height="36" rx="5" fill="#6b3f2e"/><rect x="50" y="50" width="36" height="36" rx="5" fill="#6b3f2e"/>
+      <rect x="50" y="14" width="36" height="36" rx="5" fill="#f9e9d6"/><rect x="14" y="50" width="36" height="36" rx="5" fill="#f9e9d6"/>
+    </symbol>
+    <symbol id="macaron" viewBox="0 0 100 80">
+      <ellipse cx="50" cy="56" rx="44" ry="18" fill="currentColor" stroke="#fff" stroke-width="4"/>
+      <rect x="10" y="36" width="80" height="14" rx="7" fill="#fff8f0"/>
+      <path d="M10 46Q14 40 18 46T26 46T34 46T42 46T50 46T58 46T66 46T74 46T82 46T90 46" fill="none" stroke="currentColor" stroke-width="2.5" opacity=".7"/>
+      <ellipse cx="50" cy="30" rx="44" ry="22" fill="currentColor" stroke="#fff" stroke-width="4"/>
+      <ellipse cx="34" cy="22" rx="14" ry="5" fill="#fff" opacity=".55"/>
+    </symbol>
+    <symbol id="btnB" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="url(#bdots)" stroke="#fff" stroke-width="4"/><circle cx="50" cy="50" r="34" fill="none" stroke="#3e2219" stroke-opacity=".45" stroke-width="3"/>
+      <g fill="#fff8f0"><circle cx="40" cy="40" r="5.5"/><circle cx="60" cy="40" r="5.5"/><circle cx="40" cy="60" r="5.5"/><circle cx="60" cy="60" r="5.5"/></g>
+      <path d="M40 40L60 60M60 40L40 60" stroke="#f09bb6" stroke-width="3.5"/>
+    </symbol>
+    <symbol id="btnP" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="url(#pdots)" stroke="#fff" stroke-width="4"/><circle cx="50" cy="50" r="34" fill="none" stroke="#c75f86" stroke-opacity=".5" stroke-width="3"/>
+      <g fill="#fff"><circle cx="40" cy="40" r="5.5"/><circle cx="60" cy="40" r="5.5"/><circle cx="40" cy="60" r="5.5"/><circle cx="60" cy="60" r="5.5"/></g>
+    </symbol>
+    <radialGradient id="berry" cx="38%" cy="30%" r="75%"><stop offset="0" stop-color="#ff8fa8"/><stop offset=".6" stop-color="#ea3f68"/><stop offset="1" stop-color="#b8204a"/></radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <symbol id="cream" viewBox="0 0 100 100">
+      <path d="M12 82C4 70 16 60 30 62C26 48 42 40 52 46C50 32 62 24 70 30C66 18 50 8 50 4C58 10 82 20 80 36C92 40 92 56 82 62C96 66 94 84 82 86Z" fill="#fff" stroke="#f3b3c8" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M22 76Q40 70 60 76M34 60Q50 54 66 60M50 44Q60 40 70 44M30 82Q50 78 72 82" fill="none" stroke="#f3b3c8" stroke-width="2.5" stroke-linecap="round"/>
+      <ellipse cx="40" cy="66" rx="8" ry="3" fill="#fff" opacity=".9"/>
+    </symbol>
+    <symbol id="berryS" viewBox="0 0 80 92">
+      <path d="M40 88C18 76 6 56 8 36C10 22 24 18 40 22C56 18 70 22 72 36C74 56 62 76 40 88Z" fill="url(#berry)" stroke="#fff" stroke-width="4"/>
+      <g fill="#ffe7a8"><ellipse cx="26" cy="40" rx="1.8" ry="2.8"/><ellipse cx="40" cy="36" rx="1.8" ry="2.8"/><ellipse cx="54" cy="40" rx="1.8" ry="2.8"/><ellipse cx="20" cy="54" rx="1.8" ry="2.8"/><ellipse cx="34" cy="52" rx="1.8" ry="2.8"/><ellipse cx="48" cy="52" rx="1.8" ry="2.8"/><ellipse cx="60" cy="54" rx="1.8" ry="2.8"/><ellipse cx="28" cy="66" rx="1.8" ry="2.8"/><ellipse cx="42" cy="66" rx="1.8" ry="2.8"/><ellipse cx="54" cy="66" rx="1.8" ry="2.8"/><ellipse cx="36" cy="78" rx="1.8" ry="2.8"/><ellipse cx="46" cy="78" rx="1.8" ry="2.8"/></g>
+      <path d="M40 26C30 10 18 14 14 20C24 20 30 24 34 28C26 26 20 30 18 34C28 30 36 30 40 28C44 30 52 30 62 34C60 30 54 26 46 28C50 24 56 20 66 20C62 14 50 10 40 26Z" fill="#7cc58c" stroke="#fff" stroke-width="2.5"/>
+      <ellipse cx="26" cy="38" rx="6" ry="3" fill="#fff" opacity=".6" transform="rotate(-40 26 38)"/>
+    </symbol>
+    <symbol id="cherry" viewBox="0 0 100 100">
+      <path d="M30 70C34 40 50 22 72 10M70 70C66 46 70 26 72 10" fill="none" stroke="#5a3426" stroke-width="4" stroke-linecap="round"/>
+      <path d="M72 10C82 4 94 8 96 16C86 18 78 16 72 10Z" fill="#7cc58c"/>
+      <circle cx="28" cy="74" r="20" fill="url(#berry)" stroke="#fff" stroke-width="4"/><circle cx="70" cy="74" r="20" fill="url(#berry)" stroke="#fff" stroke-width="4"/>
+      <ellipse cx="21" cy="66" rx="6" ry="3.5" fill="#fff" opacity=".7" transform="rotate(-35 21 66)"/><ellipse cx="63" cy="66" rx="6" ry="3.5" fill="#fff" opacity=".7" transform="rotate(-35 63 66)"/>
+    </symbol>
+    <symbol id="candy" viewBox="0 0 120 60">
+      <path d="M30 30L4 8L10 30L4 52Z M90 30L116 8L110 30L116 52Z" fill="currentColor" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+      <ellipse cx="60" cy="30" rx="32" ry="22" fill="#fff" stroke="#fff" stroke-width="3"/>
+      <clipPath id="cc"><ellipse cx="60" cy="30" rx="30" ry="20"/></clipPath>
+      <g clip-path="url(#cc)" fill="currentColor"><rect x="20" y="0" width="7" height="60" transform="rotate(30 60 30)"/><rect x="34" y="0" width="7" height="60" transform="rotate(30 60 30)"/><rect x="48" y="0" width="7" height="60" transform="rotate(30 60 30)"/><rect x="62" y="0" width="7" height="60" transform="rotate(30 60 30)"/><rect x="76" y="0" width="7" height="60" transform="rotate(30 60 30)"/><rect x="90" y="0" width="7" height="60" transform="rotate(30 60 30)"/></g>
+      <ellipse cx="48" cy="20" rx="9" ry="4" fill="#fff" opacity=".7"/>
+    </symbol>
+    <symbol id="lolli" viewBox="0 0 100 140">
+      <rect x="46" y="80" width="8" height="58" rx="4" fill="#fff" stroke="#f3b3c8" stroke-width="2"/>
+      <circle cx="50" cy="50" r="44" fill="#fff" stroke="#fff" stroke-width="4"/>
+      <path d="M50 50m0 -4a4 4 0 1 1 -4 4a10 10 0 0 1 10 -10a16 16 0 0 1 16 16a22 22 0 0 1 -22 22a28 28 0 0 1 -28 -28a34 34 0 0 1 34 -34a40 40 0 0 1 40 40" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+      <path d="M72 102L50 84L28 102" fill="none" stroke="#f09bb6" stroke-width="5" stroke-linecap="round"/>
+      <ellipse cx="34" cy="28" rx="10" ry="5" fill="#fff" opacity=".7" transform="rotate(-35 34 28)"/>
+    </symbol>
+    <symbol id="rose" viewBox="0 0 100 100">
+      <path d="M20 70C6 64 4 44 16 40C10 56 22 66 34 66Z M80 70C94 64 96 44 84 40C90 56 78 66 66 66Z" fill="#9fd4a6" stroke="#fff" stroke-width="3"/>
+      <circle cx="50" cy="50" r="36" fill="currentColor" stroke="#fff" stroke-width="4"/>
+      <path d="M50 50m-4 0a4 4 0 1 1 8 0a10 10 0 0 1 -16 2a16 16 0 0 1 22 -16a22 22 0 0 1 6 30a28 28 0 0 1 -40 -6" fill="none" stroke="#fff" stroke-width="3.5" stroke-opacity=".75" stroke-linecap="round"/>
+      <path d="M22 44Q30 22 50 18" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="star" viewBox="0 0 100 100"><path d="M50 4L62 36L96 38L70 60L78 94L50 76L22 94L30 60L4 38L38 36Z" fill="currentColor" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><ellipse cx="40" cy="38" rx="8" ry="4" fill="#fff" opacity=".6"/></symbol>
+    <symbol id="spark" viewBox="0 0 100 100"><path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" fill="#fff"/></symbol>
+    <!-- ボンボン（メニュー用） -->
+    <symbol id="bb1" viewBox="0 0 40 38"><use href="#hp" transform="scale(.4)" fill="url(#chocoG)" stroke="#fff" stroke-width="6"/></symbol>
+    <symbol id="bb2" viewBox="0 0 40 38"><circle cx="20" cy="20" r="16" fill="url(#truffleG)" stroke="#fff" stroke-width="2.5"/><path d="M8 18l6-4 5 5 5-5 5 5 5-4" fill="none" stroke="#f6b3c8" stroke-width="2.4" stroke-linecap="round"/></symbol>
+    <symbol id="bb3" viewBox="0 0 40 38"><rect x="4" y="4" width="32" height="30" rx="7" fill="#e8789d" stroke="#fff" stroke-width="2.5"/><path d="M8 12h24" stroke="#fff" stroke-width="2" stroke-dasharray="3 3"/></symbol>
+    <symbol id="bb4" viewBox="0 0 40 38"><circle cx="20" cy="20" r="16" fill="#a14767" stroke="#fff" stroke-width="2.5"/><path d="M8 13q12 -9 24 0" fill="none" stroke="#f6b3c8" stroke-width="3" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+<header><h1>Sweet Chocolat Parts</h1><p>バレンタイン × チョコ × 鈴リボン のパーツ素材（背景透過PNG）</p></header>
+<div id="root"></div>
+
+<script>
+const css = document.documentElement.style;
+const NS = 'xmlns="http://www.w3.org/2000/svg"';
+const uri = svg => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+const HEART = 'M50 88C18 66 2 48 2 28A24 24 0 0 1 50 16A24 24 0 0 1 98 28C98 48 82 66 50 88Z';
+const probe = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+probe.style.cssText = 'position:absolute;width:0;height:0'; document.body.appendChild(probe);
+function along(d, step) {
+  const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  p.setAttribute('d', d); probe.appendChild(p);
+  const L = p.getTotalLength(), n = Math.max(3, Math.round(L / step)), out = [];
+  for (let i = 0; i < n; i++) {
+    const a = p.getPointAtLength(L * i / n), b = p.getPointAtLength(L * (i + .5) / n);
+    out.push({ x: +a.x.toFixed(1), y: +a.y.toFixed(1), ang: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI });
+  }
+  p.remove(); return out;
+}
+const pearls = (d, r) => along(d, r * 2.05).map(p => `<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="url(#pearl)" stroke="#d9c3c8" stroke-width=".8"/>`).join('');
+const heartPath = (cx, top, w, h) => { // ハート（中央x, 上端y, 幅, 高さ）
+  const x0 = cx - w / 2, r = w / 4;
+  return `M${cx} ${top + h}C${x0 + w * .19} ${top + h * .77} ${x0} ${top + h * .55} ${x0} ${top + h * .3}A${r} ${r} 0 0 1 ${cx} ${top + h * .14}A${r} ${r} 0 0 1 ${x0 + w} ${top + h * .3}C${x0 + w} ${top + h * .55} ${x0 + w * .81} ${top + h * .77} ${cx} ${top + h}Z`;
+};
+
+/* ---- 柄タイル ---- */
+function laceTile() {
+  return `<svg ${NS} width="60" height="40" viewBox="0 0 66 44"><mask id="m"><rect width="66" height="44" fill="#fff"/>
+    <g fill="#000"><circle cx="11" cy="7" r="2.6"/><circle cx="33" cy="7" r="2.6"/><circle cx="55" cy="7" r="2.6"/><circle cx="33" cy="25" r="3.2"/>
+    ${[0,1,2,3,4,5].map(i=>{const a=i/6*Math.PI*2,x=33+Math.cos(a)*7.5,y=25+Math.sin(a)*7.5;return `<ellipse cx="${x}" cy="${y}" rx="2.6" ry="1.6" transform="rotate(${a*180/Math.PI} ${x} ${y})"/>`}).join('')}
+    <path transform="translate(-2.5 16) scale(.11)" d="${HEART}"/><path transform="translate(63.5 16) scale(.11)" d="${HEART}"/></g></mask>
+    <g fill="#fff" fill-opacity=".96" mask="url(#m)"><rect width="66" height="14"/><circle cx="33" cy="24" r="16"/><circle cx="0" cy="18" r="11"/><circle cx="66" cy="18" r="11"/>
+    ${[...Array(9)].map((_,i)=>{const a=(20+i*17.5)*Math.PI/180;return `<circle cx="${33+Math.cos(a)*17}" cy="${24+Math.sin(a)*17}" r="2.4"/>`}).join('')}</g></svg>`;
+}
+css.setProperty('--laceH', uri(laceTile()));
+function laceFrame(fill, eye, stitch) {
+  let s = '', e = '';
+  for (let k = 0; k < 3; k++) { const t = 20 + 40 * k;
+    for (const [x, y] of [[t, 19], [t, 101], [19, t], [101, t]]) { s += `<circle cx="${x}" cy="${y}" r="19"/>`; e += `<path transform="translate(${x - 5.5} ${y - 7}) scale(.11)" d="${HEART}"/>`; } }
+  return `<svg ${NS} width="120" height="120" viewBox="0 0 120 120"><g fill="${fill}">${s}<rect x="19" y="19" width="82" height="82"/></g><g fill="${eye}">${e}</g>
+    <rect x="35" y="35" width="50" height="50" fill="none" stroke="${stitch}" stroke-width="2.4" stroke-dasharray="5 4"/></svg>`;
+}
+css.setProperty('--laceW', uri(laceFrame('#ffffff', '#f3b3c8', '#f3b3c8')));
+css.setProperty('--laceC', uri(laceFrame('#fff4f8', '#f09bb6', '#e8789d')));
+(() => { let s = '', p = '';
+  for (let k = 0; k < 6; k++) { const t = 10 + 20 * k;
+    for (const [x, y] of [[t, 12], [t, 108], [12, t], [108, t]]) s += `<circle cx="${x}" cy="${y}" r="12"/>`;
+    p += `M${t - 4} 2V34M${t + 4} 4V34M${t - 4} 86V118M${t + 4} 86V116M2 ${t - 4}H34M4 ${t + 4}H34M86 ${t - 4}H118M86 ${t + 4}H116`; }
+  css.setProperty('--frill', uri(`<svg ${NS} width="120" height="120" viewBox="0 0 120 120"><g fill="#f5b8cb">${s}<rect x="12" y="12" width="96" height="96"/></g>
+    <path d="${p}" stroke="#e8789d" stroke-width="2" stroke-opacity=".45"/></svg>`)); })();
+css.setProperty('--print', uri(`<svg ${NS} width="120" height="150" viewBox="0 0 120 150">
+  <g fill="#fff">${along('M60 66m-34 0a34 34 0 1 0 68 0a34 34 0 1 0 -68 0', 9).map(p => `<circle cx="${p.x}" cy="${p.y}" r="6"/>`).join('')}<circle cx="60" cy="66" r="34"/></g>
+  <path transform="translate(36 44) scale(.48)" d="${HEART}" fill="#f7a5c1"/>
+  <g fill="#fff">${[[44,60],[56,56],[68,60],[50,72],[62,72],[56,84]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="2.2"/>`).join('')}</g>
+  <g transform="translate(42 118) scale(.3)" fill="none" stroke="#e8789d" stroke-width="8" stroke-linecap="round"><path d="M60 34C44 4 7 0 5 23C3 46 34 52 60 34ZM60 34C76 4 113 0 115 23C117 46 86 52 60 34ZM55 36L31 84M65 36L89 84"/></g>
+  <g fill="#fff"><circle cx="8" cy="130" r="3"/><circle cx="112" cy="130" r="3"/><circle cx="8" cy="10" r="3"/><circle cx="112" cy="10" r="3"/></g></svg>`));
+css.setProperty('--dotband', uri(`<svg ${NS} width="90" height="90" viewBox="0 0 90 90"><rect width="90" height="90" fill="#3e2219"/>
+  ${[0,1,2].flatMap(i=>[0,1,2].map(j=>`<circle cx="${15+30*i}" cy="${15+30*j}" r="4.5" fill="#f6c4d4"/>`)).join('')}</svg>`));
+
+
+if (location.hash === '#export') document.documentElement.classList.add('export');
+const S = (vb, w, inner) => { const [, , vw, vh] = vb.split(' ').map(Number); return `<svg viewBox="${vb}" width="${w}" height="${Math.round(w * vh / vw)}">${inner}</svg>`; };
+const U = (id, vb, w, color = '') => S(vb, w, `<use href="#${id}" ${color ? `color="${color}"` : ''}/>`);
+const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+const SH = 'filter="drop-shadow(0 6px 0 rgba(120,40,70,.25))"';
+
+/* ===== 枠・フレーム ===== */
+function laceHeart() {
+  const outer = heartPath(250, 20, 460, 420), inner = heartPath(250, 54, 380, 348), pts = along(outer, 30);
+  return S('0 0 500 470', 400, `<g ${SH}><g fill="#fff">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="18"/>`).join('')}<path d="${outer}"/></g></g>
+    <g fill="#f5b8cb">${pts.map(p => `<path transform="translate(${p.x - 6} ${p.y - 7}) scale(.12)" d="${HEART}"/>`).join('')}</g>
+    <path d="${inner}" fill="url(#quilt)"/>${pearls(inner, 5.5)}`);
+}
+function pearlHeart() {
+  const d = heartPath(200, 30, 360, 330);
+  return S('0 0 400 380', 340, `<path d="${d}" fill="url(#quilt)" stroke="#fff" stroke-width="10" ${SH}/>
+    <path d="${heartPath(200, 70, 270, 250)}" fill="#fff8f0" fill-opacity=".85"/>${pearls(d, 8)}
+    <use href="#bowP" x="140" y="8" width="120" height="94"/>`);
+}
+function doily() {
+  let sc = '', ey = '';
+  for (let i = 0; i < 30; i++) { const a = i / 30 * Math.PI * 2;
+    sc += `<circle cx="${160 + Math.cos(a) * 140}" cy="${160 + Math.sin(a) * 140}" r="16"/>`;
+    ey += `<path transform="translate(${160 + Math.cos(a) * 140 - 6} ${160 + Math.sin(a) * 140 - 7}) scale(.12)" d="${HEART}"/>`; }
+  return S('0 0 320 320', 320, `<g ${SH}><g fill="#fff">${sc}<circle cx="160" cy="160" r="140"/></g></g><g fill="#f5b8cb">${ey}</g>
+    <circle cx="160" cy="160" r="112" fill="#5a3426"/><circle cx="160" cy="160" r="104" fill="none" stroke="#f6c4d4" stroke-width="2" stroke-dasharray="4 4"/>
+    <circle cx="160" cy="160" r="96" fill="url(#quilt)" stroke="#fff" stroke-width="4"/><circle cx="160" cy="160" r="86" fill="#fff8f0" fill-opacity=".85"/>${pearls('M160 64A96 96 0 1 1 159.9 64Z', 5)}`);
+}
+function laceLabel() {
+  const d = rr(24, 24, 472, 252, 34), pts = along(d, 30);
+  return S('0 0 520 300', 480, `<g ${SH}><g fill="#fff">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="17"/>`).join('')}<path d="${d}"/></g></g>
+    <g fill="#f09bb6">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4"/>`).join('')}</g>
+    <path d="${rr(44, 44, 432, 212, 22)}" fill="#fffafc"/><path d="${rr(44, 44, 432, 212, 22)}" fill="url(#printP)" opacity=".1"/>
+    <path d="${rr(54, 54, 412, 192, 16)}" fill="none" stroke="#f09bb6" stroke-width="3" stroke-dasharray="7 6"/>`);
+}
+function cloud() {
+  const d = rr(50, 40, 500, 250, 40), pts = along(d, 44), b = pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="28"/>`).join('');
+  return S('0 0 620 360', 480, `<g transform="translate(8 12)" fill="#c94d7b" opacity=".25">${b}<path d="${d}"/><path d="M520 250L600 330L480 290Z"/></g>
+    <g fill="#e8789d">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="33"/>`).join('')}<path d="M512 236L610 336L470 296Z"/></g>
+    <g fill="#fff">${b}<path d="${d}"/><path d="M518 250L598 326L482 290Z"/></g>`);
+}
+function giftTag() {
+  const d = 'M44 8H218L254 44V356Q254 366 244 366H18Q8 366 8 356V44Z';
+  return S('0 0 262 380', 220, `<path d="${d}" fill="#fff8f0" stroke="#fff" stroke-width="6" ${SH}/>
+    <path d="M50 20H212L242 50V350H20V50Z" fill="none" stroke="#f09bb6" stroke-width="2.5" stroke-dasharray="6 5"/>
+    <path d="M8 320H254V356Q254 366 244 366H18Q8 366 8 356Z" fill="url(#stripeV)"/>
+    <circle cx="131" cy="38" r="12" fill="#fff" stroke="#d8b072" stroke-width="5"/>
+    <use href="#bellP" x="76" y="-62" width="110" height="106"/>`);
+}
+function card() {
+  return S('0 0 560 340', 480, `<path d="${rr(10, 10, 540, 320, 22)}" fill="#fff8f0" stroke="#fff" stroke-width="6" ${SH}/>
+    <path d="${rr(10, 10, 540, 320, 22)}" fill="none" stroke="#f09bb6" stroke-width="4" transform="translate(0 0)"/>
+    <path d="M10 70V32A22 22 0 0 1 32 10H528A22 22 0 0 1 550 32V70Z" fill="url(#bdots)"/>
+    ${[110, 160, 210, 260].map(y => `<path d="M40 ${y}H520" stroke="#f5b8cb" stroke-width="2" stroke-dasharray="4 5"/>`).join('')}
+    <g transform="translate(450 230) rotate(14)"><circle r="46" fill="none" stroke="#e8789d" stroke-width="4"/><circle r="38" fill="none" stroke="#e8789d" stroke-width="1.6" stroke-dasharray="3 3"/>
+    <path transform="translate(-17 -16) scale(.34)" d="${HEART}" fill="#e8789d"/></g>`);
+}
+function cassette() {
+  return S('0 0 330 206', 330, `<rect x="6" y="6" width="318" height="194" rx="18" fill="#f5b8cb" stroke="#fff" stroke-width="5" ${SH}/>
+    <rect x="6" y="6" width="318" height="194" rx="18" fill="url(#printP)" opacity=".35"/>
+    <rect x="24" y="18" width="282" height="118" rx="10" fill="#fff8f0"/><rect x="24" y="18" width="282" height="22" rx="10" fill="#e8789d"/>
+    <rect x="90" y="140" width="150" height="50" rx="8" fill="#5a3426"/>
+    <circle cx="125" cy="165" r="15" fill="#fff"/><circle cx="205" cy="165" r="15" fill="#fff"/><circle cx="125" cy="165" r="6" fill="#5a3426"/><circle cx="205" cy="165" r="6" fill="#5a3426"/>
+    <g fill="#fff"><circle cx="20" cy="186" r="5"/><circle cx="310" cy="186" r="5"/><circle cx="20" cy="20" r="5"/><circle cx="310" cy="20" r="5"/></g>`);
+}
+function chocoBar(colors) {
+  let g = '';
+  colors.forEach((c, i) => { const x = 26 + (i % 4) * 94, y = 30 + Math.floor(i / 4) * 96;
+    g += `<rect x="${x}" y="${y}" width="86" height="88" rx="8" fill="${c}"/>
+      <path d="M${x} ${y + 8}a8 8 0 0 1 8 -8H${x + 78}l-8 8H${x + 8}V${y + 80}l-8 8Z" fill="#fff" opacity=".35"/>
+      <path d="M${x + 86} ${y + 8}V${y + 80}a8 8 0 0 1 -8 8H${x + 8}l8 -8H${x + 78}V${y}Z" fill="#000" opacity=".2"/>
+      <path transform="translate(${x + 26} ${y + 26}) scale(.34)" d="${HEART}" fill="#000" opacity=".14"/>`; });
+  return S('0 0 500 250', 460, `<rect x="14" y="18" width="472" height="216" rx="16" fill="url(#chocoG)" stroke="#fff" stroke-width="5" ${SH}/>${g}
+    <path d="M400 18H486V234H430L410 214L426 196L404 176L422 156L400 136L418 116L396 96L414 76L392 56L408 36Z" fill="#f5b8cb" stroke="#fff" stroke-width="4"/>
+    <path d="M400 18H486V234H430L410 214L426 196L404 176L422 156L400 136L418 116L396 96L414 76L392 56L408 36Z" fill="url(#printP)" opacity=".6"/>
+    <rect x="446" y="18" width="20" height="216" fill="#e8789d"/><rect x="446" y="18" width="20" height="216" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="5 4"/>`);
+}
+function plate() {
+  const o = rr(10, 10, 680, 400, 60), m = rr(34, 34, 632, 352, 44), sc = along(o, 26);
+  return S('0 0 700 420', 560, `<g ${SH}><g fill="#fff">${sc.map(p => `<circle cx="${p.x}" cy="${p.y}" r="15"/>`).join('')}<path d="${o}"/></g></g>
+    <g fill="#f3b3c8">${sc.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.6"/>`).join('')}</g>
+    <path d="${m}" fill="url(#quilt)"/><path d="${m}" fill="#fff" fill-opacity=".25"/>${pearls(m, 8)}`);
+}
+function banner(c1, c2, c3, dot) {
+  return S('0 0 520 84', 460, `<path d="M0 6H520L496 42L520 78H0L24 42Z" fill="url(#bn${c1.slice(1)})" ${SH}/>
+    <defs><linearGradient id="bn${c1.slice(1)}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset=".55" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/></linearGradient>
+    <pattern id="bd${c1.slice(1)}" width="13" height="13" patternUnits="userSpaceOnUse"><circle cx="6.5" cy="6.5" r="2.2" fill="${dot}"/></pattern></defs>
+    <path d="M0 6H520L496 42L520 78H0L24 42Z" fill="url(#bd${c1.slice(1)})"/>
+    <path d="M28 14H492M28 70H492" stroke="#fff" stroke-opacity=".85" stroke-width="2.5" stroke-dasharray="7 5"/>`);
+}
+
+/* ===== ライン ===== */
+const lineLace = () => `<div style="width:760px;height:44px;background:var(--laceH) 0 0/66px 44px repeat-x;filter:drop-shadow(0 3px 0 rgba(240,155,182,.6))"></div>`;
+function linePearl() { return S('0 0 760 30', 760, `<path d="M15 15H745" stroke="url(#pearl)" stroke-width="22" stroke-linecap="round" stroke-dasharray="0 23"/><path d="M15 15H745" stroke="#d9c3c8" stroke-width="23" stroke-linecap="round" stroke-dasharray="0 23" opacity=".35" transform="translate(0 1.5)"/><path d="M15 15H745" stroke="url(#pearl)" stroke-width="21" stroke-linecap="round" stroke-dasharray="0 23"/>`); }
+function lineDrip() {
+  let d = 'M0 0H760V36', x = 760, i = 0;
+  while (x > 0) { const w = 50 + (i * 37) % 40, l = 18 + (i * 53) % 46; x -= w;
+    d += `C${x + w - 8} 36 ${x + w / 2 + 12} 40 ${x + w / 2 + 10} ${36 + l}C${x + w / 2 + 8} ${48 + l} ${x + w / 2 - 8} ${48 + l} ${x + w / 2 - 10} ${36 + l}C${x + w / 2 - 12} 40 ${x + 8} 36 ${x} 36`; i++; }
+  return S('0 0 760 110', 760, `<path d="${d}Z" fill="url(#chocoG)"/><path d="M14 18H746" stroke="#fff" stroke-opacity=".3" stroke-width="5" stroke-linecap="round" stroke-dasharray="200 30"/>
+    ${[...Array(26)].map((_, k) => `<rect x="${(k * 97) % 740 + 10}" y="${6 + (k * 13) % 20}" width="10" height="4" rx="2" fill="${['#fff', '#f78fb2', '#ffd36e', '#a8dcb4'][k % 4]}" transform="rotate(${k * 47} ${(k * 97) % 740 + 15} ${8 + (k * 13) % 20})"/>`).join('')}`);
+}
+const lineRuffle = () => `<div style="width:760px;height:46px;background:repeating-linear-gradient(90deg,#f7c4d5 0 9px,#ef9fbb 9px 12px,#fbd9e4 12px 20px);
+  -webkit-mask:linear-gradient(#000,#000) 0 0/100% 24px no-repeat,radial-gradient(circle at 20px 24px,#000 20px,transparent 20.5px) 0 0/40px 46px repeat-x;
+  mask:linear-gradient(#000,#000) 0 0/100% 24px no-repeat,radial-gradient(circle at 20px 24px,#000 20px,transparent 20.5px) 0 0/40px 46px repeat-x"></div>`;
+function garland() {
+  const w = 760, n = 3, sw = w / n; let d = '', b = '';
+  for (let i = 0; i < n; i++) d += `M${i * sw} 24Q${i * sw + sw / 2} 120 ${(i + 1) * sw} 24`;
+  for (let i = 0; i <= n; i++) b += `<use href="#${i % 2 ? 'bellP' : 'bellS'}" x="${i * sw - 50}" y="-20" width="100" height="97"/>`;
+  return S(`-60 -30 ${w + 120} 190`, 820, `<path d="${d}" fill="none" stroke="#f2a9c0" stroke-width="20"/><path d="${d}" fill="none" stroke="url(#satinH)" stroke-width="15"/>
+    <path d="${d.replaceAll(' 120 ', ' 90 ')}" fill="none" stroke="url(#pearl)" stroke-width="12" stroke-linecap="round" stroke-dasharray="0 15"/>${b}`);
+}
+function flap() {
+  const A = [300, 0], B = [0, 300], pts = []; for (let i = 0; i <= 12; i++) pts.push([A[0] + (B[0] - A[0]) * i / 12, A[1] + (B[1] - A[1]) * i / 12]);
+  return S('-20 -20 340 340', 300, `<g fill="#fff">${pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="18"/>`).join('')}<path d="M300 0L0 300H300Z" transform="translate(-12 -12)"/></g>
+    <path d="M300 0L0 300H300Z" fill="#f07ea4"/><path d="M300 0L0 300H300Z" fill="url(#printP)" opacity=".5"/>
+    <g fill="#fff">${pts.map(([x, y]) => `<circle cx="${x - 8}" cy="${y - 8}" r="3"/>`).join('')}</g>`);
+}
+const tape = (bg) => `<div style="width:170px;height:46px;opacity:.9;background:${bg};
+  -webkit-mask:radial-gradient(circle at 0 50%,transparent 4.5px,#000 5px) 0 0/100% 10px,radial-gradient(circle at 100% 50%,transparent 4.5px,#000 5px) 0 0/100% 10px"></div>`;
+const numHeart = (n, c) => `<div style="position:relative;width:86px;height:80px;display:grid;place-items:center;isolation:isolate">
+  <svg viewBox="0 0 100 92" width="86" height="80" style="position:absolute;inset:0;z-index:-1"><use href="#hp" fill="${c}" stroke="#fff" stroke-width="6" ${SH}/><ellipse cx="26" cy="27" rx="10" ry="5" fill="#fff" opacity=".55" transform="rotate(-35 26 27)"/></svg>
+  <span class="num" style="font-size:${n > 9 ? 28 : 34}px;color:#fff;padding-bottom:8px;text-shadow:0 2px 0 rgba(0,0,0,.15)">${n}</span></div>`;
+
+/* ===== カタログ ===== */
+const CATS = [
+  ['リボン・鈴', [
+    ['ribbon_stripe', 'ストライプリボン', U('bowS', '0 0 120 94', 190)],
+    ['ribbon_satin', 'サテンリボン', U('bowP', '0 0 120 94', 190)],
+    ['ribbon_dot', '水玉リボン', U('bowC', '0 0 120 94', 190)],
+    ['bell_ribbon_stripe', '鈴リボン ストライプ', U('bellS', '0 0 120 116', 180)],
+    ['bell_ribbon_satin', '鈴リボン サテン', U('bellP', '0 0 120 116', 180)],
+    ['bell_ribbon_dot', '鈴リボン 水玉', U('bellC', '0 0 120 116', 180)],
+    ['bell_ribbon_big', '3連鈴の大リボン', U('bigbow', '0 0 240 230', 280)],
+    ['bell', '鈴', U('bell', '0 0 40 46', 80)],
+  ]],
+  ['お菓子', [
+    ['choco_heart', 'ハートチョコ', U('chocoheart', '0 0 100 92', 150)],
+    ['truffle', 'トリュフ', U('truffle', '0 0 100 100', 130)],
+    ['macaron_pink', 'マカロン ピンク', U('macaron', '0 0 100 80', 140, '#f78fb2')],
+    ['macaron_choco', 'マカロン チョコ', U('macaron', '0 0 100 80', 140, '#8b5a44')],
+    ['macaron_white', 'マカロン ミルク', U('macaron', '0 0 100 80', 140, '#fde3ec')],
+    ['macaron_lavender', 'マカロン ラベンダー', U('macaron', '0 0 100 80', 140, '#c9a6e8')],
+    ['strawberry', 'いちご', U('berryS', '0 0 80 92', 110)],
+    ['cherry', 'さくらんぼ', U('cherry', '0 0 100 100', 130)],
+    ['candy_pink', 'キャンディ ピンク', U('candy', '0 0 120 60', 170, '#e8789d')],
+    ['candy_choco', 'キャンディ チョコ', U('candy', '0 0 120 60', 170, '#8b5a44')],
+    ['lollipop', 'ペロペロキャンディ', U('lolli', '0 0 100 140', 110, '#f78fb2')],
+    ['rose_pink', 'バラ ピンク', U('rose', '0 0 100 100', 120, '#f78fb2')],
+    ['rose_pale', 'バラ 淡ピンク', U('rose', '0 0 100 100', 120, '#fbc2d4')],
+    ['whipped_cream', '生クリーム', U('cream', '0 0 100 100', 120)],
+    ['checker_cookie', '市松クッキー', U('cookie', '0 0 100 100', 110)],
+    ['button_choco', 'ボタン チョコ', U('btnB', '0 0 100 100', 100)],
+    ['button_pink', 'ボタン ピンク', U('btnP', '0 0 100 100', 100)],
+    ['heart_pink', 'ハート ピンク', U('heart', '0 0 100 92', 110, '#e8789d')],
+    ['heart_choco', 'ハート チョコ', U('heart', '0 0 100 92', 110, '#6b3f2e')],
+    ['star', '星', U('star', '0 0 100 100', 100, '#ffd36e')],
+    ['sparkle', 'きらきら', `<div style="filter:drop-shadow(0 0 6px #f09bb6)">${U('spark', '0 0 100 100', 90)}</div>`],
+  ]],
+  ['枠・フレーム', [
+    ['frame_lace_heart', 'レースのハート枠', laceHeart()],
+    ['frame_pearl_heart', 'パールのハート枠', pearlHeart()],
+    ['frame_doily', 'ドイリー', doily()],
+    ['frame_name_plate', '名前プレート', plate()],
+    ['frame_lace_label', 'レースのラベル', laceLabel()],
+    ['frame_cloud_bubble', 'もこもこ吹き出し', cloud()],
+    ['frame_gift_tag', 'ギフトタグ', giftTag()],
+    ['frame_card', 'カード（ハンコ付き）', card()],
+    ['frame_cassette', 'カセット', cassette()],
+    ['frame_chocobar', 'カラー板チョコ（空）', chocoBar(['#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e', '#6b3f2e'])],
+    ['frame_chocobar_shokora', 'カラー板チョコ（しょこら配色）', chocoBar(['#a14767', '#876396', '#fbf5f6', '#f2ccdf', '#663343', '#7a4a4f', '#e75b93', '#d3a583'])],
+  ]],
+  ['見出し・ライン', [
+    ['banner_pink', '見出しリボン ピンク', banner('#ff9fc0', '#ec6f99', '#c94d7b', 'rgba(255,255,255,.45)')],
+    ['banner_choco', '見出しリボン チョコ', banner('#8b5a44', '#5a3426', '#3e2219', 'rgba(246,196,212,.55)')],
+    ['line_bell_garland', '鈴リボンのガーランド', garland()],
+    ['line_choco_drip', 'チョコ垂れ', lineDrip()],
+    ['line_lace', 'レースライン', lineLace()],
+    ['line_ruffle', 'フリルライン', lineRuffle()],
+    ['line_pearl', 'パールライン', linePearl()],
+  ]],
+  ['番号・マステ・角', [
+    ...[...Array(10)].map((_, i) => [`number_${String(i + 1).padStart(2, '0')}`, `番号 ${i + 1}`, numHeart(i + 1, i % 2 ? '#6b3f2e' : '#e8789d')]),
+    ['tape_pink_stripe', 'マステ ピンク', tape('repeating-linear-gradient(90deg,#f7a5c1 0 12px,#fde3ec 12px 24px)')],
+    ['tape_mint_dot', 'マステ ミント', tape('radial-gradient(#fff 3.4px,transparent 4px) 0 0/14px 14px,#a8dcc0')],
+    ['tape_choco_dot', 'マステ チョコ', tape('radial-gradient(#f6c4d4 3.4px,transparent 4px) 0 0/14px 14px,#6b3f2e')],
+    ['corner_scallop', '角のスカラップ', flap()],
+  ]],
+];
+document.getElementById('root').innerHTML = CATS.map(([t, items]) =>
+  `<section class="cat"><h2>${t}</h2><div class="grid">${items.map(([id, lab, html]) =>
+    `<div class="item"><div class="part" data-name="${id}">${html}</div><div class="lab">${lab}</div></div>`).join('')}</div></section>`).join('');
+</script>
+</body>
+</html>
