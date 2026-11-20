@@ -20,5 +20,14 @@ const SHEETS = [
       await page.close();
     }
   }
+  // ショコラボックス版 (16:9, 2倍)
+  {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 2 });
+    await page.goto('file://' + path.join(__dirname, 'shokora_chocobox.html'));
+    await page.evaluate(() => document.fonts.ready);
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(__dirname, 'out', 'shokora_chocobox_16x9.png') });
+    await page.close();
+  }
   await browser.close();
 })();
