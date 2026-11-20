@@ -2,17 +2,23 @@
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
+const SHEETS = [
+  ['shokora_sheet.html', 'shokora_sheet'],
+  ['shokora_sheet_gotegote.html', 'shokora_gotegote'],
+];
 (async () => {
   fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
   const browser = await chromium.launch();
-  const url = 'file://' + path.join(__dirname, 'shokora_sheet.html');
-  for (const [name, w, hash] of [['3x4', 1500, ''], ['4x5', 1600, '#ig']]) {
-    const page = await browser.newPage({ viewport: { width: w, height: 2000 }, deviceScaleFactor: 1 });
-    await page.goto(url + hash);
-    await page.evaluate(() => document.fonts.ready);
-    await page.waitForTimeout(500);
-    await page.screenshot({ path: path.join(__dirname, 'out', `shokora_sheet_${name}.png`) });
-    await page.close();
+  for (const [file, prefix] of SHEETS) {
+    const url = 'file://' + path.join(__dirname, file);
+    for (const [name, w, hash] of [['3x4', 1500, ''], ['4x5', 1600, '#ig']]) {
+      const page = await browser.newPage({ viewport: { width: w, height: 2000 }, deviceScaleFactor: 1 });
+      await page.goto(url + hash);
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(500);
+      await page.screenshot({ path: path.join(__dirname, 'out', `${prefix}_${name}.png`) });
+      await page.close();
+    }
   }
   await browser.close();
 })();

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>しょこら 設定シート ゴテゴテ版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Great+Vibes&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<!--
+  しょこら 設定シート ゴテゴテ版
+  バレンタイン × チョコ × 鈴リボン / ロリータ（茶色水玉・ピンクチェック・板チョコ・レース・パール・フリルリボン）
+  書き出し: node render.js  →  out/shokora_gotegote_3x4.png (1500x2000) / out/shokora_gotegote_4x5.png (1600x2000)
+  #ig を付けて開くと 4:5 (1600x2000)
+  レース・パール・スカラップハートなどは下の <script> で SVG を組み立てている
+-->
+<style>
+:root{
+  --choco:#5a3426; --choco-d:#3e2219; --milk:#8b5a44; --cocoa:#b98a6e;
+  --pink:#f5b8cb; --pink-l:#fde3ec; --pink-m:#f09bb6; --hot:#e8789d;
+  --cream:#fff8f0; --wine:#a14767; --gold:#d8b072;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#f4c3d2}
+body{width:1500px;height:2000px;overflow:hidden;font-family:"Zen Maru Gothic",sans-serif;color:var(--choco-d)}
+:root.ig body{width:1600px}
+
+/* 地: ピンク×ブラウン×クリームのチェック */
+.sheet{position:relative;width:100%;height:100%;overflow:hidden;
+  background:
+    repeating-linear-gradient(45deg, rgba(255,255,255,.10) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(90deg, transparent 0 34px, rgba(139,90,68,.30) 34px 62px, transparent 62px 96px, rgba(255,248,240,.55) 96px 104px, transparent 104px 132px, rgba(139,90,68,.18) 132px 138px, transparent 138px 160px),
+    repeating-linear-gradient(0deg, transparent 0 34px, rgba(139,90,68,.30) 34px 62px, transparent 62px 96px, rgba(255,248,240,.55) 96px 104px, transparent 104px 132px, rgba(139,90,68,.18) 132px 138px, transparent 138px 160px),
+    #f3b9cb;}
+
+/* 外枠: 茶色水玉のリボン枠 + 白レース */
+.frame{position:absolute;inset:0;z-index:20;pointer-events:none;border:20px solid transparent;
+  border-image:var(--dotband) 30 / 20px round}
+.frame2{position:absolute;inset:18px;z-index:20;pointer-events:none;border:22px solid transparent;
+  border-image:var(--laceW) 40 / 22px round}
+
+/* 上の板チョコ */
+.bar{position:absolute;left:0;right:0;top:0;height:86px;z-index:12;background:var(--chocobar) 0 0/100px 86px;
+  box-shadow:0 6px 0 rgba(62,34,25,.35)}
+.lace-h{position:absolute;left:0;right:0;height:44px;z-index:12;background:var(--laceH) 0 0/66px 44px repeat-x}
+.swag{position:absolute;left:0;top:70px;width:100%;height:150px;z-index:13;overflow:visible}
+
+/* 茶色水玉パネル（上半分） */
+.panel{position:absolute;left:20px;right:20px;top:80px;height:1084px;z-index:1;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,.08), transparent 60%),
+    radial-gradient(#f6c4d4 4.2px, transparent 4.8px) 0 0/38px 38px,
+    radial-gradient(#f6c4d4 4.2px, transparent 4.8px) 19px 19px/38px 38px,
+    linear-gradient(180deg,#5d3528,#4a291f);}
+.lace-v{position:absolute;top:80px;height:1084px;width:44px;z-index:2;background:var(--laceV) 0 0/44px 66px repeat-y}
+.panel-hem{position:absolute;left:20px;right:20px;top:1150px;height:60px;z-index:4;
+  background:var(--laceH) 0 0/66px 44px repeat-x;}
+.ruffle{position:absolute;left:20px;right:20px;top:1140px;height:44px;z-index:3;
+  background:repeating-linear-gradient(90deg,#f7c4d5 0 9px,#ef9fbb 9px 12px,#fbd9e4 12px 20px);
+  -webkit-mask:radial-gradient(circle at 12px 0,#000 22px,transparent 22.5px) 0 0/24px 44px repeat-x;
+  mask:radial-gradient(circle at 12px 0,#000 22px,transparent 22.5px) 0 0/24px 44px repeat-x}
+
+.u{position:absolute;pointer-events:none;overflow:visible}
+
+/* ===== キャラ後ろのスカラップハート ===== */
+.bigheart{position:absolute;z-index:2;right:46px;top:138px;width:1110px;height:1020px}
+:root.ig .bigheart{right:56px;width:1180px}
+
+/* ===== イラスト ===== */
+.illust{position:absolute;z-index:5;top:150px;right:30px;width:1230px}
+:root.ig .illust{width:1280px}
+.illust img{width:100%;display:block;
+  filter:drop-shadow(7px 0 0 #fff) drop-shadow(-7px 0 0 #fff) drop-shadow(0 7px 0 #fff) drop-shadow(0 -7px 0 #fff)
+         drop-shadow(0 0 2px var(--pink-m)) drop-shadow(0 16px 20px rgba(40,18,12,.45))}
+.mk{position:absolute;width:52px;height:52px;margin:-26px 0 0 -26px;z-index:3;
+  font-family:"Mochiy Pop One";font-size:23px;color:#fff;display:grid;place-items:center;padding-bottom:5px;
+  text-shadow:0 0 3px var(--choco)}
+.mk svg{position:absolute;inset:-6px;width:64px;height:60px;z-index:-1;overflow:visible}
+
+/* ===== タイトル（キルティング＋パール） ===== */
+.plaque{position:absolute;left:58px;top:168px;width:660px;height:384px;z-index:8}
+.plaque svg{position:absolute;inset:-22px;width:calc(100% + 44px);height:calc(100% + 44px);overflow:visible}
+.title{position:absolute;left:62px;top:196px;z-index:9;width:652px;text-align:center}
+.title .script{font-family:"Great Vibes";font-size:56px;line-height:1;color:var(--hot);
+  -webkit-text-stroke:8px #fff;paint-order:stroke fill;filter:drop-shadow(2px 3px 0 rgba(90,52,38,.35))}
+.title h1{font-family:"Mochiy Pop One";font-weight:400;font-size:126px;line-height:1.05;margin:2px 0 8px;
+  color:var(--choco);white-space:nowrap;-webkit-text-stroke:14px #fff;paint-order:stroke fill;
+  filter:drop-shadow(5px 6px 0 var(--pink-m)) drop-shadow(0 0 1px var(--choco-d))}
+.title h1 .h{font-size:.42em;vertical-align:1em;color:var(--hot);-webkit-text-stroke:9px #fff}
+.title .tag{display:inline-block;font-family:"Hachi Maru Pop";font-size:25px;line-height:1.5;color:var(--choco);
+  background:rgba(255,248,240,.92);padding:8px 22px;border-radius:20px;box-shadow:0 0 0 2.5px var(--pink-m)}
+.title .tag b{color:var(--hot);font-weight:400}
+
+/* ===== イメージソング（パールハート） ===== */
+.song{position:absolute;z-index:8;left:44px;top:858px;width:330px;height:304px;text-align:center;
+  font-family:"Hachi Maru Pop";color:var(--choco);padding-top:76px}
+:root.ig .song{left:54px}
+.song svg.bg{position:absolute;inset:0;width:100%;height:100%;z-index:-1;overflow:visible}
+.song .lbl{font-family:"Mochiy Pop One";font-size:17px;letter-spacing:.18em;color:#fff;background:var(--choco);
+  display:inline-block;padding:4px 14px;border-radius:999px;margin-bottom:8px;box-shadow:0 0 0 3px #fff}
+.song p{font-size:24px;line-height:1.3}
+.song p small{display:block;font-size:17px;color:var(--milk)}
+.song p+p{margin-top:6px}
+
+/* ===== 下段 ===== */
+.lower{position:absolute;z-index:10;left:58px;right:58px;top:1232px;bottom:62px;
+  display:grid;grid-template-columns:1fr 1.18fr;grid-template-rows:auto 1fr;gap:54px 30px}
+.card{position:relative;padding:26px 14px 4px;
+  border:28px solid transparent;border-image:var(--laceC) 40 fill / 28px round}
+.card::before{content:"";position:absolute;inset:-18px;z-index:-1;
+  border:30px solid transparent;border-image:var(--frill) 40 / 30px round}
+.card::after{content:"";position:absolute;inset:-2px;z-index:-1;background:var(--cream)}
+.card h2{position:absolute;top:-62px;left:44px;z-index:3;font-family:"Mochiy Pop One";font-weight:400;font-size:26px;
+  letter-spacing:.14em;color:#fff;padding:7px 28px 7px 70px;white-space:nowrap;
+  background:radial-gradient(rgba(246,196,212,.35) 2.2px,transparent 2.7px) 0 0/14px 14px,linear-gradient(180deg,#7a4a36,#5a3426 55%,#3e2219);
+  clip-path:polygon(0 0,100% 0,calc(100% - 16px) 50%,100% 100%,0 100%,16px 50%);text-shadow:0 2px 0 var(--choco-d)}
+.card h2 small{font-family:"Hachi Maru Pop";font-size:17px;letter-spacing:.04em;margin-left:10px;color:var(--pink)}
+.card h2 i{position:absolute;inset:4px 18px;border-top:2px dashed rgba(246,196,212,.9);border-bottom:2px dashed rgba(246,196,212,.9)}
+.card .hb{position:absolute;top:-92px;left:2px;width:110px;height:100px;z-index:4;overflow:visible}
+
+.prof dl{display:grid;grid-template-columns:auto 1fr auto 1.5fr;gap:12px 0;font-size:23px;font-weight:700;line-height:1.35}
+.prof dt{font-family:"Hachi Maru Pop";font-weight:400;color:#fff;background:var(--milk);border-radius:999px;
+  padding:2px 14px;font-size:19px;align-self:start;text-align:center;margin-right:12px;min-width:90px;
+  box-shadow:0 0 0 2px #fff,0 0 0 4px var(--pink-m)}
+.prof dd{margin-right:12px;border-bottom:2px dotted var(--pink-m);padding-bottom:5px}
+.prof dd.wide{grid-column:2 / span 3}
+
+.sw{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 6px;text-align:center}
+.sw div{font-size:16px;font-weight:700;line-height:1.25}
+.sw .sh{position:relative;display:block;width:80px;height:74px;margin:0 auto 4px}
+.sw .sh::before{content:"";position:absolute;inset:0;background:var(--choco);
+  -webkit-mask:var(--heartmask) center/contain no-repeat;mask:var(--heartmask) center/contain no-repeat}
+.sw .sh i{position:absolute;inset:5px 5px 7px;background:currentColor;
+  -webkit-mask:var(--heartmask) center/contain no-repeat;mask:var(--heartmask) center/contain no-repeat}
+.sw .sh::after{content:"";position:absolute;left:20px;top:15px;width:16px;height:8px;border-radius:50%;background:rgba(255,255,255,.6);transform:rotate(-30deg)}
+.sw code{display:block;font-family:"Zen Maru Gothic";font-size:14px;color:var(--milk);font-weight:500}
+
+.persona .key{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.persona .key span{font-family:"Hachi Maru Pop";font-size:18px;background:var(--pink-l);color:var(--choco);
+  border:2px solid var(--pink-m);padding:0 11px;border-radius:999px}
+.persona .key span::before{content:"♥ ";color:var(--hot);font-size:.8em}
+.persona p{font-size:20px;line-height:1.56;font-weight:500}
+.persona p em{font-style:normal;font-weight:900;color:var(--wine);background:linear-gradient(transparent 60%,var(--pink) 60%)}
+.persona .two{margin-top:9px;display:flex;align-items:center;gap:10px;font-family:"Hachi Maru Pop";font-size:21px;color:var(--choco)}
+.persona .two .gauge{flex:1;height:20px;border-radius:999px;
+  background:linear-gradient(90deg,#fff 0%,var(--pink) 35%,var(--milk) 68%,var(--choco-d) 100%);box-shadow:0 0 0 3px #fff,0 0 0 5px var(--pink-m)}
+
+.points ol{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:13px 10px}
+.points li{display:flex;gap:7px;font-size:18px;line-height:1.38;font-weight:500;letter-spacing:-.05em}
+.points li b{font-weight:900;color:var(--wine)}
+.points li .n{flex:none;width:30px;height:28px;display:grid;place-items:center;font-family:"Mochiy Pop One";font-size:15px;color:#fff;
+  background:var(--hot);-webkit-mask:var(--heartmask) center/contain no-repeat;mask:var(--heartmask) center/contain no-repeat;padding-bottom:3px;letter-spacing:0}
+.points .face{margin-top:12px;padding-top:10px;border-top:2px dotted var(--pink-m);font-size:18px;line-height:1.45;letter-spacing:-.03em}
+.points .face b{color:var(--wine);font-weight:900}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="gold" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#fff6d6"/><stop offset=".45" stop-color="#e9c47a"/><stop offset="1" stop-color="#a8733a"/>
+    </radialGradient>
+    <radialGradient id="pearl" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#f7eef0"/><stop offset="1" stop-color="#cdb4ba"/>
+    </radialGradient>
+    <linearGradient id="chocoG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8b5a44"/><stop offset=".5" stop-color="#5a3426"/><stop offset="1" stop-color="#3a1f16"/>
+    </linearGradient>
+    <radialGradient id="truffleG" cx="35%" cy="30%" r="75%">
+      <stop offset="0" stop-color="#9a6650"/><stop offset=".6" stop-color="#5a3426"/><stop offset="1" stop-color="#2e1710"/>
+    </radialGradient>
+    <linearGradient id="satin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff2f6"/><stop offset=".5" stop-color="#fbd2df"/><stop offset="1" stop-color="#f2a9c0"/>
+    </linearGradient>
+    <pattern id="stripePB" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(38)">
+      <rect width="16" height="16" fill="#f7c6d5"/><rect width="7" height="16" fill="#6b3f2e"/><rect x="10" width="1.6" height="16" fill="#fff8f0"/>
+    </pattern>
+    <pattern id="pdots" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#f09bb6"/><circle cx="5" cy="5" r="2" fill="#5a3426"/></pattern>
+    <pattern id="bdots" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#7a4a36"/><circle cx="5" cy="5" r="2.1" fill="#f6c4d4"/></pattern>
+    <pattern id="quilt" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="40" height="40" fill="#fbd6e2"/>
+      <rect x="3" y="3" width="34" height="34" rx="9" fill="#fde8ef"/>
+      <ellipse cx="14" cy="14" rx="8" ry="6" fill="#fff" opacity=".7"/>
+      <path d="M0 0H40M0 0V40" stroke="#f3b3c8" stroke-width="2"/>
+      <circle cx="0" cy="0" r="2.6" fill="#fff"/>
+    </pattern>
+    <pattern id="quiltC" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <path d="M0 0H22M0 0V22" stroke="#3a1f16" stroke-opacity=".55" stroke-width="2"/>
+      <path d="M2 2H22M2 2V22" stroke="#fff" stroke-opacity=".12" stroke-width="1.5"/>
+    </pattern>
+
+    <!-- リボン形（塗りは use 側で指定） -->
+    <g id="bowL">
+      <path d="M55 36L31 84L44 78L52 90L63 40Z"/>
+      <path d="M65 36L89 84L76 78L68 90L57 40Z"/>
+      <path d="M60 34C44 4 7 0 5 23C3 46 34 52 60 34Z"/>
+      <path d="M60 34C76 4 113 0 115 23C117 46 86 52 60 34Z"/>
+    </g>
+    <symbol id="bowS" viewBox="0 0 120 94">
+      <use href="#bowL" fill="#fff" stroke="#fff" stroke-width="9" stroke-dasharray="0 7.5" stroke-linecap="round"/>
+      <use href="#bowL" fill="url(#stripePB)" stroke="#fff" stroke-width="3"/>
+      <path d="M60 34C48 18 22 12 18 25C30 21 46 27 60 34Z M60 34C72 18 98 12 102 25C90 21 74 27 60 34Z" fill="#2e1710" fill-opacity=".28"/>
+      <rect x="49" y="22" width="22" height="25" rx="8" fill="#6b3f2e" stroke="#fff" stroke-width="3"/>
+      <path d="M53 28H67M53 34H67M53 40H67" stroke="#f7c6d5" stroke-width="1.6"/>
+    </symbol>
+    <symbol id="bowP" viewBox="0 0 120 94">
+      <use href="#bowL" fill="#fff" stroke="#fff" stroke-width="9" stroke-dasharray="0 7.5" stroke-linecap="round"/>
+      <use href="#bowL" fill="url(#satin)" stroke="#f2a9c0" stroke-width="2"/>
+      <path d="M60 34C48 18 22 12 18 25C30 21 46 27 60 34Z M60 34C72 18 98 12 102 25C90 21 74 27 60 34Z" fill="#e8789d" fill-opacity=".25"/>
+      <path d="M22 12C30 8 42 12 48 20" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".9"/>
+      <path d="M98 12C90 8 78 12 72 20" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".9"/>
+      <rect x="49" y="22" width="22" height="25" rx="9" fill="url(#satin)" stroke="#f2a9c0" stroke-width="2"/>
+    </symbol>
+    <symbol id="bell" viewBox="0 0 40 46">
+      <circle cx="20" cy="6" r="4.5" fill="none" stroke="#b8864e" stroke-width="3"/>
+      <circle cx="20" cy="27" r="16" fill="url(#gold)" stroke="#94622f" stroke-width="1.6"/>
+      <path d="M5.5 23.5Q20 27 34.5 23.5" fill="none" stroke="#94622f" stroke-width="2"/>
+      <circle cx="20" cy="33" r="3.6" fill="#5b3a1e"/>
+      <path d="M20 34V42" stroke="#5b3a1e" stroke-width="2.6" stroke-linecap="round"/>
+      <ellipse cx="13" cy="19" rx="4.5" ry="2.6" fill="#fff" opacity=".85" transform="rotate(-30 13 19)"/>
+    </symbol>
+    <!-- 鈴リボン -->
+    <symbol id="bellS" viewBox="0 0 120 116">
+      <path d="M60 44V62" stroke="#b8864e" stroke-width="3"/>
+      <use href="#bowS" width="120" height="94"/>
+      <use href="#bell" x="42" y="46" width="36" height="42"/>
+    </symbol>
+    <symbol id="bellP" viewBox="0 0 120 116">
+      <path d="M60 44V62" stroke="#b8864e" stroke-width="3"/>
+      <use href="#bowP" width="120" height="94"/>
+      <use href="#bell" x="42" y="46" width="36" height="42"/>
+    </symbol>
+    <!-- ハート -->
+    <path id="hp" d="M50 88C18 66 2 48 2 28A24 24 0 0 1 50 16A24 24 0 0 1 98 28C98 48 82 66 50 88Z"/>
+    <symbol id="heart" viewBox="0 0 100 92">
+      <use href="#hp" fill="currentColor" stroke="#fff" stroke-width="5"/>
+      <ellipse cx="25" cy="27" rx="10" ry="5.5" fill="#fff" opacity=".6" transform="rotate(-35 25 27)"/>
+    </symbol>
+    <!-- キルティングのハートチョコ -->
+    <symbol id="chocoheart" viewBox="0 0 100 92">
+      <use href="#hp" fill="url(#chocoG)" stroke="#fff" stroke-width="5"/>
+      <use href="#hp" fill="url(#quiltC)" transform="translate(9 8) scale(.82)"/>
+      <use href="#hp" fill="none" stroke="#2e1710" stroke-opacity=".5" stroke-width="3" transform="translate(9 8) scale(.82)"/>
+      <use href="#hp" fill="#f6b3c8" stroke="#fff" stroke-width="4" transform="translate(31 27) scale(.38)"/>
+      <ellipse cx="24" cy="26" rx="9" ry="4.5" fill="#fff" opacity=".35" transform="rotate(-30 24 26)"/>
+    </symbol>
+    <!-- トリュフ -->
+    <symbol id="truffle" viewBox="0 0 100 100">
+      <ellipse cx="50" cy="86" rx="38" ry="9" fill="#2e1710" opacity=".3"/>
+      <circle cx="50" cy="50" r="40" fill="url(#truffleG)" stroke="#fff" stroke-width="4"/>
+      <path d="M18 40L28 32L36 42L46 30L56 42L66 30L74 40L84 34" fill="none" stroke="#f6b3c8" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M20 56L30 48L40 58L50 46L60 58L70 46L82 54" fill="none" stroke="#f6b3c8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+      <ellipse cx="34" cy="26" rx="10" ry="5" fill="#fff" opacity=".35" transform="rotate(-30 34 26)"/>
+    </symbol>
+    <!-- 市松クッキー -->
+    <symbol id="cookie" viewBox="0 0 100 100">
+      <rect x="6" y="6" width="88" height="88" rx="12" fill="#f3dcc0" stroke="#fff" stroke-width="5"/>
+      <rect x="14" y="14" width="36" height="36" rx="5" fill="#6b3f2e"/><rect x="50" y="50" width="36" height="36" rx="5" fill="#6b3f2e"/>
+      <rect x="50" y="14" width="36" height="36" rx="5" fill="#f9e9d6"/><rect x="14" y="50" width="36" height="36" rx="5" fill="#f9e9d6"/>
+      <rect x="6" y="6" width="88" height="88" rx="12" fill="none" stroke="#c99b74" stroke-width="2"/>
+    </symbol>
+    <!-- ボタン -->
+    <symbol id="btnB" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="url(#bdots)" stroke="#fff" stroke-width="4"/>
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#3e2219" stroke-opacity=".45" stroke-width="3"/>
+      <g fill="#fff8f0"><circle cx="40" cy="40" r="5.5"/><circle cx="60" cy="40" r="5.5"/><circle cx="40" cy="60" r="5.5"/><circle cx="60" cy="60" r="5.5"/></g>
+      <path d="M40 40L60 60M60 40L40 60" stroke="#f09bb6" stroke-width="3.5"/>
+      <ellipse cx="32" cy="24" rx="12" ry="5" fill="#fff" opacity=".3" transform="rotate(-30 32 24)"/>
+    </symbol>
+    <symbol id="btnP" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="46" fill="url(#pdots)" stroke="#fff" stroke-width="4"/>
+      <circle cx="50" cy="50" r="34" fill="none" stroke="#c75f86" stroke-opacity=".5" stroke-width="3"/>
+      <g fill="#fff"><circle cx="40" cy="40" r="5.5"/><circle cx="60" cy="40" r="5.5"/><circle cx="40" cy="60" r="5.5"/><circle cx="60" cy="60" r="5.5"/></g>
+      <ellipse cx="32" cy="24" rx="12" ry="5" fill="#fff" opacity=".5" transform="rotate(-30 32 24)"/>
+    </symbol>
+    <symbol id="spark" viewBox="0 0 100 100">
+      <path d="M50 0C54 36 64 46 100 50C64 54 54 64 50 100C46 64 36 54 0 50C36 46 46 36 50 0Z" fill="#fff"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="sheet">
+  <div class="panel"></div>
+  <div class="lace-v" style="left:20px"></div>
+  <div class="lace-v" style="right:20px;transform:scaleX(-1)"></div>
+  <div class="ruffle"></div>
+  <div class="panel-hem"></div>
+
+  <div class="bar"></div>
+  <div class="lace-h" style="top:80px"></div>
+  <svg class="swag" id="swag" aria-hidden="true"></svg>
+
+  <svg class="bigheart" id="bigheart" viewBox="0 0 1000 920" preserveAspectRatio="none" aria-hidden="true"></svg>
+
+  <div class="illust">
+    <img src="img/shokora.png" alt="しょこら 全身">
+    <span class="mk" style="left:58.5%;top:3%">1</span>
+    <span class="mk" style="left:80%;top:17%">2</span>
+    <span class="mk" style="left:67%;top:37%">3</span>
+    <span class="mk" style="left:56%;top:47%">4</span>
+    <span class="mk" style="left:95%;top:20%">5</span>
+    <span class="mk" style="left:86%;top:47%">6</span>
+    <span class="mk" style="left:20%;top:57%">7</span>
+    <span class="mk" style="left:27%;top:44%">8</span>
+    <span class="mk" style="left:38%;top:47%">9</span>
+    <span class="mk" style="left:7%;top:63%">10</span>
+  </div>
+
+  <div class="plaque"><svg id="plaque" viewBox="0 0 704 428" aria-hidden="true"></svg></div>
+  <div class="title">
+    <div class="script">Sweet Chocolatier</div>
+    <h1>しょこら<span class="h">♡</span></h1>
+    <p class="tag"><b>19歳</b>のショコラティエのお姉さん<b>♡</b><br>いつも甘い匂いがする。</p>
+  </div>
+
+  <div class="song">
+    <svg class="bg" id="songheart" viewBox="0 0 330 304" aria-hidden="true"></svg>
+    <span class="lbl">IMAGE SONG</span>
+    <p>毒チョコ<small>ザアザア</small></p>
+    <p>妄想日記2<small>シド</small></p>
+  </div>
+
+  <div class="lower">
+    <section class="card prof">
+      <svg class="hb" viewBox="0 0 120 116"><use href="#bellS"/></svg>
+      <h2><i></i>PROFILE<small>プロフィール</small></h2>
+      <dl>
+        <dt>年齢</dt><dd>19歳</dd><dt>職業</dt><dd>ショコラティエ</dd>
+        <dt>身長</dt><dd>160cm</dd><dt>体重</dt><dd>47kg</dd>
+        <dt>MBTI</dt><dd>INFJ</dd><dt>バスト</dt><dd>Eカップ</dd>
+        <dt>特技</dt><dd class="wide">お菓子作り、人に合わせること</dd>
+      </dl>
+    </section>
+
+    <section class="card persona">
+      <svg class="hb" viewBox="0 0 120 116"><use href="#bellP"/></svg>
+      <h2><i></i>PERSONALITY<small>性格</small></h2>
+      <div class="key"><span>明るく穏やか</span><span>愛され上手</span><span>完璧主義</span><span>戦略家</span><span>独占欲つよめ</span></div>
+      <p>普段はおっとりしていて、人の機嫌をよく伺っている。でも<em>完璧主義</em>で、自分のやることには妥協したくない。意外と戦略家気質で、冷静に相手を観察できる。</p>
+      <p>人には言えない一面があって、恋をすると印象が一変。好きな人にはかなり<em>独占的で執着深い</em>。</p>
+      <div class="two"><span>表は甘い</span><span class="gauge"></span><span>中は苦い</span></div>
+    </section>
+
+    <section class="card colors">
+      <svg class="hb" viewBox="0 0 120 116"><use href="#bellP"/></svg>
+      <h2><i></i>COLOR<small>カラー</small></h2>
+      <div class="sw">
+        <div><span class="sh"><i style="color:#a14767"></i></span>髪・スカート<code>#A14767</code></div>
+        <div><span class="sh"><i style="color:#876396"></i></span>瞳<code>#876396</code></div>
+        <div><span class="sh"><i style="color:#fbf5f6"></i></span>白（帽子・服）<code>#FBF5F6</code></div>
+        <div><span class="sh"><i style="color:#f2ccdf"></i></span>透けパネル<code>#F2CCDF</code></div>
+        <div><span class="sh"><i style="color:#663343"></i></span>チョコ<code>#663343</code></div>
+        <div><span class="sh"><i style="color:#7a4a4f"></i></span>靴<code>#7A4A4F</code></div>
+        <div><span class="sh"><i style="color:#e75b93"></i></span>差し色ピンク<code>#E75B93</code></div>
+        <div><span class="sh"><i style="color:#d3a583"></i></span>金ライン<code>#D3A583</code></div>
+      </div>
+    </section>
+
+    <section class="card points">
+      <svg class="hb" viewBox="0 0 120 116"><use href="#bellS"/></svg>
+      <h2><i></i>POINT<small>ここは外さんといて♡</small></h2>
+      <ol>
+        <li><span class="n">1</span><span><b>白ベレー</b>＋チョコハート＆金ボタン</span></li>
+        <li><span class="n">2</span><span>両サイドの<b>縦ロール</b></span></li>
+        <li><span class="n">3</span><span>ワインの<b>スタンドカラー</b>＋ハート</span></li>
+        <li><span class="n">4</span><span>胸元に<b>チョコ色リボン</b>＆垂れチョコ</span></li>
+        <li><span class="n">5</span><span>チョコがついた<b>泡立て器</b></span></li>
+        <li><span class="n">6</span><span>ワインの手袋＋腕に<b>リボン巻き</b></span></li>
+        <li><span class="n">7</span><span>フリル＋<b>ハート窓の透けパネル</b></span></li>
+        <li><span class="n">8</span><span><b>片脚だけ</b>白い網タイツ</span></li>
+        <li><span class="n">9</span><span>もう片脚に<b>ストライプのガーター</b></span></li>
+        <li><span class="n">10</span><span>ブラウンの<b>厚底ストラップ靴</b></span></li>
+      </ol>
+      <p class="face"><b>髪</b> ワインレッドのぱっつんボブ ／ <b>目</b> 紫のジト目・たれ目ぎみ ／ <b>肌</b> 色白、頬はほんのりピンク</p>
+    </section>
+  </div>
+
+  <div id="deco"></div>
+  <div class="frame"></div>
+  <div class="frame2"></div>
+</div>
+
+<script>
+const IG = location.hash === '#ig';
+if (IG) document.documentElement.classList.add('ig');
+const W = IG ? 1600 : 1500;
+const css = document.documentElement.style;
+const NS = 'xmlns="http://www.w3.org/2000/svg"';
+const uri = svg => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+const HEART = 'M50 88C18 66 2 48 2 28A24 24 0 0 1 50 16A24 24 0 0 1 98 28C98 48 82 66 50 88Z';
+
+/* パスに沿って点を取る */
+const probe = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+probe.style.cssText = 'position:absolute;width:0;height:0';
+document.body.appendChild(probe);
+function along(d, step) {
+  const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  p.setAttribute('d', d); probe.appendChild(p);
+  const L = p.getTotalLength(), n = Math.max(3, Math.round(L / step)), out = [];
+  for (let i = 0; i < n; i++) {
+    const a = p.getPointAtLength(L * i / n), b = p.getPointAtLength(L * (i + .5) / n);
+    out.push({ x: a.x, y: a.y, ang: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI });
+  }
+  p.remove(); return out;
+}
+const pearls = (d, r) => along(d, r * 2.05).map(p =>
+  `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r}" fill="url(#pearl)" stroke="#d9c3c8" stroke-width=".8"/>`).join('');
+
+/* ---- 柄タイル ---- */
+// 板チョコ 100x86
+css.setProperty('--chocobar', uri(`<svg ${NS} width="100" height="86" viewBox="0 0 100 86">
+  <rect width="100" height="86" fill="#4a291f"/>
+  <path d="M4 4H96L88 12H12V74L4 82Z" fill="#8b5a44"/><path d="M96 4V82H4L12 74H88V12Z" fill="#3a1f16"/>
+  <rect x="12" y="12" width="76" height="62" fill="#6b3f2e"/>
+  <path transform="translate(36 28) scale(.28)" d="${HEART}" fill="#5a3426"/>
+  <path transform="translate(37 29) scale(.27)" d="${HEART}" fill="none" stroke="#8b5a44" stroke-width="5"/></svg>`));
+// レース（横） 66x44
+function laceTile(rot) {
+  const g = `<mask id="m"><rect width="66" height="44" fill="#fff"/>
+      <g fill="#000"><circle cx="11" cy="7" r="2.6"/><circle cx="33" cy="7" r="2.6"/><circle cx="55" cy="7" r="2.6"/>
+      <circle cx="33" cy="25" r="3.2"/>${[0,1,2,3,4,5].map(i=>{const a=i/6*Math.PI*2;return `<ellipse cx="${33+Math.cos(a)*7.5}" cy="${25+Math.sin(a)*7.5}" rx="2.6" ry="1.6" transform="rotate(${a*180/Math.PI} ${33+Math.cos(a)*7.5} ${25+Math.sin(a)*7.5})"/>`}).join('')}
+      <path transform="translate(-2.5 16) scale(.11)" d="${HEART}"/><path transform="translate(63.5 16) scale(.11)" d="${HEART}"/></g></mask>
+    <g fill="#fff" fill-opacity=".96" mask="url(#m)">
+      <rect width="66" height="14"/><circle cx="33" cy="24" r="16"/><circle cx="0" cy="18" r="11"/><circle cx="66" cy="18" r="11"/>
+      ${[...Array(9)].map((_,i)=>{const a=(20+i*17.5)*Math.PI/180;return `<circle cx="${33+Math.cos(a)*17}" cy="${24+Math.sin(a)*17}" r="2.4"/>`}).join('')}
+    </g>
+    <path d="M0 13.5H66" stroke="#f3b3c8" stroke-width="1.4" stroke-dasharray="3 3"/>`;
+  return rot
+    ? `<svg ${NS} width="44" height="66" viewBox="0 0 44 66"><g transform="translate(44 0) rotate(90)">${g}</g></svg>`
+    : `<svg ${NS} width="66" height="44" viewBox="0 0 66 44">${g}</svg>`;
+}
+css.setProperty('--laceH', uri(laceTile(false)));
+css.setProperty('--laceV', uri(laceTile(true)));
+// border-image 用: 大きいスカラップのレース（3山/辺, ハートの穴）
+function laceFrame(fill, eye, stitch) {
+  let s = '', e = '';
+  for (let k = 0; k < 3; k++) {
+    const t = 20 + 40 * k;
+    for (const [x, y] of [[t, 19], [t, 101], [19, t], [101, t]]) {
+      s += `<circle cx="${x}" cy="${y}" r="19"/>`;
+      e += `<path transform="translate(${x - 5.5} ${y - 7}) scale(.11)" d="${HEART}"/>`;
+    }
+  }
+  return `<svg ${NS} width="120" height="120" viewBox="0 0 120 120"><g fill="${fill}">${s}<rect x="19" y="19" width="82" height="82"/></g>
+    <g fill="${eye}">${e}</g>
+    <rect x="35" y="35" width="50" height="50" fill="none" stroke="${stitch}" stroke-width="2.4" stroke-dasharray="5 4"/></svg>`;
+}
+css.setProperty('--laceW', uri(laceFrame('#ffffff', '#f3b3c8', '#f3b3c8')));
+css.setProperty('--laceC', uri(laceFrame('#fff8f0', '#f09bb6', '#b98a6e')));
+// フリル（ギャザー）
+(() => {
+  let s = '', p = '';
+  for (let k = 0; k < 6; k++) {
+    const t = 10 + 20 * k;
+    for (const [x, y] of [[t, 12], [t, 108], [12, t], [108, t]]) s += `<circle cx="${x}" cy="${y}" r="12"/>`;
+    p += `M${t - 4} 2V34M${t + 4} 4V34M${t - 4} 86V118M${t + 4} 86V116M2 ${t - 4}H34M4 ${t + 4}H34M86 ${t - 4}H118M86 ${t + 4}H116`;
+  }
+  css.setProperty('--frill', uri(`<svg ${NS} width="120" height="120" viewBox="0 0 120 120"><g fill="#f5b8cb">${s}<rect x="12" y="12" width="96" height="96"/></g>
+    <path d="${p}" stroke="#e8789d" stroke-width="2" stroke-opacity=".45"/>
+    <rect x="34" y="34" width="52" height="52" fill="none"/></svg>`));
+})();
+// 外枠の茶色水玉リボン
+css.setProperty('--dotband', uri(`<svg ${NS} width="90" height="90" viewBox="0 0 90 90"><rect width="90" height="90" fill="#5a3426"/>
+  ${[0,1,2].flatMap(i=>[0,1,2].map(j=>`<circle cx="${15+30*i}" cy="${15+30*j}" r="4.5" fill="#f6c4d4"/>`)).join('')}</svg>`));
+css.setProperty('--heartmask', uri(`<svg ${NS} viewBox="0 0 100 92"><path d="${HEART}"/></svg>`));
+
+/* ---- キャラ後ろの スカラップハート（ハートの穴あき） ---- */
+(() => {
+  const d = 'M500 890C190 680 30 500 30 300A235 235 0 0 1 500 150A235 235 0 0 1 970 300C970 500 810 680 500 890Z';
+  const pts = along(d, 50);
+  const sc = pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="30"/>`).join('');
+  const eyes = pts.map(p => `<path transform="translate(${p.x - 8} ${p.y - 9}) scale(.16)" d="${HEART}"/>`).join('');
+  const inner = 'M500 830C220 640 84 480 84 306A188 188 0 0 1 500 196A188 188 0 0 1 916 306C916 480 780 640 500 830Z';
+  document.getElementById('bigheart').innerHTML = `
+    <g fill="#f5b8cb">${sc}<path d="${d}"/></g>
+    <g fill="#fff">${eyes}</g>
+    <path d="${inner}" fill="url(#quilt)"/>
+    <path d="${inner}" fill="#fff" fill-opacity=".35"/>
+    <path d="${inner}" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="10 8"/>
+    ${pearls(inner, 9)}`;
+})();
+
+/* ---- タイトルのキルティング板（パール縁 + 白レース） ---- */
+(() => {
+  const w = 704, h = 428, r = 46, i = 22;
+  const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+  const outer = rr(8, 8, w - 16, h - 16, r + 14), mid = rr(i, i, w - 2 * i, h - 2 * i, r);
+  const sc = along(outer, 26).map(p => `<circle cx="${p.x}" cy="${p.y}" r="15"/>`).join('');
+  const eye = along(outer, 26).map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.6"/>`).join('');
+  document.getElementById('plaque').innerHTML = `
+    <g filter="drop-shadow(0 8px 0 rgba(40,18,12,.35))"><g fill="#fff">${sc}<path d="${outer}"/></g></g>
+    <g fill="#f3b3c8">${eye}</g>
+    <path d="${mid}" fill="url(#quilt)"/>
+    <path d="${mid}" fill="#fff" fill-opacity=".25"/>
+    ${pearls(mid, 8.5)}`;
+})();
+
+/* ---- イメージソングのパールハート ---- */
+(() => {
+  const d = 'M165 292C62 222 14 166 14 98A78 78 0 0 1 165 56A78 78 0 0 1 316 98C316 166 268 222 165 292Z';
+  document.getElementById('songheart').innerHTML = `
+    <path d="${d}" fill="url(#quilt)" stroke="#fff" stroke-width="10" filter="drop-shadow(0 7px 0 rgba(40,18,12,.35))"/>
+    <path d="M165 262C80 202 42 156 42 102A60 60 0 0 1 165 76A60 60 0 0 1 288 102C288 156 250 202 165 262Z" fill="#fff8f0" fill-opacity=".8"/>
+    ${pearls(d, 8)}`;
+})();
+
+/* ---- 上のスワッグ（サテンリボン + 鈴リボン） ---- */
+(() => {
+  const n = 5, w = W / n; let d = '', b = '';
+  for (let i = 0; i < n; i++) d += `M${i * w} 18Q${i * w + w / 2} 110 ${(i + 1) * w} 18`;
+  for (let i = 0; i <= n; i++) {
+    const s = i === 0 || i === n ? 120 : 132;
+    b += `<use href="#${i % 2 ? 'bellP' : 'bellS'}" x="${i * w - s / 2}" y="-22" width="${s}" height="${s * 116 / 120}"/>`;
+  }
+  const sv = document.getElementById('swag');
+  sv.setAttribute('viewBox', `0 0 ${W} 150`);
+  sv.innerHTML = `
+    <path d="${d}" fill="none" stroke="#3e2219" stroke-opacity=".3" stroke-width="18" transform="translate(0 5)"/>
+    <path d="${d}" fill="none" stroke="#f5b8cb" stroke-width="16"/>
+    <path d="${d}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="4 5" transform="translate(0 -3)"/>
+    <path d="${d.replaceAll(' 110 ', ' 76 ')}" fill="none" stroke="url(#pearl)" stroke-width="11" stroke-linecap="round" stroke-dasharray="0 14"/>
+    <path d="${d.replaceAll(' 110 ', ' 76 ')}" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 14"/>
+    ${b}`;
+})();
+
+/* ---- 番号ハート ---- */
+document.querySelectorAll('.mk').forEach(m => m.insertAdjacentHTML('afterbegin',
+  `<svg viewBox="0 0 100 92"><use href="#hp" fill="#e8789d" stroke="#fff" stroke-width="7"/><use href="#hp" fill="none" stroke="#5a3426" stroke-width="2.5" transform="translate(-4 -4) scale(1.08)"/></svg>`));
+
+/* ---- ちらし飾り [種類, x(負なら右端から), y, 幅, 回転, 色] ---- */
+const D = [
+  // タイトル
+  ['bowP', 328, 98, 104, 0, '', 9],
+  ['chocoheart', 24, 486, 96, -16, '', 9],
+  ['btnP', 650, 496, 64, 0, '', 9],
+  // 左の空き
+  ['truffle', 66, 610, 96, 0],
+  ['bellS', 30, 720, 110, -12],
+  ['heart', 180, 560, 44, 18, '#f5b8cb'],
+  ['spark', 210, 820, 34, 0], ['spark', 50, 600, 26, 0],
+  // 右上
+  ['btnB', -64, 210, 74, 0],
+  ['spark', -150, 186, 34, 0],
+  // 右下
+  ['chocoheart', -90, 690, 120, 16],
+  ['cookie', -220, 840, 96, 14],
+  ['truffle', -76, 880, 100, 0],
+  ['bellP', -170, 970, 140, -8],
+  ['btnP', -60, 1040, 70, 0],
+  ['heart', -250, 1060, 50, -14, '#e8789d'],
+  ['spark', -40, 800, 34, 0], ['spark', -300, 980, 28, 0],
+  // 下中央
+  ['cookie', 400, 1048, 80, -12],
+  ['chocoheart', 500, 1068, 86, 12],
+  ['btnB', 600, 1076, 56, 0],
+  ['spark', 360, 1000, 30, 0],
+  // ソングハートのリボン
+  ['bellS', 150, 818, 120, 0],
+  // 下段の隅
+  ['chocoheart', 14, 1916, 72, -18], ['chocoheart', -14, 1916, 72, 18],
+  ['btnP', -96, 1940, 52, 0], ['btnB', 96, 1940, 52, 0],
+];
+const VB = { bowS:'0 0 120 94', bowP:'0 0 120 94', bellS:'0 0 120 116', bellP:'0 0 120 116', heart:'0 0 100 92',
+  chocoheart:'0 0 100 92', truffle:'0 0 100 100', cookie:'0 0 100 100', btnB:'0 0 100 100', btnP:'0 0 100 100', spark:'0 0 100 100' };
+const deco = document.getElementById('deco');
+for (const [k, x, y, s, r, col, zz] of D) {
+  const [, , vw, vh] = VB[k].split(' ').map(Number);
+  const h = s * vh / vw, left = x < 0 ? W + x - s : x;
+  const z = zz || (k === 'spark' ? 6 : (y > 1180 ? 21 : 7));
+  deco.insertAdjacentHTML('beforeend',
+    `<svg class="u" viewBox="${VB[k]}" style="left:${left}px;top:${y}px;width:${s}px;height:${h}px;z-index:${z};transform:rotate(${r}deg);color:${col || ''};filter:drop-shadow(0 4px 0 rgba(40,18,12,.3))"><use href="#${k}"/></svg>`);
+}
+</script>
+</body>
+</html>

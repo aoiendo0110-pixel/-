@@ -8,3 +8,12 @@
   - `out/shokora_sheet_3x4.png` (1500×2000)
   - `out/shokora_sheet_4x5.png` (1600×2000, Instagram向け)
 - イラスト上のハート番号の位置は `.mk` の `left` / `top`（%指定）で調整
+
+## ゴテゴテ版 (`shokora_sheet_gotegote.html`)
+
+バレンタイン × チョコ × 鈴リボンのロリータ版。茶色水玉・ピンクチェック・板チョコ・白レース・
+パール縁のキルティングハート・フリル付きストライプリボン・鈴・ボタン・トリュフ・市松クッキー。
+
+- `out/shokora_gotegote_3x4.png` / `out/shokora_gotegote_4x5.png`
+- ちらし飾りの位置は `<script>` 内の配列 `D`（[種類, x, y, 幅, 回転, 色, 重なり順]、x が負なら右端から）
+- レース・フリル・パールの柄は `<script>` で SVG を組み立てて CSS 変数に入れている
