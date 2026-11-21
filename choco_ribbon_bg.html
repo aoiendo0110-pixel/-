@@ -79,25 +79,30 @@ function chocoHeart(cx,cy,s,rot,base,drizzle,style){
     `<path d="${d}" fill="none" stroke="${C.chocoDark}" stroke-opacity=".35" stroke-width="${f(s*0.03)}"/>`+
     `<path d="${tp('M-0.3,-0.25 Q-0.3,-0.38 -0.17,-0.4',cx,cy,s,rot)}" stroke="#fff" stroke-opacity=".55" stroke-width="${f(s*0.05)}" fill="none" stroke-linecap="round"/>`;
 }
+// 🎀-style bow: puffy round loops, pinched knot, flared notched tails
+function mx(d){let i=0;return d.replace(/-?\d*\.?\d+/g,n=>(i++%2===0)?String(-n):n)}
 function bow(cx,cy,s,rot,fill,dark,light){
-  const L='M0,0 C-0.25,-0.5 -0.95,-0.6 -1,-0.2 C-1.04,0.18 -0.4,0.28 0,0 Z';
-  const Rr='M0,0 C0.25,-0.5 0.95,-0.6 1,-0.2 C1.04,0.18 0.4,0.28 0,0 Z';
-  const TL='M-0.14,0.02 C-0.26,0.25 -0.4,0.48 -0.6,0.74 L-0.4,0.72 L-0.3,0.9 C-0.16,0.66 -0.04,0.4 0.04,0.1 Z';
-  const TR='M0.14,0.02 C0.26,0.25 0.4,0.48 0.6,0.74 L0.4,0.72 L0.3,0.9 C0.16,0.66 0.04,0.4 -0.04,0.1 Z';
-  const sw=f(Math.max(1.2,s*0.045));
+  const LOOP='M-0.1,-0.06 C-0.26,-0.44 -0.64,-0.66 -0.88,-0.52 C-1.1,-0.38 -1.1,0.04 -0.9,0.22 C-0.72,0.38 -0.36,0.26 -0.1,0.08 Z';
+  const FOLD='M-0.12,-0.02 C-0.28,-0.24 -0.5,-0.32 -0.62,-0.2 C-0.7,-0.08 -0.52,0.07 -0.12,0.05 Z';
+  const CREASE='M-0.14,0.04 C-0.4,0.12 -0.62,0.18 -0.82,0.12';
+  const SHINE='M-0.8,-0.38 Q-0.66,-0.54 -0.46,-0.48';
+  const TAIL='M-0.12,0.06 C-0.24,0.28 -0.44,0.5 -0.68,0.72 L-0.48,0.75 L-0.42,0.92 C-0.22,0.72 -0.02,0.46 0.1,0.12 Z';
+  const TAILLINE='M-0.08,0.16 C-0.16,0.38 -0.28,0.58 -0.46,0.8';
+  const KNOT='M-0.17,-0.13 Q-0.18,-0.21 -0.1,-0.21 L0.1,-0.21 Q0.18,-0.21 0.17,-0.13 L0.14,0.14 Q0.13,0.21 0.07,0.21 L-0.07,0.21 Q-0.13,0.21 -0.14,0.14 Z';
+  const sw=f(Math.max(1.2,s*0.045)), sw2=f(Math.max(1,s*0.035));
   const st=`stroke="${dark}" stroke-width="${sw}" stroke-linejoin="round"`;
-  return `<g>`+
-   `<path d="${tp(TL,cx,cy,s,rot)}" fill="${fill}" ${st}/>`+
-   `<path d="${tp(TR,cx,cy,s,rot)}" fill="${fill}" ${st}/>`+
-   `<path d="${tp(L,cx,cy,s,rot)}" fill="${fill}" ${st}/>`+
-   `<path d="${tp(Rr,cx,cy,s,rot)}" fill="${fill}" ${st}/>`+
-   `<path d="${tp('M-0.12,-0.02 C-0.4,-0.2 -0.7,-0.25 -0.82,-0.12',cx,cy,s,rot)}" fill="none" stroke="${dark}" stroke-opacity=".55" stroke-width="${sw}" stroke-linecap="round"/>`+
-   `<path d="${tp('M0.12,-0.02 C0.4,-0.2 0.7,-0.25 0.82,-0.12',cx,cy,s,rot)}" fill="none" stroke="${dark}" stroke-opacity=".55" stroke-width="${sw}" stroke-linecap="round"/>`+
-   `<path d="${tp('M-0.75,-0.35 Q-0.6,-0.45 -0.42,-0.4',cx,cy,s,rot)}" fill="none" stroke="${light}" stroke-opacity=".9" stroke-width="${f(s*0.06)}" stroke-linecap="round"/>`+
-   `<path d="${tp('M0.42,-0.4 Q0.6,-0.45 0.75,-0.35',cx,cy,s,rot)}" fill="none" stroke="${light}" stroke-opacity=".9" stroke-width="${f(s*0.06)}" stroke-linecap="round"/>`+
-   `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${f(s*0.17)}" ry="${f(s*0.2)}" fill="${fill}" ${st} transform="rotate(${rot} ${f(cx)} ${f(cy)})"/>`+
-   `<ellipse cx="${f(cx-s*0.04)}" cy="${f(cy-s*0.07)}" rx="${f(s*0.06)}" ry="${f(s*0.04)}" fill="${light}" fill-opacity=".9"/>`+
-  `</g>`;
+  const P=(d,extra)=>`<path d="${tp(d,cx,cy,s,rot)}" ${extra}/>`;
+  let g='<g>';
+  for(const m of [d=>d, mx]){ g+=P(m(TAIL),`fill="${fill}" ${st}`)+P(m(TAILLINE),`fill="none" stroke="${dark}" stroke-opacity=".45" stroke-width="${sw2}" stroke-linecap="round"`); }
+  for(const m of [d=>d, mx]){
+    g+=P(m(LOOP),`fill="${fill}" ${st}`)+
+       P(m(FOLD),`fill="${dark}" fill-opacity=".38"`)+
+       P(m(CREASE),`fill="none" stroke="${dark}" stroke-opacity=".45" stroke-width="${sw2}" stroke-linecap="round"`)+
+       P(m(SHINE),`fill="none" stroke="${light}" stroke-opacity=".9" stroke-width="${f(s*0.065)}" stroke-linecap="round"`);
+  }
+  g+=P(KNOT,`fill="${fill}" ${st}`)+
+     P('M-0.08,-0.12 Q0,-0.15 0.07,-0.12',`fill="none" stroke="${light}" stroke-opacity=".9" stroke-width="${f(s*0.05)}" stroke-linecap="round"`);
+  return g+'</g>';
 }
 function sparkle(cx,cy,s,col='#fff',op=1){return `<path d="${tp(SPARK,cx,cy,s)}" fill="${col}" fill-opacity="${op}"/>`}
 function pearl(cx,cy,r){return `<circle cx="${f(cx)}" cy="${f(cy+r*0.15)}" r="${f(r)}" fill="#d9a7b4" fill-opacity=".45"/><circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="url(#pearl)"/>`}
