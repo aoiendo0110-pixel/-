@@ -1,19 +1,21 @@
 // パーツ素材を書き出す: node export_parts.js
 //  parts/<名前>.png … 背景透過・3倍 ／ parts_catalog.png … 一覧
+//  しょこら配色: node export_parts.js parts_shokora.html parts_shokora parts_shokora_catalog.png
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 (async () => {
-  const out = path.join(__dirname, 'parts');
+  const [html = 'parts.html', dir = 'parts', cat = 'parts_catalog.png'] = process.argv.slice(2);
+  const out = path.join(__dirname, dir);
   fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch();
-  const url = 'file://' + path.join(__dirname, 'parts.html');
+  const url = 'file://' + path.join(__dirname, html);
   // 一覧
   let page = await browser.newPage({ viewport: { width: 1800, height: 1000 }, deviceScaleFactor: 1 });
   await page.goto(url);
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(600);
-  await page.screenshot({ path: path.join(__dirname, 'parts_catalog.png'), fullPage: true });
+  await page.screenshot({ path: path.join(__dirname, cat), fullPage: true });
   await page.close();
   // 1個ずつ（背景透過）
   page = await browser.newPage({ viewport: { width: 1800, height: 1000 }, deviceScaleFactor: 3 });
