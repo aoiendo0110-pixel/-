@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Great+Vibes&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
 <!--
-  外見の特徴「チョコの詰め合わせボックス」デザイン（しょこら公式カラー）
-  3×3 の仕切りに 1 マス 1 特徴。中身は FEATURES を編集。
+  外見の特徴「ロココの手鏡」デザイン（しょこら公式カラー）
+  鏡のガラスの中に特徴を並べる。中身は .list を編集。
   python3 build_frame.py look → look_frame.html → node export_frames.js look
   → out/look_frame.png（文字入り）/ out/look_frame_blank.png（空）… 背景透過・2倍
 -->
@@ -16,109 +16,103 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:transparent}
 body{font-family:"Zen Maru Gothic",sans-serif;padding:40px}
-.frame{position:relative;width:1180px;height:960px}
+.frame{position:relative;width:1000px;height:1260px}
 .u{position:absolute;overflow:visible;pointer-events:none}
-.box{position:absolute;left:30px;top:130px;width:1120px;height:800px}
-.box svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.mirror{position:absolute;left:0;top:0;width:1000px;height:1260px}
 
-/* 見出しの札 */
-.head{position:absolute;left:50%;top:22px;transform:translateX(-50%);z-index:5;text-align:center;width:640px;height:150px}
-.head svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.head .s{position:relative;font-family:"Great Vibes";font-size:46px;line-height:1;color:#a82454;margin-top:16px}
-.head .j{position:relative;font-family:"Mochiy Pop One";font-size:46px;letter-spacing:.14em;color:#6c4848;line-height:1.2}
-.head .j .h{color:#a82454}
+/* 見出しリボン（鏡のてっぺんに渡す） */
+.ttl{position:absolute;left:50%;top:150px;transform:translateX(-50%);z-index:5;white-space:nowrap;text-align:center;
+  font-family:"Mochiy Pop One";font-size:40px;letter-spacing:.16em;color:#fff;padding:12px 76px 14px;
+  background:radial-gradient(rgba(255,255,255,.4) 2.4px,transparent 3px) 0 0/15px 15px,linear-gradient(180deg,#c44a74,#a82454 55%,#7d1a3e);
+  clip-path:polygon(0 0,100% 0,calc(100% - 30px) 50%,100% 100%,0 100%,30px 50%);text-shadow:0 3px 0 #6e1236}
+.ttl::after{content:"";position:absolute;inset:6px 32px;border-top:2.5px dashed rgba(255,255,255,.85);border-bottom:2.5px dashed rgba(255,255,255,.85)}
+.sub{position:absolute;left:50%;top:250px;transform:translateX(-50%) rotate(-4deg);z-index:5;font-family:"Great Vibes";font-size:54px;color:#a82454;white-space:nowrap;
+  -webkit-text-stroke:9px #fff;paint-order:stroke fill;filter:drop-shadow(2px 3px 0 rgba(108,72,72,.25))}
 
-/* マス */
-.grid{position:absolute;left:96px;top:226px;width:988px;height:668px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:28px;z-index:3}
-.cell{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 14px 12px}
-.cell .num{position:absolute;left:-14px;top:-18px;width:64px;height:60px;display:grid;place-items:center;font-family:"Mochiy Pop One";font-size:24px;color:#fff;padding-bottom:6px;isolation:isolate}
-.cell .num svg{position:absolute;inset:0;width:100%;height:100%;z-index:-1;overflow:visible}
-.cell .part{font-family:"Mochiy Pop One";font-size:19px;letter-spacing:.16em;color:#fff;background:#a82454;padding:3px 18px 4px;border-radius:999px;margin-bottom:8px;
-  box-shadow:0 0 0 3px #fff}
-.cell b{display:block;font-size:24px;font-weight:900;line-height:1.3;color:#4a3234}
-.cell b em{font-style:normal;color:#a82454}
-.cell small{display:block;margin-top:5px;font-size:17.5px;font-weight:700;line-height:1.35;color:#6c4848}
-:root.blank .cell > :not(.num){visibility:hidden}
+/* 特徴リスト */
+.list{position:absolute;left:190px;right:190px;top:372px;z-index:4;list-style:none;text-align:center}
+.list li{font-size:36px;font-weight:900;line-height:1.35;color:#4a3234;padding:14px 0 15px;
+  background:radial-gradient(circle,#e98cc0 1.6px,transparent 2px) 0 100%/12px 6px repeat-x}
+.list li:last-child{background:none}
+.list li .h{font-family:"Hachi Maru Pop";font-weight:400;color:#a82454;margin-right:8px}
+.list li em{font-style:normal;color:#a82454;background:linear-gradient(transparent 62%,#fcc0e4 62%,#fcc0e4 92%,transparent 92%)}
+.list li .l2{display:block;font-size:33px}
+:root.blank .list{visibility:hidden}
 </style>
 </head>
 <body>
 {{DEFS}}
 <div class="frame">
-  <div class="box"><svg id="box" viewBox="0 0 1120 800" aria-hidden="true"></svg></div>
-  <div class="head"><svg id="head" viewBox="0 0 640 150" aria-hidden="true"></svg>
-    <div class="s">Chocolat Look Book</div><div class="j">外見<span class="h">の</span>特徴</div></div>
-  <div class="grid" id="grid"></div>
+  <svg class="mirror" id="mirror" viewBox="0 0 1000 1260" aria-hidden="true"></svg>
+  <div class="ttl">外見の特徴</div>
+  <div class="sub">my looks ♡</div>
+  <ul class="list">
+    <li><span class="h">♡</span><em>赤髪</em>ぱっつん前髪<span class="l2"><em>ドリルツインテール</em></span></li>
+    <li><span class="h">♡</span>おっとり<em>紫目</em></li>
+    <li><span class="h">♡</span><em>160cm</em> / <em>48kg</em></li>
+    <li><span class="h">♡</span>大きめバスト <em>Eカップ</em></li>
+    <li><span class="h">♡</span>全体的に少し<em>お姉さん体型</em></li>
+    <li><span class="h">♡</span>白い<em>もちもちほっぺ</em></li>
+  </ul>
   <div id="deco"></div>
 </div>
 
 <script>
 {{HELPERS}}
 if (location.hash === '#blank') document.documentElement.classList.add('blank');
-const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
-
-/* [部位, 特徴（<em>で強調）, 補足] */
-const FEATURES = [
-  ['髪', 'ワインレッドの<br><em>ぱっつんボブ</em>', '両サイドに縦ロール'],
-  ['目', '<em>紫のジト目</em>', 'ちょっぴりたれ目'],
-  ['帽子', '白い<em>ベレー帽</em>', 'チョコハート付き'],
-  ['襟元', 'ワインの<br><em>スタンドカラー</em>', 'ハートチョコのブローチ'],
-  ['胸元', '白の<em>ピンタック</em><br>ブラウス', 'チョコリボン＆垂れチョコ'],
-  ['手元', 'ワインの<em>手袋</em>', 'ピンクのリボン巻き'],
-  ['スカート', 'ワインのフリル＋<br><em>ハートのエプロン</em>', '後ろにピンクの大リボン'],
-  ['脚', '<em>片脚だけ</em>網タイツ', 'もう片脚はストライプの<br>リボン巻き'],
-  ['靴', 'ブラウンの<em>厚底</em>', 'ストライプリボン＆鈴'],
-];
-const numCol = ['#a82454', '#6c4848', '#e98cc0'];
-document.getElementById('grid').innerHTML = FEATURES.map(([p, t, s], i) =>
-  `<div class="cell"><span class="num"><svg viewBox="0 0 100 92"><use href="#hp" fill="${i % 2 ? '#6c4848' : '#a82454'}" stroke="#fff" stroke-width="7"/><ellipse cx="27" cy="27" rx="10" ry="5" fill="#fff" opacity=".5" transform="rotate(-35 27 27)"/></svg>${i + 1}</span>
-   <span class="part">${p}</span><b>${t}</b><small>${s}</small></div>`).join('');
-
-/* 箱: 影 → 金のふち → チョコの壁（水玉） → ピンクの敷き紙 → 仕切り → 紙カップ */
+const oval = (cx, cy, rx, ry) => `M${cx - rx} ${cy}A${rx} ${ry} 0 1 0 ${cx + rx} ${cy}A${rx} ${ry} 0 1 0 ${cx - rx} ${cy}Z`;
 (() => {
-  const outer = rr(0, 0, 1120, 800, 48), wall = rr(10, 10, 1100, 780, 40), liner = rr(44, 74, 1032, 692, 26);
-  let cups = '';
-  const cw = (988 - 56) / 3, ch = (668 - 56) / 3;
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
-    const x = 66 + c * (cw + 28), y = 96 + r * (ch + 28);
-    const cup = rr(x, y, cw, ch, 22);
-    const pl = along(cup, 12).map(p => `<ellipse cx="${p.x}" cy="${p.y}" rx="6.5" ry="13" transform="rotate(${p.ang + 90} ${p.x} ${p.y})"/>`).join('');
-    cups += `<path d="${cup}" fill="#4a3234" opacity=".35" transform="translate(4 7)"/>
-      <g fill="#fff" stroke="#fcc0e4" stroke-width="1.6">${pl}</g>
-      <path d="${rr(x + 8, y + 8, cw - 16, ch - 16, 16)}" fill="#fffafc"/>
-      <path d="${rr(x + 8, y + 8, cw - 16, ch - 16, 16)}" fill="url(#cupdot)"/>
-      <path d="${rr(x + 16, y + 16, cw - 32, ch - 32, 12)}" fill="none" stroke="#f9b2dc" stroke-width="2.4" stroke-dasharray="6 5"/>`;
-  }
-  document.getElementById('box').innerHTML = `
+  const cx = 500, cy = 560;
+  const frill = oval(cx, cy, 440, 480), rim = oval(cx, cy, 410, 450), gold = oval(cx, cy, 378, 418), glass = oval(cx, cy, 352, 392);
+  const fp = along(frill, 22);
+  const pleats = fp.map(p => `<ellipse cx="${p.x}" cy="${p.y}" rx="11" ry="28" transform="rotate(${p.ang + 90} ${p.x} ${p.y})"/>`).join('');
+  // 持ち手
+  const handle = 'M452 990C452 1060 440 1130 446 1190Q450 1236 500 1236Q550 1236 554 1190C560 1130 548 1060 548 990Z';
+  document.getElementById('mirror').innerHTML = `
     <defs>
-      <pattern id="cdot" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="11" cy="11" r="3.4" fill="#fcc0e4" opacity=".55"/></pattern>
-      <pattern id="cupdot" width="40" height="40" patternUnits="userSpaceOnUse"><path transform="translate(14 14) scale(.12)" d="${HEART}" fill="#fcc0e4" opacity=".55"/></pattern>
-      <pattern id="lgin" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="#fcc0e4"/><rect width="15" height="30" fill="#fff" opacity=".35"/><rect width="30" height="15" fill="#fff" opacity=".35"/></pattern>
+      <radialGradient id="glassG" cx="38%" cy="30%" r="80%">
+        <stop offset="0" stop-color="#ffffff"/><stop offset=".45" stop-color="#fff2f9"/><stop offset="1" stop-color="#fcc0e4"/></radialGradient>
+      <linearGradient id="rimG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c44a74"/><stop offset=".5" stop-color="#a82454"/><stop offset="1" stop-color="#7d1a3e"/></linearGradient>
+      <linearGradient id="goldG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffbe8"/><stop offset=".45" stop-color="#f0e4a8"/><stop offset="1" stop-color="#cdb46e"/></linearGradient>
+      <pattern id="gdot" width="56" height="56" patternUnits="userSpaceOnUse"><path transform="translate(20 20) scale(.12)" d="${HEART}" fill="#fcc0e4" opacity=".55"/></pattern>
+      <clipPath id="gc"><path d="${glass}"/></clipPath>
     </defs>
-    <path d="${outer}" fill="#6c4848" opacity=".3" transform="translate(12 18)"/>
-    <path d="${outer}" fill="#f0e4a8" stroke="#fff" stroke-width="8"/>
-    <path d="${wall}" fill="url(#chocoG)"/><path d="${wall}" fill="url(#cdot)"/>
-    ${pearls(rr(26, 26, 1068, 748, 32), 6)}
-    <path d="${liner}" fill="url(#lgin)" stroke="#fff" stroke-width="5"/>
-    ${cups}`;
+    <!-- 影 -->
+    <g transform="translate(12 18)" fill="#6c4848" opacity=".26"><path d="${frill}"/><path d="${handle}"/></g>
+    <!-- 持ち手（ワイン×金の帯） -->
+    <path d="${handle}" fill="url(#rimG)" stroke="#fff" stroke-width="6"/>
+    <g fill="url(#goldG)" stroke="#fff" stroke-width="3">
+      <rect x="440" y="1020" width="120" height="22" rx="11"/><rect x="438" y="1140" width="124" height="22" rx="11"/>
+      <circle cx="500" cy="1232" r="22"/></g>
+    <path d="M478 1060V1120M500 1056V1124M522 1060V1120" stroke="#fff" stroke-opacity=".35" stroke-width="4" stroke-linecap="round"/>
+    <!-- フリル・ワインのふち・金の飾り枠・パール -->
+    <g fill="#fff" stroke="#fcc0e4" stroke-width="1.8">${pleats}</g>
+    <path d="${frill}" fill="#fff" transform="scale(.985) translate(7.6 8.5)"/>
+    <path d="${rim}" fill="url(#rimG)" stroke="#fff" stroke-width="6"/>
+    <g fill="#fcc0e4">${along(oval(cx, cy, 394, 434), 34).map(p => `<path transform="translate(${p.x - 7} ${p.y - 7}) scale(.14)" d="${HEART}"/>`).join('')}</g>
+    <path d="${gold}" fill="url(#goldG)" stroke="#fff" stroke-width="4"/>
+    <!-- ガラス -->
+    <path d="${glass}" fill="url(#glassG)"/>
+    <path d="${glass}" fill="url(#gdot)"/>
+    <g clip-path="url(#gc)" fill="#fff" opacity=".7">
+      <path d="M150 380L330 160L380 180L200 420Z"/><path d="M180 460L390 210L410 220L200 480Z"/>
+      <path d="M640 940L820 700L840 712L660 952Z" opacity=".6"/></g>
+    <path d="${oval(cx, cy, 336, 376)}" fill="none" stroke="#e98cc0" stroke-width="3" stroke-dasharray="9 7"/>
+    ${pearls(oval(cx, cy, 366, 406), 7)}
+    <!-- てっぺんの飾り（ハートの冠） -->
+    <path transform="translate(440 52) scale(1.2)" d="${HEART}" fill="url(#rimG)" stroke="#fff" stroke-width="6"/>
+    <path transform="translate(468 76) scale(.64)" d="${HEART}" fill="#fcc0e4"/>
+    <!-- 下の飾り（ハートのチャーム） -->
+    <path transform="translate(470 968) scale(.6)" d="${HEART}" fill="url(#goldG)" stroke="#fff" stroke-width="6"/>`;
 })();
-/* 見出しの札（レースのスカラップ＋ワインのふち） */
-(() => {
-  const d = rr(40, 22, 560, 112, 56), pts = along(d, 30);
-  document.getElementById('head').innerHTML = `
-    <g fill="#6c4848" opacity=".28" transform="translate(6 10)">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="20"/>`).join('')}<path d="${d}"/></g>
-    <g fill="#a82454">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="21"/>`).join('')}<path d="${d}"/></g>
-    <g fill="#fff">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="17"/>`).join('')}<path d="${d}"/></g>
-    <g fill="#fcc0e4">${pts.map(p => `<path transform="translate(${p.x - 5} ${p.y - 6}) scale(.1)" d="${HEART}"/>`).join('')}</g>
-    <path d="${rr(56, 36, 528, 84, 42)}" fill="#fff8fc" stroke="#e98cc0" stroke-width="2.4" stroke-dasharray="7 6"/>`;
-})();
-/* 飾り（鈴・マカロン無し） */
 const VB = { bowS:'0 0 120 94', bowP:'0 0 120 94', chocoheart:'0 0 100 92', berryS:'0 0 80 92', rose:'0 0 100 100', spark:'0 0 100 100',
-  heart:'0 0 100 92', truffle:'0 0 100 100', cherry:'0 0 100 100', cream:'0 0 100 100' };
+  heart:'0 0 100 92', truffle:'0 0 100 100', cherry:'0 0 100 100' };
 const D = [
-  ['bowP', -8, 70, 150, -18, ''], ['bowS', 1020, 96, 160, 16, ''],
-  ['rose', 1090, 860, 80, 0, '#f78fb2'], ['berryS', 1050, 886, 60, -14, ''], ['truffle', 10, 880, 70, 0, ''], ['cherry', 70, 880, 76, 8, ''],
-  ['heart', 300, 60, 44, -14, '#a82454'], ['heart', 850, 50, 40, 14, '#e8789d'],
-  ['spark', 250, 20, 40, 0, ''], ['spark', 900, 110, 34, 0, ''], ['spark', 1130, 520, 36, 0, ''], ['spark', 14, 600, 32, 0, ''],
+  ['bowP', 410, 1046, 180, 0, ''],                      // 持ち手に結んだリボン
+  ['bowS', 22, 120, 170, -22, ''], ['rose', 840, 110, 90, 0, '#f78fb2'], ['rose', 900, 190, 64, 0, '#fbc2d4'],
+  ['chocoheart', 840, 930, 130, 14, ''], ['berryS', 930, 880, 64, 20, ''], ['cherry', 30, 900, 96, -12, ''], ['truffle', 120, 990, 70, 0, ''],
+  ['heart', 30, 560, 50, -16, '#a82454'], ['heart', 930, 520, 44, 14, '#e8789d'], ['heart', 960, 600, 30, -10, '#6c4848'],
+  ['spark', 200, 60, 46, 0, ''], ['spark', 760, 40, 38, 0, ''], ['spark', 30, 700, 36, 0, ''], ['spark', 940, 400, 40, 0, ''], ['spark', 300, 1160, 36, 0, ''], ['spark', 680, 1180, 40, 0, ''],
 ];
 const deco = document.getElementById('deco');
 for (const [k, x, y, s, r, col] of D) {
