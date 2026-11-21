@@ -7,34 +7,36 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Great+Vibes&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <!--
-  外見の特徴「メイクパレット」デザイン（しょこら公式カラー）
-  ふたの鏡に見出し、6色のアイシャドウ＝6つの特徴。中身は SHADES を編集。
-  （前のパッケージ風は src_look_package.html）
+  外見の特徴「ロゼット（リボンバッジ）」デザイン（しょこら公式カラー）
+  1特徴＝1ロゼット、2段をサテンリボンのガーランドでつなぐ。中身は ITEMS を編集。
+  （前の版: src_look_package.html / src_look_palette.html）
   python3 build_frame.py look → look_frame.html → node export_frames.js look
-  → out/look_frame.png（文字入り）/ out/look_frame_blank.png（空）… 背景透過・2倍
 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:transparent}
 body{font-family:"Zen Maru Gothic",sans-serif;padding:40px;color:#4a3234}
-.frame{position:relative;width:1240px;height:1300px}
+.frame{position:relative;width:1200px;height:1080px}
 .u{position:absolute;overflow:visible;pointer-events:none}
-#case{position:absolute;left:0;top:0;width:1240px;height:1300px;overflow:visible}
+#art{position:absolute;left:0;top:0;width:1200px;height:1080px;overflow:visible}
 
-/* 鏡の文字 */
-.mirror{position:absolute;left:170px;top:92px;width:900px;height:300px;z-index:3;text-align:center;padding-top:34px}
-.mirror .s{font-family:"Great Vibes";font-size:58px;line-height:1;color:#a83c60;opacity:.9}
-.mirror h1{font-family:"Mochiy Pop One";font-weight:400;font-size:84px;line-height:1.15;color:#a82454;letter-spacing:.06em;
-  -webkit-text-stroke:10px #fff;paint-order:stroke fill;filter:drop-shadow(3px 5px 0 rgba(168,36,84,.25))}
-.mirror .lip{font-family:"Hachi Maru Pop";font-size:26px;color:#a82454;margin-top:4px}
+/* 見出しバナー */
+.ttl{position:absolute;left:0;right:0;top:34px;z-index:5;text-align:center}
+.ttl .s{font-family:"Great Vibes";font-size:54px;line-height:1;color:#a82454;-webkit-text-stroke:8px #fff;paint-order:stroke fill;
+  filter:drop-shadow(2px 3px 0 rgba(108,72,72,.25));margin-bottom:-8px;position:relative;z-index:2}
+.ttl h1{display:inline-block;position:relative;font-family:"Mochiy Pop One";font-weight:400;font-size:48px;letter-spacing:.16em;color:#fff;
+  padding:12px 90px 16px;text-shadow:0 3px 0 #6e1236;
+  background:radial-gradient(rgba(255,255,255,.4) 2.4px,transparent 3px) 0 0/15px 15px,linear-gradient(180deg,#c44a74,#a82454 55%,#7d1a3e);
+  clip-path:polygon(0 0,100% 0,calc(100% - 34px) 50%,100% 100%,0 100%,34px 50%)}
+.ttl h1::after{content:"";position:absolute;inset:7px 36px;border-top:2.5px dashed rgba(255,255,255,.85);border-bottom:2.5px dashed rgba(255,255,255,.85)}
 
-/* 色のラベル */
-.shade{position:absolute;z-index:3;width:330px;text-align:center}
-.shade .no{display:inline-block;font-family:"Mochiy Pop One";font-size:15px;letter-spacing:.2em;color:#fff;background:#6c4848;padding:3px 14px;border-radius:999px;margin-bottom:6px}
-.shade b{display:block;font-size:30px;font-weight:900;line-height:1.25;color:#a82454;white-space:nowrap}
-.shade small{display:block;font-size:20px;font-weight:900;line-height:1.35;color:#4a3234;margin-top:3px;white-space:nowrap}
-:root.blank .shade b,:root.blank .shade small{visibility:hidden}
-:root.blank .mirror h1,:root.blank .mirror .lip{visibility:hidden}
+/* ロゼットの中身 */
+.in{position:absolute;z-index:4;width:200px;height:200px;margin:-100px 0 0 -100px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.in .k{font-family:"Great Vibes";font-size:34px;line-height:.9;color:#e98cc0}
+.in b{display:block;font-size:27px;font-weight:900;line-height:1.3;color:#a82454;white-space:nowrap}
+.in small{display:block;font-size:18px;font-weight:900;line-height:1.3;color:#6c4848;margin-top:3px;white-space:nowrap}
+:root.blank .in b,:root.blank .in small{visibility:hidden}
+:root.blank .ttl h1{color:transparent;text-shadow:none}
 </style>
 </head>
 <body>
@@ -191,9 +193,9 @@ body{font-family:"Zen Maru Gothic",sans-serif;padding:40px;color:#4a3234}
   </defs>
 </svg>
 <div class="frame">
-  <svg id="case" viewBox="0 0 1240 1300" aria-hidden="true"></svg>
-  <div class="mirror"><div class="s">Shokora's Look Palette</div><h1>外見の特徴</h1><div class="lip">♡ my looks ♡</div></div>
-  <div id="shades"></div>
+  <svg id="art" viewBox="0 0 1200 1080" aria-hidden="true"></svg>
+  <div class="ttl"><div class="s">my looks</div><h1>外見の特徴</h1></div>
+  <div id="ins"></div>
   <div id="deco"></div>
 </div>
 
@@ -256,90 +258,78 @@ css.setProperty('--dotband', uri(`<svg ${NS} width="90" height="90" viewBox="0 0
 
 
 if (location.hash === '#blank') document.documentElement.classList.add('blank');
-const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
 
-/* [色, 見出し, 補足] */
-const SHADES = [
-  ['#a83c60', '赤髪ぱっつん前髪', 'ドリルツインテール'],
-  ['#84609c', 'おっとり紫目', ''],
-  ['#f0e4a8', '160cm / 48kg', ''],
-  ['#fcc0e4', '大きめバスト', 'Eカップ'],
-  ['#6c4848', 'お姉さん体型', '全体的に少し'],
-  ['#fdeef6', 'もちもちほっぺ', '白くてもちもち'],
+/* [英字, 見出し(<br>可), 補足] */
+const ITEMS = [
+  ['Hair', '赤髪<br>ぱっつん前髪', 'ドリルツインテール'],
+  ['Eyes', 'おっとり<br>紫目', ''],
+  ['Size', '160cm<br>48kg', ''],
+  ['Bust', '大きめバスト', 'Eカップ'],
+  ['Style', '少し<br>お姉さん体型', ''],
+  ['Cheek', '白い<br>もちもちほっぺ', ''],
 ];
-const PAN = { cx: [290, 620, 950], cy: [680, 1040], r: 88 };
+// 配色 [プリーツ濃, プリーツ淡, しっぽ]
+const COLS = [['#a82454', '#c44a74', '#7d1a3e'], ['#f59fd2', '#fcc0e4', '#a82454'], ['#6c4848', '#8a6262', '#4a3234']];
+const POS = [[220, 380], [600, 370], [980, 380], [220, 750], [600, 740], [980, 750]];
+
+function rosette(cx, cy, [c1, c2, ct]) {
+  const R1 = 104, R2 = 150, N = 40;
+  let pleat = '', bumps = '';
+  for (let i = 0; i < N; i++) {
+    const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2;
+    const p = (r, a) => `${cx + Math.cos(a) * r} ${cy + Math.sin(a) * r}`;
+    pleat += `<path d="M${p(R1, a0)}L${p(R2, a0)}A${R2} ${R2} 0 0 1 ${p(R2, a1)}L${p(R1, a1)}Z" fill="${i % 2 ? c1 : c2}"/>`;
+    bumps += `<circle cx="${cx + Math.cos((a0 + a1) / 2) * R2}" cy="${cy + Math.sin((a0 + a1) / 2) * R2}" r="13"/>`;
+  }
+  const circ = r => `M${cx - r} ${cy}A${r} ${r} 0 1 0 ${cx + r} ${cy}A${r} ${r} 0 1 0 ${cx - r} ${cy}Z`;
+  const lace = along(circ(110), 24);
+  const tail = (s) => `<g transform="translate(${cx} ${cy}) scale(${s} 1)">
+      <path d="M-14 90L-78 300L-52 282L-34 316L22 100Z" fill="${ct}" stroke="#fff" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M-10 120L-58 280" stroke="#fff" stroke-opacity=".55" stroke-width="3" stroke-dasharray="6 5"/></g>`;
+  return `
+    <g transform="translate(8 14)" opacity=".22" fill="#6c4848"><circle cx="${cx}" cy="${cy}" r="${R2 + 12}"/></g>
+    ${tail(1)}${tail(-1)}
+    <g fill="#fff">${bumps}</g>
+    <circle cx="${cx}" cy="${cy}" r="${R2 + 6}" fill="#fff"/>
+    <g fill="${c2}">${bumps.replaceAll('r="13"', 'r="9"')}</g>
+    ${pleat}
+    ${Array.from({ length: N }, (_, i) => { const a = i / N * Math.PI * 2; return `<path d="M${cx + Math.cos(a) * R1} ${cy + Math.sin(a) * R1}L${cx + Math.cos(a) * R2} ${cy + Math.sin(a) * R2}" stroke="#000" stroke-opacity=".12" stroke-width="1.5"/>`; }).join('')}
+    <circle cx="${cx}" cy="${cy}" r="${R1 + 20}" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-dasharray="4 5"/>
+    <g fill="#fff">${lace.map(p => `<circle cx="${p.x}" cy="${p.y}" r="12"/>`).join('')}<circle cx="${cx}" cy="${cy}" r="110"/></g>
+    <g fill="#fcc0e4">${lace.map(p => `<path transform="translate(${p.x - 5} ${p.y - 6}) scale(.1)" d="${HEART}"/>`).join('')}</g>
+    <circle cx="${cx}" cy="${cy}" r="98" fill="#fff8fc"/>
+    <circle cx="${cx}" cy="${cy}" r="98" fill="url(#hdots)"/>
+    <circle cx="${cx}" cy="${cy}" r="90" fill="none" stroke="#e98cc0" stroke-width="2.5" stroke-dasharray="7 6"/>
+    ${pearls(circ(101), 4.5)}`;
+}
 
 (() => {
-  const lid = rr(60, 20, 1120, 430, 70), glass = rr(110, 66, 1020, 338, 46);
-  const base = rr(60, 470, 1120, 810, 70), well = rr(100, 508, 1040, 734, 48);
-  let pans = '';
-  SHADES.forEach(([c], i) => {
-    const x = PAN.cx[i % 3], y = PAN.cy[Math.floor(i / 3)] - 70, r = PAN.r;
-    pans += `
-      <circle cx="${x}" cy="${y + 6}" r="${r + 14}" fill="#a83c60" opacity=".18"/>
-      <circle cx="${x}" cy="${y}" r="${r + 14}" fill="url(#goldG)" stroke="#fff" stroke-width="4"/>
-      <circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>
-      <circle cx="${x}" cy="${y}" r="${r}" fill="url(#shim)"/>
-      <circle cx="${x}" cy="${y}" r="${r}" fill="url(#glit)" opacity=".85"/>
-      <path transform="translate(${x - 34} ${y - 29}) scale(.68)" d="${HEART}" fill="#000" opacity=".1"/>
-      <path transform="translate(${x - 36} ${y - 31}) scale(.68)" d="${HEART}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5"/>
-      ${i === 5 ? `<circle cx="${x - 34}" cy="${y + 26}" r="20" fill="#f9b2dc" opacity=".75"/><circle cx="${x + 34}" cy="${y + 26}" r="20" fill="#f9b2dc" opacity=".75"/>` : ''}
-      <path d="M${x - 58} ${y - 38}A72 72 0 0 1 ${x - 12} ${y - 70}" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="10" stroke-linecap="round"/>`;
-  });
-  let glitter = '';
-  for (let i = 0; i < 26; i++) glitter += `<circle cx="${(i * 37) % 90 + 5}" cy="${(i * 53) % 90 + 5}" r="${1 + (i % 3) * .6}" fill="#fff"/>`;
-  document.getElementById('case').innerHTML = `
-    <defs>
-      <linearGradient id="caseG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fee6f3"/><stop offset=".45" stop-color="#fcc0e4"/><stop offset="1" stop-color="#f2a2cf"/></linearGradient>
-      <linearGradient id="goldG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffbe8"/><stop offset=".5" stop-color="#f0e4a8"/><stop offset="1" stop-color="#cdb46e"/></linearGradient>
-      <linearGradient id="mirG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#fdeef6"/><stop offset="1" stop-color="#f9d6ea"/></linearGradient>
-      <radialGradient id="shim" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
-      <pattern id="glit" width="100" height="100" patternUnits="userSpaceOnUse">${glitter}</pattern>
-      <pattern id="quiltS" width="34" height="34" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-        <path d="M0 0H34M0 0V34" stroke="#fff" stroke-opacity=".55" stroke-width="2"/><circle r="2.6" fill="#fff"/></pattern>
-      <clipPath id="mc"><path d="${glass}"/></clipPath>
-    </defs>
-    <path d="${lid}" fill="#6c4848" opacity=".25" transform="translate(12 18)"/><path d="${base}" fill="#6c4848" opacity=".25" transform="translate(12 18)"/>
-    <rect x="300" y="436" width="640" height="48" rx="20" fill="url(#goldG)" stroke="#fff" stroke-width="4"/>
-    <path d="M320 460H920" stroke="#cdb46e" stroke-width="3" stroke-dasharray="40 14"/>
-    <path d="${lid}" fill="url(#caseG)" stroke="#fff" stroke-width="6"/>
-    <path d="${lid}" fill="url(#quiltS)"/>
-    <path d="${rr(84, 44, 1072, 382, 56)}" fill="none" stroke="url(#goldG)" stroke-width="10"/>
-    <path d="${glass}" fill="url(#mirG)" stroke="#fff" stroke-width="5"/>
-    <g clip-path="url(#mc)" fill="#fff" opacity=".85">
-      <path d="M130 360L360 66L420 66L190 400Z"/><path d="M220 400L450 66L470 66L240 400Z"/><path d="M900 400L1100 120L1120 140L940 400Z" opacity=".6"/></g>
-    <path d="${base}" fill="url(#caseG)" stroke="#fff" stroke-width="6"/>
-    <path d="${base}" fill="url(#quiltS)"/>
-    <path d="${well}" fill="#fff6fb" stroke="url(#goldG)" stroke-width="10"/>
-    <path d="${rr(118, 526, 1004, 698, 36)}" fill="none" stroke="#f59fd2" stroke-width="3" stroke-dasharray="9 7"/>
-    ${pans}
-    <path d="${rr(560, 1260, 120, 34, 14)}" fill="url(#goldG)" stroke="#fff" stroke-width="4"/>
-    <path transform="translate(606 1266) scale(.28)" d="${HEART}" fill="#a82454"/>`;
-  document.getElementById('shades').innerHTML = SHADES.map(([c, t, s], i) => {
-    const x = PAN.cx[i % 3], y = PAN.cy[Math.floor(i / 3)] - 70 + PAN.r + 24;
-    return `<div class="shade" style="left:${x - 165}px;top:${y}px"><span class="no">No.0${i + 1}</span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</div>`;
-  }).join('');
+  // ガーランド（各段をつなぐサテンリボン）
+  const row = (y) => `M-20 ${y + 40}C200 ${y - 60} 400 ${y + 60} 600 ${y - 10}S1000 ${y - 60} 1220 ${y + 40}`;
+  const satin = (d) => `<path d="${d}" fill="none" stroke="#6c4848" stroke-opacity=".2" stroke-width="30" transform="translate(4 10)"/>
+    <path d="${d}" fill="none" stroke="#fff" stroke-width="32" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="url(#satinH)" stroke-width="24"/>
+    <path d="${d}" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="5 5" transform="translate(0 -7)"/>`;
+  let g = `<defs><pattern id="hdots" width="44" height="44" patternUnits="userSpaceOnUse"><path transform="translate(14 14) scale(.14)" d="${HEART}" fill="#fcc0e4" opacity=".6"/></pattern></defs>`;
+  g += satin(row(310)) + satin(row(680));
+  // 下段 → 上段の順に描くと上段のしっぽが下段の後ろに回る
+  [3, 4, 5, 0, 1, 2].forEach(i => { g += rosette(POS[i][0], POS[i][1], COLS[i % 3]); });
+  // 上段のしっぽは下段より後ろに置きたいので、上段→下段の順に描き直す
+  g = g.split('<!--split-->')[0];
+  document.getElementById('art').innerHTML = `<defs><pattern id="hdots" width="44" height="44" patternUnits="userSpaceOnUse"><path transform="translate(14 14) scale(.14)" d="${HEART}" fill="#fcc0e4" opacity=".6"/></pattern></defs>
+    ${satin(row(360))}${[0, 1, 2].map(i => rosette(POS[i][0], POS[i][1], COLS[i % 3])).join('')}
+    ${satin(row(730))}${[3, 4, 5].map(i => rosette(POS[i][0], POS[i][1], COLS[i % 3])).join('')}`;
+  document.getElementById('ins').innerHTML = ITEMS.map(([k, t, s], i) =>
+    `<div class="in" style="left:${POS[i][0]}px;top:${POS[i][1]}px"><span class="k">${k}</span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</div>`).join('');
 })();
 
-/* ブラシとリップ */
-const brush = `<svg class="u" viewBox="0 0 80 420" style="left:1150px;top:300px;width:76px;height:400px;z-index:5;transform:rotate(16deg);filter:drop-shadow(4px 6px 0 rgba(108,72,72,.3))">
-  <defs><linearGradient id="bg2" x1="0" x2="1"><stop offset="0" stop-color="#fffbe8"/><stop offset=".5" stop-color="#f0e4a8"/><stop offset="1" stop-color="#cdb46e"/></linearGradient></defs>
-  <path d="M40 4C14 30 10 80 22 118H58C70 80 66 30 40 4Z" fill="#6c4848" stroke="#fff" stroke-width="4"/>
-  <path d="M40 10C28 40 26 80 32 112" stroke="#8a6262" stroke-width="4" fill="none"/>
-  <path d="M40 4C26 18 22 34 22 50" stroke="#fcc0e4" stroke-width="8" fill="none" stroke-linecap="round" opacity=".8"/>
-  <rect x="20" y="116" width="40" height="64" rx="6" fill="url(#bg2)" stroke="#fff" stroke-width="4"/>
-  <path d="M24 178H56L50 410Q40 418 30 410Z" fill="#a82454" stroke="#fff" stroke-width="4"/>
-  <path transform="translate(30 330) scale(.2)" d="${HEART}" fill="#fcc0e4"/></svg>`;
-const lip = `<svg class="u" viewBox="0 0 90 260" style="left:20px;top:690px;width:84px;height:240px;z-index:5;transform:rotate(-14deg);filter:drop-shadow(4px 6px 0 rgba(108,72,72,.3))">
-  <path d="M26 70V24Q26 4 64 2V70Z" fill="#a82454" stroke="#fff" stroke-width="4"/><path d="M32 66V26Q34 12 46 8" stroke="#fff" stroke-opacity=".5" stroke-width="5" fill="none"/>
-  <rect x="18" y="68" width="54" height="40" rx="5" fill="#f0e4a8" stroke="#fff" stroke-width="4"/>
-  <rect x="12" y="104" width="66" height="150" rx="10" fill="#fcc0e4" stroke="#fff" stroke-width="4"/>
-  <path transform="translate(30 166) scale(.3)" d="${HEART}" fill="#a82454"/></svg>`;
-document.getElementById('deco').insertAdjacentHTML('beforeend', brush + lip);
-const VB = { bowP:'0 0 120 94', bowS:'0 0 120 94', spark:'0 0 100 100', heart:'0 0 100 92', chocoheart:'0 0 100 92' };
-const D = [['bowP', 10, 0, 170, -18, ''], ['bowS', 1080, 0, 150, 16, ''],
-  ['spark', 1110, 230, 44, 0, ''], ['spark', 30, 440, 38, 0, ''], ['spark', 1190, 1100, 40, 0, ''], ['spark', 420, 1270, 32, 0, ''],
-  ['heart', 1170, 820, 50, 16, '#a82454'], ['heart', 40, 1100, 40, -12, '#a82454'], ['chocoheart', 1120, 1180, 110, 14, '']];
+const VB = { bowP:'0 0 120 94', bowS:'0 0 120 94', spark:'0 0 100 100', heart:'0 0 100 92', chocoheart:'0 0 100 92', berryS:'0 0 80 92' };
+const D = [
+  ['bowP', 110, 50, 150, -16, ''], ['bowS', 940, 50, 150, 16, ''],
+  ['chocoheart', 400, 500, 70, -14, ''], ['berryS', 780, 490, 50, 16, ''],
+  ['heart', 410, 870, 50, 14, '#a82454'], ['heart', 770, 880, 40, -12, '#f59fd2'],
+  ['spark', 60, 200, 40, 0, ''], ['spark', 1110, 210, 44, 0, ''], ['spark', 40, 560, 34, 0, ''], ['spark', 1130, 580, 36, 0, ''], ['spark', 600, 990, 40, 0, ''],
+];
 for (const [k, x, y, s, r, col] of D) {
   const [, , vw, vh] = VB[k].split(' ').map(Number);
   document.getElementById('deco').insertAdjacentHTML('beforeend', `<svg class="u" viewBox="${VB[k]}" style="left:${x}px;top:${y}px;width:${s}px;height:${s * vh / vw}px;z-index:6;transform:rotate(${r}deg);color:${col};filter:drop-shadow(3px 5px 0 rgba(108,72,72,.28))${k === 'spark' ? ' drop-shadow(0 0 6px #f59fd2)' : ''}"><use href="#${k}"/></svg>`);
