@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Choco Cake Salon</title>
+<style>
+  html,body{margin:0;padding:0;background:#f9cdd8}
+  svg{display:block}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<svg id="measure" width="0" height="0" style="position:absolute"><path id="mp"/></svg>
+<script>
+// ?w=1920&h=1080&frame=1
+const Q = new URLSearchParams(location.search);
+const W = +(Q.get('w') || 1920), H = +(Q.get('h') || 1080);
+const FRAME = Q.get('frame') !== '0';
+
+// ---------- palette (softer, milky) ----------
+const C = {
+  groove:'#f2b3c3', tileShadow:'#eca6b8', tileHi:'#feeaf0', tileFace:'#f9cfda',
+  choco:'#85503f', chocoDark:'#5c3125', chocoLight:'#b07a64', chocoMilk:'#c48e78',
+  red:'#e2506a', redDark:'#a92e48', redLight:'#ff8da0',
+  pink:'#ff9fbc', pinkPale:'#ffdbe5', pinkDeep:'#f07399', pinkRuffle:'#f8b8ca',
+  white:'#fffbfc', lace:'#fffafb', hole:'#f7cad6',
+  leaf:'#9cc5a4', leafDark:'#6f9f7c'
+};
+
+// ---------- utils ----------
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R = rng(5150);
+const rr = (a,b)=>a+(b-a)*R();
+const pick = a=>a[Math.floor(R()*a.length)];
+const f = n=>(+n).toFixed(1);
+function tp(d,cx,cy,s,rot=0){
+  const c=Math.cos(rot*Math.PI/180), sn=Math.sin(rot*Math.PI/180);
+  const toks=d.match(/[MLCQZ]|-?\d*\.?\d+/g); let out='',buf=[];
+  for(const t of toks){
+    if(/[MLCQZ]/.test(t)){out+=t+' ';continue}
+    buf.push(+t);
+    if(buf.length===2){const[x,y]=buf;buf=[];
+      out+=f(cx+(x*c-y*sn)*s)+','+f(cy+(x*sn+y*c)*s)+' ';}
+  }
+  return out;
+}
+function mx(d){let i=0;return d.replace(/-?\d*\.?\d+/g,n=>(i++%2===0)?String(-n):n)}
+const mp=document.getElementById('mp');
+function along(d,step){ // points along path at ~step spacing
+  mp.setAttribute('d',d); const L=mp.getTotalLength(); const n=Math.max(1,Math.round(L/step)); const pts=[];
+  for(let i=0;i<n;i++){const t=i*L/n; const p=mp.getPointAtLength(t), q=mp.getPointAtLength(Math.min(L,t+0.5));
+    pts.push({x:p.x,y:p.y,a:Math.atan2(q.y-p.y,q.x-p.x)})}
+  return pts;
+}
+const HEART='M0,0.45 C-0.1,0.33 -0.5,0.1 -0.5,-0.18 C-0.5,-0.4 -0.3,-0.5 -0.18,-0.48 C-0.08,-0.46 -0.02,-0.38 0,-0.3 C0.02,-0.38 0.08,-0.46 0.18,-0.48 C0.3,-0.5 0.5,-0.4 0.5,-0.18 C0.5,0.1 0.1,0.33 0,0.45 Z';
+const SPARK='M0,-1 Q0.12,-0.12 1,0 Q0.12,0.12 0,1 Q-0.12,0.12 -1,0 Q-0.12,-0.12 0,-1 Z';
+let uid=0;
+
+// ---------- motifs ----------
+function heart(cx,cy,s,rot,fill,extra=''){return `<path d="${tp(HEART,cx,cy,s,rot)}" fill="${fill}" ${extra}/>`}
+function glossyHeart(cx,cy,s,rot,fill,dark){
+  return heart(cx,cy+s*0.04,s,rot,dark)+heart(cx,cy,s,rot,fill)+
+    `<path d="${tp('M-0.32,-0.22 Q-0.32,-0.38 -0.16,-0.4',cx,cy,s,rot)}" stroke="#fff" stroke-opacity=".85" stroke-width="${f(s*0.06)}" fill="none" stroke-linecap="round"/>`;
+}
+function outlineHeart(cx,cy,s,rot,col){return heart(cx,cy,s,rot,'none',`stroke="${col}" stroke-width="${f(Math.max(2,s*0.09))}" stroke-linejoin="round"`)}
+function chocoHeart(cx,cy,s,rot,base,drizzle,style){
+  const id='ch'+(uid++); const d=tp(HEART,cx,cy,s,rot); let deco='';
+  if(style==='zig'){let p=`M${f(cx-s*0.7)},${f(cy-s*0.3)}`,k=0;
+    for(let x=-0.7;x<=0.7;x+=0.12)p+=` L${f(cx+x*s)},${f(cy+(k++%2?0.25:-0.35)*s)}`;
+    deco=`<path d="${p}" stroke="${drizzle}" stroke-width="${f(s*0.045)}" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }else if(style==='stripe'){for(let i=-3;i<=3;i++)deco+=`<line x1="${f(cx-s)}" y1="${f(cy+i*s*0.16-s*0.3)}" x2="${f(cx+s)}" y2="${f(cy+i*s*0.16+s*0.3)}" stroke="${drizzle}" stroke-width="${f(s*0.055)}"/>`;
+  }else{for(let i=-3;i<=3;i++)for(let j=-3;j<=3;j++)deco+=`<circle cx="${f(cx+i*s*0.16+(j%2)*s*0.08)}" cy="${f(cy+j*s*0.14)}" r="${f(s*0.035)}" fill="${drizzle}"/>`}
+  return `<clipPath id="${id}"><path d="${d}"/></clipPath>`+heart(cx,cy+s*0.05,s,rot,C.chocoDark)+
+    `<path d="${d}" fill="${base}"/><g clip-path="url(#${id})">${deco}</g>`+
+    `<path d="${tp('M-0.3,-0.25 Q-0.3,-0.38 -0.17,-0.4',cx,cy,s,rot)}" stroke="#fff" stroke-opacity=".55" stroke-width="${f(s*0.05)}" fill="none" stroke-linecap="round"/>`;
+}
+// 🎀 bow
+function bow(cx,cy,s,rot,fill,dark,light){
+  const LOOP='M-0.1,-0.06 C-0.26,-0.44 -0.64,-0.66 -0.88,-0.52 C-1.1,-0.38 -1.1,0.04 -0.9,0.22 C-0.72,0.38 -0.36,0.26 -0.1,0.08 Z';
+  const FOLD='M-0.12,-0.02 C-0.28,-0.24 -0.5,-0.32 -0.62,-0.2 C-0.7,-0.08 -0.52,0.07 -0.12,0.05 Z';
+  const CREASE='M-0.14,0.04 C-0.4,0.12 -0.62,0.18 -0.82,0.12';
+  const SHINE='M-0.8,-0.38 Q-0.66,-0.54 -0.46,-0.48';
+  const TAIL='M-0.12,0.06 C-0.24,0.28 -0.44,0.5 -0.68,0.72 L-0.48,0.75 L-0.42,0.92 C-0.22,0.72 -0.02,0.46 0.1,0.12 Z';
+  const TAILLINE='M-0.08,0.16 C-0.16,0.38 -0.28,0.58 -0.46,0.8';
+  const KNOT='M-0.17,-0.13 Q-0.18,-0.21 -0.1,-0.21 L0.1,-0.21 Q0.18,-0.21 0.17,-0.13 L0.14,0.14 Q0.13,0.21 0.07,0.21 L-0.07,0.21 Q-0.13,0.21 -0.14,0.14 Z';
+  const sw=f(Math.max(1.2,s*0.045)), sw2=f(Math.max(1,s*0.035));
+  const st=`stroke="${dark}" stroke-width="${sw}" stroke-linejoin="round"`;
+  const P=(d,extra)=>`<path d="${tp(d,cx,cy,s,rot)}" ${extra}/>`;
+  let g='<g>';
+  for(const m of [d=>d,mx]) g+=P(m(TAIL),`fill="${fill}" ${st}`)+P(m(TAILLINE),`fill="none" stroke="${dark}" stroke-opacity=".4" stroke-width="${sw2}" stroke-linecap="round"`);
+  for(const m of [d=>d,mx]) g+=P(m(LOOP),`fill="${fill}" ${st}`)+P(m(FOLD),`fill="${dark}" fill-opacity=".32"`)+
+    P(m(CREASE),`fill="none" stroke="${dark}" stroke-opacity=".4" stroke-width="${sw2}" stroke-linecap="round"`)+
+    P(m(SHINE),`fill="none" stroke="${light}" stroke-opacity=".9" stroke-width="${f(s*0.065)}" stroke-linecap="round"`);
+  g+=P(KNOT,`fill="${fill}" ${st}`)+P('M-0.08,-0.12 Q0,-0.15 0.07,-0.12',`fill="none" stroke="${light}" stroke-opacity=".9" stroke-width="${f(s*0.05)}" stroke-linecap="round"`);
+  return g+'</g>';
+}
+const BOWS={
+  red:(x,y,s,r=0)=>bow(x,y,s,r,C.red,C.redDark,C.redLight),
+  pink:(x,y,s,r=0)=>bow(x,y,s,r,C.pink,C.pinkDeep,'#fff'),
+  ging:(x,y,s,r=0)=>bow(x,y,s,r,'url(#gingham)',C.redDark,'#fff'),
+  choco:(x,y,s,r=0)=>bow(x,y,s,r,C.choco,C.chocoDark,C.chocoMilk),
+  white:(x,y,s,r=0)=>bow(x,y,s,r,'#fff',C.pinkDeep,C.pinkPale)
+};
+function sparkle(cx,cy,s,col='#fff',op=1){return `<path d="${tp(SPARK,cx,cy,s)}" fill="${col}" fill-opacity="${op}"/>`}
+function pearl(cx,cy,r){return `<circle cx="${f(cx)}" cy="${f(cy+r*0.18)}" r="${f(r)}" fill="#d49aab" fill-opacity=".4"/><circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="url(#pearl)"/>`}
+function rose(cx,cy,r,col,dark,leaves=true){
+  let s='';
+  if(leaves){
+    for(const a of [-35,215,95]){const rad=a*Math.PI/180;const lx=cx+Math.cos(rad)*r*0.95, ly=cy+Math.sin(rad)*r*0.95;
+      s+=`<ellipse cx="${f(lx)}" cy="${f(ly)}" rx="${f(r*0.62)}" ry="${f(r*0.3)}" fill="${C.leaf}" stroke="${C.leafDark}" stroke-width="${f(r*0.06)}" transform="rotate(${a} ${f(lx)} ${f(ly)})"/>`;
+      s+=`<line x1="${f(lx-Math.cos(rad)*r*0.5)}" y1="${f(ly-Math.sin(rad)*r*0.5)}" x2="${f(lx+Math.cos(rad)*r*0.5)}" y2="${f(ly+Math.sin(rad)*r*0.5)}" stroke="${C.leafDark}" stroke-width="${f(r*0.05)}" stroke-opacity=".7"/>`;
+    }
+  }
+  for(let i=0;i<6;i++){const a=i*60*Math.PI/180;s+=`<circle cx="${f(cx+Math.cos(a)*r*0.45)}" cy="${f(cy+Math.sin(a)*r*0.45)}" r="${f(r*0.5)}" fill="${col}" stroke="${dark}" stroke-opacity=".35" stroke-width="${f(r*0.05)}"/>`}
+  s+=`<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r*0.62)}" fill="${col}"/>`;
+  let p='';for(let t=0;t<=4.2*Math.PI;t+=0.25){const rad=r*0.05+r*0.55*t/(4.2*Math.PI);p+=(p?' L':'M')+f(cx+Math.cos(t)*rad)+','+f(cy+Math.sin(t)*rad*0.9)}
+  s+=`<path d="${p}" fill="none" stroke="${dark}" stroke-opacity=".55" stroke-width="${f(r*0.08)}" stroke-linecap="round"/>`;
+  s+=`<path d="M${f(cx-r*0.5)},${f(cy-r*0.55)} Q${f(cx-r*0.2)},${f(cy-r*0.85)} ${f(cx+r*0.2)},${f(cy-r*0.72)}" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="${f(r*0.08)}" stroke-linecap="round"/>`;
+  return s;
+}
+const BERRY='M0,0.5 C-0.36,0.36 -0.5,0 -0.45,-0.22 C-0.4,-0.44 0.4,-0.44 0.45,-0.22 C0.5,0 0.36,0.36 0,0.5 Z';
+function strawberry(cx,cy,s,rot,dip){ // dip: null | 'choco' | 'pink' | 'white'
+  const id='sb'+(uid++); const d=tp(BERRY,cx,cy,s,rot);
+  let g=`<clipPath id="${id}"><path d="${d}"/></clipPath><path d="${d}" fill="${C.red}" stroke="${C.redDark}" stroke-width="${f(s*0.03)}"/>`;
+  let seeds='';
+  for(let i=-2;i<=2;i++)for(let j=-2;j<=3;j++){const x=i*0.17+(j%2)*0.085,y=j*0.15-0.05;
+    const c=Math.cos(rot*Math.PI/180),sn=Math.sin(rot*Math.PI/180);
+    seeds+=`<ellipse cx="${f(cx+(x*c-y*sn)*s)}" cy="${f(cy+(x*sn+y*c)*s)}" rx="${f(s*0.022)}" ry="${f(s*0.035)}" fill="#ffe7a6"/>`}
+  g+=`<g clip-path="url(#${id})">${seeds}`;
+  if(dip){const col={choco:C.choco,pink:'#f7a6bf',white:'#fff6ef'}[dip];
+    g+=`<path d="${tp('M-0.6,0.02 Q-0.45,0.12 -0.3,0.04 Q-0.25,0.22 -0.15,0.06 Q0,0.14 0.12,0.04 Q0.2,0.26 0.3,0.06 Q0.45,0.14 0.6,0.02 L0.6,0.7 L-0.6,0.7 Z',cx,cy,s,rot)}" fill="${col}"/>`;
+    g+=`<path d="${tp('M-0.32,0.18 Q-0.2,0.3 -0.1,0.22',cx,cy,s,rot)}" stroke="#fff" stroke-opacity=".6" stroke-width="${f(s*0.04)}" fill="none" stroke-linecap="round"/>`;
+    if(dip==='choco') g+=`<path d="${tp('M-0.5,0.3 L-0.2,0.18 L0,0.32 L0.2,0.2 L0.5,0.34',cx,cy,s,rot)}" stroke="${C.pink}" stroke-width="${f(s*0.035)}" fill="none" stroke-linejoin="round"/>`;
+  }
+  g+=`</g><path d="${tp('M-0.2,-0.22 Q-0.12,-0.12 -0.3,-0.06',cx,cy,s,rot)}" stroke="#fff" stroke-opacity=".7" stroke-width="${f(s*0.04)}" fill="none" stroke-linecap="round"/>`;
+  g+=`<path d="${tp('M0,-0.34 L-0.32,-0.42 L-0.12,-0.28 L-0.24,-0.12 L0,-0.26 L0.24,-0.12 L0.12,-0.28 L0.32,-0.42 Z',cx,cy,s,rot)}" fill="${C.leaf}" stroke="${C.leafDark}" stroke-width="${f(s*0.025)}" stroke-linejoin="round"/>`;
+  g+=`<path d="${tp('M0,-0.36 Q0.02,-0.48 0.08,-0.54',cx,cy,s,rot)}" stroke="${C.leafDark}" stroke-width="${f(s*0.04)}" fill="none" stroke-linecap="round"/>`;
+  return g;
+}
+
+// ---------- defs ----------
+let defs=`
+<radialGradient id="pearl" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff"/><stop offset=".55" stop-color="#fdf2f5"/><stop offset="1" stop-color="#e8c4cf"/></radialGradient>
+<radialGradient id="glow" cx="50%" cy="55%" r="60%"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".65" stop-color="#fff" stop-opacity=".15"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+<pattern id="gingham" width="20" height="20" patternUnits="userSpaceOnUse"><rect width="20" height="20" fill="#fff6f8"/><rect width="10" height="20" fill="${C.red}" fill-opacity=".5"/><rect width="20" height="10" fill="${C.red}" fill-opacity=".5"/></pattern>
+<pattern id="chocoDots" width="30" height="30" patternUnits="userSpaceOnUse"><rect width="30" height="30" fill="${C.choco}"/><circle cx="7" cy="7" r="3" fill="${C.pink}" fill-opacity=".8"/><circle cx="22" cy="22" r="3" fill="#fff" fill-opacity=".6"/></pattern>
+<pattern id="net" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="${C.lace}"/><path d="M0,0 L10,10 M10,0 L0,10" stroke="#f3cdd8" stroke-width=".9"/></pattern>
+<linearGradient id="ribbonV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb3c7"/><stop offset=".5" stop-color="${C.pink}"/><stop offset="1" stop-color="${C.pinkDeep}"/></linearGradient>`;
+
+let svg='';
+function laceRow(y,dir,r,col,hole,band){
+  let s='';const n=Math.ceil(W/(r*2))+2;
+  s+= dir>0?`<rect x="0" y="${f(y-band)}" width="${W}" height="${band}" fill="${col}"/>`:`<rect x="0" y="${f(y)}" width="${W}" height="${band}" fill="${col}"/>`;
+  for(let i=-1;i<n*2;i++)s+=`<circle cx="${f(i*r)}" cy="${f(y+dir*r*0.95)}" r="${f(r*0.28)}" fill="${col}"/>`;
+  for(let i=-1;i<n;i++)s+=`<circle cx="${f(i*r*2+r)}" cy="${f(y)}" r="${f(r)}" fill="${col}"/>`;
+  for(let i=-1;i<n;i++){const cx=i*r*2+r;
+    s+=`<circle cx="${f(cx)}" cy="${f(y+dir*r*0.2)}" r="${f(r*0.24)}" fill="${hole}"/>`;
+    for(let k=0;k<5;k++){const a=((dir>0?0:180)+20+k*35)*Math.PI/180;s+=`<circle cx="${f(cx+Math.cos(a)*r*0.6)}" cy="${f(y+dir*r*0.2+Math.sin(a)*r*0.6)}" r="${f(r*0.08)}" fill="${hole}"/>`}
+    if(band>r) s+=`<path d="${tp(HEART,cx+r,y-dir*Math.min(band*0.45,r*1.1),r*0.42)}" fill="${hole}"/>`;
+  }
+  return s;
+}
+// gathered ruffle: edgeY = ruffle hem, dir=+1 hangs down from top, -1 rises from bottom
+
+function bonbon(cx,cy,r,base,driz){
+  const id='bb'+(uid++);let s='';
+  for(let k=0;k<12;k++){const a=k*30*Math.PI/180;s+=`<circle cx="${f(cx+Math.cos(a)*r*1.12)}" cy="${f(cy+Math.sin(a)*r*1.12)}" r="${f(r*0.3)}" fill="#ffd3df" stroke="#f3a5bb" stroke-width="1"/>`}
+  s+=`<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r*1.12)}" fill="#ffd3df"/>`;
+  s+=`<clipPath id="${id}"><circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}"/></clipPath>`;
+  s+=`<circle cx="${f(cx)}" cy="${f(cy+r*0.08)}" r="${f(r)}" fill="${C.chocoDark}"/><circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="${base}"/>`;
+  let p=`M${f(cx-r)},${f(cy-r*0.2)}`;for(let k=0;k<=8;k++)p+=` L${f(cx-r+k*r/4)},${f(cy+(k%2?0.35:-0.35)*r)}`;
+  s+=`<g clip-path="url(#${id})"><path d="${p}" stroke="${driz}" stroke-width="${f(r*0.14)}" fill="none" stroke-linejoin="round"/></g>`;
+  s+=`<ellipse cx="${f(cx-r*0.35)}" cy="${f(cy-r*0.45)}" rx="${f(r*0.22)}" ry="${f(r*0.12)}" fill="#fff" fill-opacity=".6" transform="rotate(-30 ${f(cx-r*0.35)} ${f(cy-r*0.45)})"/>`;
+  return s;
+}
+
+// =====================================================================
+//  "Chocolat Salon": framed candy-stripe panels over a red-dot ground,
+//  satin ribbon garland on top, layered chocolate-cake border below
+// =====================================================================
+const U=480, n=Math.round(W/U);              // 4 panels on 16:9, 3 on 4:3
+const GOLD='#e9c28e', GOLDD='#c38f5a', CREAM='#fff6f3';
+const CAKE_TOP=668;
+defs+=`
+<pattern id="redDots" width="40" height="40" patternUnits="userSpaceOnUse">
+  <rect width="40" height="40" fill="${CREAM}"/>
+  <circle cx="10" cy="10" r="5.2" fill="${C.red}" fill-opacity=".85"/>
+  <circle cx="30" cy="30" r="4.2" fill="${C.choco}" fill-opacity=".75"/>
+</pattern>
+<pattern id="candy" width="30" height="30" patternUnits="userSpaceOnUse">
+  <rect width="30" height="30" fill="#fbd9e2"/><rect width="15" height="30" fill="#f8c6d4"/>
+  <rect x="14" width="1.6" height="30" fill="#fff" fill-opacity=".8"/>
+</pattern>
+<linearGradient id="satin" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="${C.pinkDeep}"/><stop offset=".3" stop-color="#ffc2d3"/><stop offset=".55" stop-color="${C.pink}"/><stop offset="1" stop-color="${C.pinkDeep}"/>
+</linearGradient>
+<linearGradient id="ganache" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#6a382a"/><stop offset="1" stop-color="${C.chocoDark}"/>
+</linearGradient>`;
+
+// ---- 1. red-dot ground ----
+svg+=`<rect width="${W}" height="${H}" fill="url(#redDots)"/>`;
+
+// ---- 2. framed candy-stripe arch panels ----
+function archPath(cx,top,hw,bot){ return `M${f(cx-hw)},${bot} L${f(cx-hw)},${f(top+hw)} A${f(hw)},${f(hw)} 0 0 1 ${f(cx+hw)},${f(top+hw)} L${f(cx+hw)},${bot} Z` }
+const PTOP=192, PHW=168;
+const panelMotif=(x,y,k)=>{
+  switch(k%6){
+    case 0: return bonbon(x,y,14,C.choco,'#ffd0dc');
+    case 1: return strawberry(x,y,40,rr(-15,15),pick(['choco','pink','white']));
+    case 2: return BOWS.red(x,y,22,rr(-12,12));
+    case 3: return chocoHeart(x,y,36,rr(-15,15),C.choco,pick([C.pink,'#fff']),pick(['zig','stripe','dots']));
+    case 4: return sparkle(x,y,10,'#fff')+sparkle(x+16,y-12,5,'#fff');
+    default: return glossyHeart(x,y,28,rr(-15,15),C.pink,C.pinkDeep);
+  }
+};
+for(let i=0;i<n;i++){
+  const cx=(i+0.5)*U, bot=CAKE_TOP+60;
+  const outer=archPath(cx,PTOP-22,PHW+22,bot), band=archPath(cx,PTOP-11,PHW+11,bot), inner=archPath(cx,PTOP,PHW,bot);
+  svg+=`<path d="${outer}" fill="${C.chocoDark}" fill-opacity=".15" transform="translate(4,6)"/>`;
+  svg+=`<path d="${outer}" fill="${GOLD}" stroke="${GOLDD}" stroke-width="3"/>`;
+  svg+=`<path d="${band}" fill="none" stroke="${GOLDD}" stroke-width="1.6" stroke-dasharray="2 6" stroke-linecap="round"/>`;
+  // frill lace on the inner edge
+  const pts=along(inner,17);
+  for(const p of pts) svg+=`<circle cx="${f(p.x)}" cy="${f(p.y)}" r="9.5" fill="#fff"/>`;
+  svg+=`<path d="${inner}" fill="url(#candy)"/>`;
+  for(const p of pts) svg+=`<circle cx="${f(p.x)}" cy="${f(p.y)}" r="2.4" fill="#f5c0cf"/>`;
+  // motifs inside, clipped
+  const id='pc'+i;let m='';let k=i*2;
+  for(let row=0, y=PTOP+92; y<CAKE_TOP+10; y+=86,row++){
+    for(let x=cx-PHW+44+(row%2)*42; x<cx+PHW-30; x+=84){
+      const dx=x-cx, ay=PTOP+PHW; // keep motifs fully inside the arch
+      if(y<ay && Math.hypot(dx,y-ay)>PHW-38) continue;
+      m+=panelMotif(x+rr(-5,5),y+rr(-5,5),k++); }
+  }
+  svg+=`<clipPath id="${id}"><path d="${archPath(cx,PTOP+10,PHW-10,bot)}"/></clipPath><g clip-path="url(#${id})">${m}</g>`;
+  // gold beads on frame
+  for(const p of along(archPath(cx,PTOP-11,PHW+11,bot),26)) svg+=`<circle cx="${f(p.x)}" cy="${f(p.y)}" r="3" fill="#fff8ea" stroke="${GOLDD}" stroke-width="1"/>`;
+  // crest at the top of the arch: lace heart cameo + bow
+  const hy=PTOP-6;
+  for(const p of along(tp(HEART,cx,hy,92),15)) svg+=`<circle cx="${f(p.x)}" cy="${f(p.y)}" r="9" fill="#fff"/>`;
+  svg+=heart(cx,hy,92,0,GOLD,`stroke="${GOLDD}" stroke-width="3"`)+heart(cx,hy+2,76,0,'#ffd3df');
+  for(const p of along(tp(HEART,cx,hy+2,76),12)) svg+=pearl(p.x,p.y,3.6);
+  svg+=chocoHeart(cx,hy+4,44,0,C.choco,C.pink,'zig');
+  svg+=rose(cx-52,hy-24,15,'#ffc2d3',C.pinkDeep,true)+rose(cx+52,hy-24,15,'#ffc2d3',C.pinkDeep,true);
+}
+
+// ---- 3. top: lace + satin ribbon garland with big bows & flowing tails ----
+svg+=`<rect width="${W}" height="40" fill="${C.pinkPale}"/>`;
+svg+=laceRow(40,1,13,'#fff',C.pinkPale,0);
+for(let x=6;x<W;x+=20) svg+=pearl(x,36,4.5);
+function satinBand(d,w){
+  return `<path d="${d}" stroke="${C.pinkDeep}" stroke-width="${w+5}" fill="none" stroke-linecap="round"/>`+
+         `<path d="${d}" stroke="${C.pink}" stroke-width="${w}" fill="none" stroke-linecap="round"/>`+
+         `<path d="${d}" stroke="#fff" stroke-opacity=".45" stroke-width="${f(w*0.22)}" fill="none" stroke-linecap="round" transform="translate(-2,-${f(w*0.22)})"/>`;
+}
+for(let i=0;i<=n;i++){ // flowing tails down each gap
+  const gx=i*U;
+  for(const m of [-1,1]){
+    let d=`M${gx+m*6},96`;
+    for(let y=96;y<=CAKE_TOP-30;y+=12){const x=gx+m*(8+18*Math.sin((y-96)/72+ (m>0?0:Math.PI)));d+=` L${f(x)},${y}`}
+    svg+=satinBand(d,17);
+    const ex=gx+m*(8+18*Math.sin((CAKE_TOP-30-96)/72+(m>0?0:Math.PI)));
+    svg+=`<path d="M${f(ex-11)},${CAKE_TOP-34} L${f(ex+11)},${CAKE_TOP-34} L${f(ex+11)},${CAKE_TOP-6} L${f(ex)},${CAKE_TOP-16} L${f(ex-11)},${CAKE_TOP-6} Z" fill="${C.pink}" stroke="${C.pinkDeep}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  }
+  // pearl strand in the middle
+  for(let y=120;y<CAKE_TOP-40;y+=16) svg+=pearl(gx,y,4.2);
+  svg+=glossyHeart(gx,CAKE_TOP-48,28,0,C.red,C.redDark);
+}
+for(let i=0;i<n;i++){ // swags
+  const x1=i*U, x2=(i+1)*U;
+  svg+=satinBand(`M${x1},70 Q${(x1+x2)/2},150 ${x2},70`,24);
+  // pearl drapes under the swag
+  for(const [sg,r] of [[190,5],[220,4]]){const N=Math.round(U/(r*2.4));
+    for(let k=1;k<N;k++){const t=k/N,x=x1+(x2-x1)*t,y=(1-t)*(1-t)*74+2*(1-t)*t*sg*0.5+t*t*74;  }
+  }
+}
+for(let i=0;i<=n;i++){
+  const gx=i*U;
+  svg+=rose(gx-58,82,18,'#fff','#f3a1b8',true)+rose(gx+58,82,18,'#fff','#f3a1b8',true);
+  svg+=BOWS[i%2?'ging':'pink'](gx,66,74);
+}
+
+// ---- 4. the cake border ----
+{
+  const RS=rng(612);
+  // ganache top with drips
+  const gt=CAKE_TOP+52, gb=gt+46;
+  // sponge layers
+  const sponge=(y1,y2)=>{let s=`<rect x="0" y="${y1}" width="${W}" height="${y2-y1}" fill="#93573f"/>`;
+    for(let k=0;k<W*(y2-y1)/260;k++){const x=RS()*W,y=y1+RS()*(y2-y1);s+=`<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(1.5+RS()*3)}" ry="${f(1+RS()*2)}" fill="${RS()<.5?'#6e3d2c':'#b07558'}" fill-opacity=".7"/>`}return s};
+  svg+=sponge(gt,H-130);
+  // pink cream layer with strawberry slices
+  const cy1=gt+92;
+  svg+=`<rect x="0" y="${cy1}" width="${W}" height="44" fill="#ffd3df"/>`;
+  svg+=`<rect x="0" y="${cy1}" width="${W}" height="5" fill="#fff" fill-opacity=".6"/>`;
+  for(let x=24,k=0;x<W+30;x+=62,k++){
+    const s=40, y=cy1+23;
+    svg+=`<path d="${tp(BERRY,x,y,s)}" fill="${C.red}"/>`+`<path d="${tp(BERRY,x,y+s*0.03,s*0.7)}" fill="#fff0f3"/>`+
+         `<path d="${tp(BERRY,x,y+s*0.05,s*0.34)}" fill="#ffc4d1"/>`;
+    for(const [a,b] of [[-0.28,-0.05],[0.28,-0.05],[-0.18,0.22],[0.18,0.22],[0,-0.25]]) svg+=`<ellipse cx="${f(x+a*s*0.95)}" cy="${f(y+b*s*0.95)}" rx="1.4" ry="2.2" fill="#ffe7a6"/>`;
+  }
+  // ganache layer drawn over the top sponge
+  let d=`M0,${gt} L${W},${gt} L${W},${gb}`;let x=W;
+  while(x>0){const nx=Math.max(0,x-(26+RS()*40));d+=` Q${f((x+nx)/2)},${f(gb+5)} ${f(nx)},${gb}`;x=nx;if(x<=0)break;
+    const dw=10+RS()*6,len=16+RS()*30,cx=x-dw;
+    d+=` C${f(x-dw*0.3)},${gb+3} ${f(cx+dw*0.7)},${f(gb+len*0.5)} ${f(cx+dw*0.7)},${f(gb+len-dw*0.7)} C${f(cx+dw*0.7)},${f(gb+len+dw*0.3)} ${f(cx-dw*0.7)},${f(gb+len+dw*0.3)} ${f(cx-dw*0.7)},${f(gb+len-dw*0.7)} C${f(cx-dw*0.7)},${f(gb+len*0.5)} ${f(x-2*dw+dw*0.3)},${gb+3} ${f(x-2*dw)},${gb}`;x-=2*dw;}
+  d+=` L0,${gt} Z`;
+  svg+=`<path d="${d}" fill="url(#ganache)"/>`;
+  svg+=`<line x1="0" y1="${gt+12}" x2="${W}" y2="${gt+12}" stroke="${C.chocoLight}" stroke-width="5" stroke-opacity=".6"/>`;
+  for(let x=0;x<W;x+=56) svg+=`<path d="M${x+14},${gt+24} Q${x+28},${gt+16} ${x+42},${gt+24}" stroke="${C.pink}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  // cream rosettes + strawberries on top
+  for(let x=-10,k=0;x<W+40;x+=64,k++){
+    svg+=`<ellipse cx="${x}" cy="${gt+6}" rx="34" ry="14" fill="${C.chocoDark}" fill-opacity=".3"/>`;
+    svg+=rose(x,gt-6,27,'#fffaf7','#f1c9d3',false);
+  }
+  for(let x=22,k=0;x<W+40;x+=64,k++){
+    const dip=['choco',null,'pink','white'][k%4];
+    svg+=strawberry(x,gt-34,48,(k%2?10:-10),dip);
+  }
+  // ribbon wrap
+  const rb=H-130;
+  svg+=`<rect x="0" y="${rb}" width="${W}" height="40" fill="${C.red}"/>`;
+  svg+=`<rect x="0" y="${rb}" width="${W}" height="7" fill="${C.redLight}" fill-opacity=".7"/><rect x="0" y="${rb+34}" width="${W}" height="6" fill="${C.redDark}"/>`;
+  svg+=`<line x1="0" y1="${rb+20}" x2="${W}" y2="${rb+20}" stroke="#fff" stroke-width="2" stroke-dasharray="8 6"/>`;
+  // doily plate
+  const py=rb+40;
+  svg+=laceRow(py+8,1,18,'#fff',CREAM,8);
+  svg+=`<rect x="0" y="${py+30}" width="${W}" height="${H-py-30}" fill="url(#net)"/>`;
+  for(let x=0;x<W+30;x+=30){svg+=`<circle cx="${x}" cy="${H-16}" r="15" fill="#fff"/><circle cx="${x}" cy="${H-14}" r="3.6" fill="#f5c0cf"/>`}
+  for(let x=8;x<W;x+=22) svg+=pearl(x,py+34,5);
+  svg+=`<rect x="0" y="${H-5}" width="${W}" height="5" fill="#fff"/>`;
+  // cameos on the ribbon at panel centers, bows in the gaps
+  for(let i=0;i<n;i++){
+    const cx=(i+0.5)*U, cy=rb+18;
+    for(const p of along(`M${cx-58},${cy} A58,40 0 1 0 ${cx+58},${cy} A58,40 0 1 0 ${cx-58},${cy} Z`,14)) svg+=`<circle cx="${f(p.x)}" cy="${f(p.y)}" r="9" fill="#fff"/>`;
+    svg+=`<ellipse cx="${cx}" cy="${cy}" rx="58" ry="40" fill="${GOLD}" stroke="${GOLDD}" stroke-width="3"/><ellipse cx="${cx}" cy="${cy}" rx="48" ry="31" fill="#ffe4ec"/>`;
+    for(const p of along(`M${cx-48},${cy} A48,31 0 1 0 ${cx+48},${cy} A48,31 0 1 0 ${cx-48},${cy} Z`,11)) svg+=pearl(p.x,p.y,3.2);
+    svg+=heartBoxMini(cx,cy+2);
+  }
+  for(let i=0;i<=n;i++){
+    const gx=i*U;
+    svg+=rose(gx-40,rb+20,17,'#ffc2d3',C.pinkDeep,true)+rose(gx+40,rb+20,17,'#ffc2d3',C.pinkDeep,true);
+    svg+=BOWS[i%2?'choco':'red'](gx,rb+12,52);
+  }
+}
+function heartBoxMini(cx,cy){
+  return heart(cx,cy+1,46,0,C.chocoDark)+chocoHeart(cx,cy,46,0,C.choco,C.pink,'zig')+
+         bonbon(cx-30,cy+4,7,'#f39ab6','#fff')+bonbon(cx+30,cy+4,7,'#fff4ec',C.choco);
+}
+
+// ---- 5. sparkles ----
+{const R5=rng(91);for(let i=0;i<W/50;i++){const x=R5()*W,y=170+R5()*(CAKE_TOP-240);svg+=sparkle(x,y,5+R5()*7,'#fff',.95)}}
+
+document.getElementById('stage').innerHTML=
+ `<svg id="bg" xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${defs}</defs>${svg}</svg>`;
+document.title='ready';
+</script>
+</body>
+</html>
