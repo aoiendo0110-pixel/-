@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>しょこら プロフィールフレーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Great+Vibes&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<!--
+  プロフィールの吹き出しフレーム（しょこら公式カラー）
+  python3 build_profile.py → profile_frame.html → node export_profile.js
+  → out/profile_frame.png（文章入り）/ out/profile_frame_blank.png（空）… 背景透過・2倍
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:transparent}
+body{font-family:"Zen Maru Gothic",sans-serif;padding:40px}
+.frame{position:relative;width:1160px;height:820px}
+.frame > svg.bg{position:absolute;left:0;top:0;width:1160px;height:820px;overflow:visible}
+.u{position:absolute;overflow:visible;pointer-events:none}
+
+.ttl{position:absolute;left:50%;top:44px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:12px;white-space:nowrap;
+  font-family:"Mochiy Pop One";font-size:40px;letter-spacing:.16em;color:#fff;padding:10px 70px 12px;
+  background:radial-gradient(rgba(255,255,255,.4) 2.4px,transparent 3px) 0 0/15px 15px,linear-gradient(180deg,#c44a74,#a82454 55%,#7d1a3e);
+  clip-path:polygon(0 0,100% 0,calc(100% - 28px) 50%,100% 100%,0 100%,28px 50%);text-shadow:0 3px 0 #6e1236}
+.ttl::after{content:"";position:absolute;inset:6px 30px;border-top:2.5px dashed rgba(255,255,255,.85);border-bottom:2.5px dashed rgba(255,255,255,.85)}
+.ttl small{font-family:"Great Vibes";font-size:44px;letter-spacing:0;color:#fcc0e4;font-weight:400}
+
+.txt{position:absolute;left:110px;right:110px;top:240px;z-index:2;color:#4a3234;text-align:center}
+.txt p{font-size:31px;font-weight:900;line-height:1.9;letter-spacing:.01em;white-space:nowrap}
+.txt p + p{margin-top:26px}
+.txt em{font-style:normal;color:#a82454;background:linear-gradient(transparent 62%,#fcc0e4 62%,#fcc0e4 92%,transparent 92%);padding:0 2px}
+.txt .h{color:#a82454;font-family:"Hachi Maru Pop";font-weight:400}
+.sep{display:flex;justify-content:center;gap:14px;margin:18px 0 0}
+.sep svg{width:26px;height:24px}
+:root.blank .txt{display:none}
+</style>
+</head>
+<body>
+{{DEFS}}
+<div class="frame" id="frame">
+  <svg class="bg" id="bg" viewBox="0 0 1160 820" aria-hidden="true"></svg>
+  <div class="ttl">PROFILE<small>sweet profile</small></div>
+  <div class="txt">
+    <p><em>甘い香り</em>をまとった、<em>19歳のショコラティエ</em>のお姉さん。<br>おっとりやさしい笑顔で、みんなに愛される<em>あまあまガール</em>。</p>
+    <div class="sep" id="sep"></div>
+    <p>でも、お菓子作りには妥協しない<em>こだわり派</em>。<br>恋をすると、好きな人を<em>ひとりじめ</em>したくなっちゃう、<br>ちょっぴり重たい一面も…<span class="h">♡</span></p>
+  </div>
+  <div id="deco"></div>
+</div>
+
+<script>
+{{HELPERS}}
+if (location.hash === '#blank') document.documentElement.classList.add('blank');
+const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+
+/* もこもこ吹き出し: ワインの縁 → 白レース（ハート穴） → ピンクの地 → 点線 → パール */
+(() => {
+  const body = rr(60, 70, 1040, 660, 70);
+  const tail = 'M170 690L96 800L300 712Z';
+  const pts = along(body, 50);
+  const bumps = (r) => pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="${r}"/>`).join('');
+  const inner = rr(96, 106, 968, 588, 46);
+  document.getElementById('bg').innerHTML = `
+    <defs>
+      <pattern id="gin" width="36" height="36" patternUnits="userSpaceOnUse">
+        <rect width="36" height="36" fill="#fff6fb"/><rect width="18" height="36" fill="#fcc0e4" opacity=".22"/><rect width="36" height="18" fill="#fcc0e4" opacity=".22"/>
+      </pattern>
+      <pattern id="hdot" width="70" height="70" patternUnits="userSpaceOnUse">
+        <path transform="translate(8 8) scale(.13)" d="${HEART}" fill="#fcc0e4" opacity=".7"/>
+        <circle cx="52" cy="52" r="3" fill="#fff"/>
+      </pattern>
+    </defs>
+    <g transform="translate(10 16)" fill="#6c4848" opacity=".28">${bumps(36)}<path d="${body}"/><path d="${tail}"/></g>
+    <g fill="#a82454">${bumps(37)}<path d="${body}"/><path d="M162 682L80 812L310 708Z"/></g>
+    <g fill="#fff">${bumps(31)}<path d="${body}"/><path d="${tail}"/></g>
+    <g fill="#fcc0e4">${pts.map(p => `<path transform="translate(${p.x - 8} ${p.y - 9}) scale(.16)" d="${HEART}"/>`).join('')}</g>
+    <g fill="#f8a8d6">${along(rr(78, 88, 1004, 624, 56), 20).map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.2"/>`).join('')}</g>
+    <path d="${inner}" fill="url(#gin)"/>
+    <path d="${inner}" fill="url(#hdot)"/>
+    <path d="${rr(112, 122, 936, 556, 36)}" fill="none" stroke="#e98cc0" stroke-width="3" stroke-dasharray="9 7"/>
+    ${pearls(inner, 7)}`;
+  // 区切りのハート
+  document.getElementById('sep').innerHTML = ['#a82454', '#fcc0e4', '#6c4848', '#fcc0e4', '#a82454']
+    .map(c => `<svg viewBox="0 0 100 92"><path d="${HEART}" fill="${c}" stroke="#fff" stroke-width="8"/></svg>`).join('');
+})();
+
+/* 飾り [種類, x, y, 幅, 回転, 色] */
+const VB = { bellS:'0 0 120 116', bellP:'0 0 120 116', bellC:'0 0 120 116', bigbow:'0 0 240 230', chocoheart:'0 0 100 92', macaron:'0 0 100 80',
+  berryS:'0 0 80 92', truffle:'0 0 100 100', rose:'0 0 100 100', spark:'0 0 100 100', heart:'0 0 100 92', cream:'0 0 100 100', btnP:'0 0 100 100' };
+const D = [
+  ['bigbow', 900, -14, 230, 14, ''],
+  ['bellP', 20, 26, 140, -16, ''],
+  ['chocoheart', 1010, 640, 130, 14, ''],
+  ['macaron', 930, 712, 110, -8, '#f78fb2'],
+  ['berryS', 1080, 560, 66, 18, ''],
+  ['rose', 330, 728, 70, 0, '#f78fb2'],
+  ['truffle', 400, 744, 60, 0, ''],
+  ['heart', 22, 400, 64, -16, '#e8789d'],
+  ['btnP', 1104, 300, 58, 0, ''],
+  ['spark', 270, 30, 44, 0, ''], ['spark', 860, 44, 36, 0, ''], ['spark', 1100, 470, 40, 0, ''], ['spark', 30, 560, 34, 0, ''],
+];
+const deco = document.getElementById('deco');
+for (const [k, x, y, s, r, col] of D) {
+  const [, , vw, vh] = VB[k].split(' ').map(Number);
+  deco.insertAdjacentHTML('beforeend', `<svg class="u" viewBox="${VB[k]}" style="left:${x}px;top:${y}px;width:${s}px;height:${s * vh / vw}px;z-index:4;transform:rotate(${r}deg);color:${col};filter:drop-shadow(3px 5px 0 rgba(108,72,72,.3))${k === 'spark' ? ' drop-shadow(0 0 6px #f59fd2)' : ''}"><use href="#${k}"/></svg>`);
+}
+</script>
+</body>
+</html>
