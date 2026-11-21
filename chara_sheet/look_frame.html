@@ -22,15 +22,23 @@ body{font-family:"Zen Maru Gothic",sans-serif;padding:40px;color:#4a3234}
 
 /* 便箋の中身（便箋と一緒に傾ける） */
 .letter{position:absolute;left:190px;top:96px;width:820px;height:620px;z-index:3;transform:rotate(2.5deg);transform-origin:50% 100%;text-align:center}
-.letter .dear{font-family:"Great Vibes";font-size:60px;line-height:1;color:#c44a74;margin-top:42px}
-.letter h1{font-family:"Mochiy Pop One";font-weight:400;font-size:52px;letter-spacing:.14em;color:#a82454;line-height:1.2;margin-top:2px}
+.letter .dear{font-family:"Great Vibes";font-size:62px;line-height:1;color:#c44a74;margin-top:40px;-webkit-text-stroke:8px #fff;paint-order:stroke fill}
+.letter h1{font-family:"Mochiy Pop One";font-weight:400;font-size:54px;letter-spacing:.12em;color:#a82454;line-height:1.2;margin-top:0;
+  -webkit-text-stroke:10px #fff;paint-order:stroke fill;filter:drop-shadow(3px 4px 0 #fcc0e4)}
 .letter h1 .h{color:#f59fd2}
-.list{list-style:none;margin:18px auto 0;width:700px;text-align:left}
-.list li{font-size:29px;font-weight:900;line-height:62px;height:62px;white-space:nowrap;color:#4a3234;padding-left:6px}
-.list li::before{content:"♡";font-family:"Hachi Maru Pop";color:#a82454;margin-right:12px}
+.list{list-style:none;margin:16px auto 0;width:700px;text-align:left}
+.list li{display:block;font-family:"Mochiy Pop One";font-size:27px;line-height:62px;height:62px;white-space:nowrap;color:#6c4848;padding-left:4px;
+  -webkit-text-stroke:6px #fff;paint-order:stroke fill}
+.list li::before{content:"";display:inline-block;vertical-align:-5px;width:34px;height:31px;margin-right:12px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 92'%3E%3Cpath d='M50 88C18 66 2 48 2 28A24 24 0 0 1 50 16A24 24 0 0 1 98 28C98 48 82 66 50 88Z' fill='%23f59fd2' stroke='%23fff' stroke-width='9'/%3E%3Cellipse cx='27' cy='28' rx='10' ry='5' fill='%23fff' opacity='.7' transform='rotate(-35 27 28)'/%3E%3C/svg%3E") center/contain no-repeat;
+  filter:drop-shadow(2px 2px 0 #a82454)}
+.list li:nth-child(2n)::before{filter:drop-shadow(2px 2px 0 #6c4848) hue-rotate(0deg)}
 .list li em{font-style:normal;color:#a82454}
-:root.blank .list li{color:transparent}
+:root.blank .list li{color:transparent;-webkit-text-stroke:0}
 :root.blank .list li em{color:transparent}
+/* 文字だけ */
+:root.textonly #back,:root.textonly #paper,:root.textonly #front,:root.textonly #deco{visibility:hidden}
+:root.straight .letter{transform:none}
 </style>
 </head>
 <body>
@@ -263,7 +271,7 @@ css.setProperty('--dotband', uri(`<svg ${NS} width="90" height="90" viewBox="0 0
   ${[0,1,2].flatMap(i=>[0,1,2].map(j=>`<circle cx="${15+30*i}" cy="${15+30*j}" r="4.5" fill="#fcc0e4"/>`)).join('')}</svg>`));
 
 
-if (location.hash === '#blank') document.documentElement.classList.add('blank');
+for (const m of location.hash.slice(1).split('+')) if (m) document.documentElement.classList.add(m);
 const circ = (cx, cy, r) => `M${cx - r} ${cy}A${r} ${r} 0 1 0 ${cx + r} ${cy}A${r} ${r} 0 1 0 ${cx - r} ${cy}Z`;
 const G = `<defs>
   <pattern id="gin" width="34" height="34" patternUnits="userSpaceOnUse"><rect width="34" height="34" fill="#fde0f0"/><rect width="17" height="34" fill="#f59fd2" opacity=".35"/><rect width="34" height="17" fill="#f59fd2" opacity=".35"/></pattern>

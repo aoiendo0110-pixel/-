@@ -7,7 +7,9 @@ const fs = require('fs');
   const name = process.argv[2] || 'song';
   fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
   const browser = await chromium.launch();
-  for (const [hash, suffix] of [['', ''], ['#blank', '_blank']]) {
+  const modes = [['', ''], ['#blank', '_blank']];
+  if (name === 'look') modes.push(['#textonly', '_text'], ['#textonly+straight', '_text_straight']);
+  for (const [hash, suffix] of modes) {
     const page = await browser.newPage({ viewport: { width: 1400, height: 1400 }, deviceScaleFactor: 2 });
     await page.goto('file://' + path.join(__dirname, `${name}_frame.html`) + hash);
     await page.evaluate(() => document.fonts.ready);
@@ -15,7 +17,8 @@ const fs = require('fs');
     // 描かれている範囲だけを切り出す
     const box = await page.evaluate(() => {
       let l = 1e9, t = 1e9, r = -1e9, b = -1e9;
-      for (const el of document.querySelectorAll('.frame, .frame *')) {
+      const straight = document.documentElement.classList.contains('straight');
+      for (const el of document.querySelectorAll(straight ? '.letter, .letter *' : '.frame, .frame *')) {
         const q = el.getBoundingClientRect(); if (!q.width || !q.height) continue;
         l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom);
       }
