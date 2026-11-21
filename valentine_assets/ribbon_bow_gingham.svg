@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-20 30 440 330" width="440" height="330"><defs>
+<filter id="stk" x="-25%" y="-25%" width="150%" height="150%">
+  <feMorphology in="SourceAlpha" operator="dilate" radius="7" result="d"/>
+  <feFlood flood-color="#fff"/><feComposite in2="d" operator="in" result="w"/>
+  <feMorphology in="SourceAlpha" operator="dilate" radius="9" result="d2"/>
+  <feGaussianBlur in="d2" stdDeviation="4" result="b"/>
+  <feFlood flood-color="#E86A9A" flood-opacity=".45"/><feComposite in2="b" operator="in" result="s"/>
+  <feOffset in="s" dy="4" result="s2"/>
+  <feMerge><feMergeNode in="s2"/><feMergeNode in="w"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<pattern id="st" width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(-25)">
+  <rect width="24" height="24" fill="#B8234F"/><rect width="10" height="24" fill="#D04470"/><rect x="16" width="2" height="24" fill="#F6C7A6"/></pattern>
+<pattern id="gg" width="20" height="20" patternUnits="userSpaceOnUse">
+  <rect width="20" height="20" fill="#FDE3EE"/><rect width="10" height="20" fill="#F7A9C8" opacity=".55"/><rect width="20" height="10" fill="#F7A9C8" opacity=".55"/></pattern>
+<pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+  <rect width="22" height="22" fill="#F7A9C8"/><circle cx="5" cy="5" r="3" fill="#fff"/><circle cx="16" cy="16" r="3" fill="#fff"/></pattern>
+<linearGradient id="ch" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A4A3E"/><stop offset="1" stop-color="#3E211E"/></linearGradient>
+<radialGradient id="pearl" cx=".35" cy=".35" r=".7"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#FCE6EF"/><stop offset="1" stop-color="#E9B5CB"/></radialGradient></defs><g filter="url(#stk)">
+<clipPath id="ginghamclip"><path d="M200,150 C170,95 120,50 72,62 C30,72 28,140 55,178 C85,215 150,200 200,165 Z"/><path d="M200,150 C230,95 280,50 328,62 C370,72 372,140 345,178 C315,215 250,200 200,165 Z"/></clipPath>
+<g stroke="#E27FA5" stroke-width="3.5" stroke-linejoin="round">
+  <path d="M188,168 C170,220 140,270 118,318 L148,300 L160,332 C178,282 196,232 206,176 Z" fill="url(#gg)"/><path d="M212,168 C230,220 260,270 282,318 L252,300 L240,332 C222,282 204,232 194,176 Z" fill="url(#gg)"/>
+</g>
+<g fill="none" stroke="#E27FA5" stroke-width="3" opacity=".5" stroke-linecap="round">
+  <path d="M190,190 C178,240 160,280 140,310"/><path d="M210,190 C222,240 240,280 260,310"/>
+</g>
+<g stroke="#E27FA5" stroke-width="3.5" stroke-linejoin="round">
+  <path d="M200,150 C170,95 120,50 72,62 C30,72 28,140 55,178 C85,215 150,200 200,165 Z" fill="url(#gg)"/><path d="M200,150 C230,95 280,50 328,62 C370,72 372,140 345,178 C315,215 250,200 200,165 Z" fill="url(#gg)"/>
+</g>
+<g clip-path="url(#ginghamclip)">
+  
+  <g fill="#E27FA5" opacity=".5">
+    <path d="M198,156 C165,122 118,108 92,128 C125,132 165,146 198,162 Z"/>
+    <path d="M202,156 C235,122 282,108 308,128 C275,132 235,146 202,162 Z"/>
+    <path d="M50,165 C90,200 150,200 200,165 L200,200 L40,200 Z"/>
+    <path d="M350,165 C310,200 250,200 200,165 L200,200 L360,200 Z"/>
+  </g>
+</g>
+<g stroke="#E27FA5" stroke-width="3.5" fill="none" stroke-linejoin="round"><path d="M200,150 C170,95 120,50 72,62 C30,72 28,140 55,178 C85,215 150,200 200,165 Z"/><path d="M200,150 C230,95 280,50 328,62 C370,72 372,140 345,178 C315,215 250,200 200,165 Z"/></g>
+<g fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".8">
+  <path d="M82,76 C108,68 138,82 162,110"/><path d="M318,76 C292,68 262,82 238,110"/>
+  <path d="M44,118 C44,135 50,150 58,160" stroke-width="4"/><path d="M356,118 C356,135 350,150 342,160" stroke-width="4"/>
+</g>
+<rect x="174" y="130" width="52" height="54" rx="20" fill="#F7A9C8" stroke="#E27FA5" stroke-width="3.5"/>
+<path d="M185,141 C192,136 205,135 214,139" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".85"/>
+<circle cx="200" cy="157" r="12" fill="url(#pearl)" stroke="#E27FA5" stroke-width="2"/></g></svg>
