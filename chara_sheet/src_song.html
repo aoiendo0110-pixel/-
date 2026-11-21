@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>しょこら イメージソングフレーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Great+Vibes&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+<!--
+  イメージソングのフレーム（しょこら公式カラー、プロフィールフレームとおそろい）
+  python3 build_song.py → song_frame.html → node export_frames.js song
+  → out/song_frame.png（曲名入り）/ out/song_frame_blank.png（空）… 背景透過・2倍
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:transparent}
+body{font-family:"Zen Maru Gothic",sans-serif;padding:40px}
+.frame{position:relative;width:1100px;height:650px}
+.frame > svg.bg{position:absolute;left:0;top:0;width:1100px;height:650px;overflow:visible}
+.u{position:absolute;overflow:visible;pointer-events:none}
+
+.ttl{position:absolute;left:50%;top:40px;transform:translateX(-50%);z-index:3;display:flex;align-items:center;gap:12px;white-space:nowrap;
+  font-family:"Mochiy Pop One";font-size:38px;letter-spacing:.14em;color:#fff;padding:10px 66px 12px;
+  background:radial-gradient(rgba(255,255,255,.4) 2.4px,transparent 3px) 0 0/15px 15px,linear-gradient(180deg,#c44a74,#a82454 55%,#7d1a3e);
+  clip-path:polygon(0 0,100% 0,calc(100% - 28px) 50%,100% 100%,0 100%,28px 50%);text-shadow:0 3px 0 #6e1236}
+.ttl::after{content:"";position:absolute;inset:6px 30px;border-top:2.5px dashed rgba(255,255,255,.85);border-bottom:2.5px dashed rgba(255,255,255,.85)}
+.ttl small{font-family:"Great Vibes";font-size:44px;letter-spacing:0;color:#fcc0e4;font-weight:400}
+
+.songs{position:absolute;left:150px;right:150px;top:176px;z-index:2;display:grid;gap:30px}
+.song{position:relative;display:flex;align-items:center;gap:22px;padding:10px 34px 10px 14px;background:#fff;border-radius:999px;
+  box-shadow:0 0 0 4px #fcc0e4,0 0 0 8px #fff,0 0 0 11px #e98cc0,6px 10px 0 10px rgba(108,72,72,.16)}
+.song svg.rec{flex:none;width:100px;height:100px}
+.song .t{flex:1;min-width:0}
+.song .side{font-family:"Mochiy Pop One";font-size:16px;letter-spacing:.2em;color:#fff;background:#6c4848;padding:3px 14px;border-radius:999px;display:inline-block;margin-bottom:6px}
+.song b{display:block;font-size:40px;font-weight:900;line-height:1.15;color:#a82454;white-space:nowrap}
+.song small{display:block;font-size:22px;font-weight:700;color:#6c4848;margin-top:2px}
+.song small::before{content:"♪ ";color:#e98cc0}
+.song .note{flex:none;width:54px;height:64px}
+:root.blank .song .t > *{visibility:hidden}
+</style>
+</head>
+<body>
+{{DEFS}}
+<div class="frame">
+  <svg class="bg" id="bg" viewBox="0 0 1100 650" aria-hidden="true"></svg>
+  <div class="ttl">IMAGE SONG<small>sweet music</small></div>
+  <div class="songs">
+    <div class="song"><svg class="rec" viewBox="0 0 120 120"><use href="#rec"/></svg>
+      <div class="t"><span class="side">SIDE A</span><b>毒チョコ</b><small>ザアザア</small></div>
+      <svg class="note" viewBox="0 0 54 64"><use href="#note"/></svg></div>
+    <div class="song"><svg class="rec" viewBox="0 0 120 120"><use href="#rec"/></svg>
+      <div class="t"><span class="side">SIDE B</span><b>妄想日記2</b><small>シド</small></div>
+      <svg class="note" viewBox="0 0 54 64"><use href="#note2"/></svg></div>
+  </div>
+  <div id="deco"></div>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <!-- チョコのレコード（ハートのラベル） -->
+  <symbol id="rec" viewBox="0 0 120 120">
+    <circle cx="60" cy="60" r="56" fill="#4a3234" stroke="#fff" stroke-width="4"/>
+    <circle cx="60" cy="60" r="46" fill="none" stroke="#6c4848" stroke-width="2"/>
+    <circle cx="60" cy="60" r="38" fill="none" stroke="#6c4848" stroke-width="2"/>
+    <circle cx="60" cy="60" r="30" fill="none" stroke="#6c4848" stroke-width="2"/>
+    <path d="M24 34A44 44 0 0 1 52 18" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="60" cy="60" r="22" fill="#fcc0e4"/>
+    <path transform="translate(49 50) scale(.22)" d="M50 88C18 66 2 48 2 28A24 24 0 0 1 50 16A24 24 0 0 1 98 28C98 48 82 66 50 88Z" fill="#a82454"/>
+    <circle cx="60" cy="60" r="3" fill="#fff"/>
+  </symbol>
+  <!-- 音符 -->
+  <symbol id="note" viewBox="0 0 54 64">
+    <path d="M22 50V10L50 4V42" fill="none" stroke="#a82454" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="14" cy="52" rx="11" ry="8" fill="#a82454" transform="rotate(-20 14 52)"/>
+    <ellipse cx="42" cy="44" rx="11" ry="8" fill="#a82454" transform="rotate(-20 42 44)"/>
+    <path d="M22 18L50 12" stroke="#a82454" stroke-width="5"/>
+  </symbol>
+  <symbol id="note2" viewBox="0 0 54 64">
+    <path d="M28 52V6C34 14 46 16 48 28" fill="none" stroke="#6c4848" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="19" cy="53" rx="12" ry="9" fill="#6c4848" transform="rotate(-20 19 53)"/>
+  </symbol>
+</defs></svg>
+
+<script>
+{{HELPERS}}
+if (location.hash === '#blank') document.documentElement.classList.add('blank');
+const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+(() => {
+  const body = rr(60, 66, 980, 520, 70), pts = along(body, 50);
+  const bumps = (r) => pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="${r}"/>`).join('');
+  const inner = rr(96, 102, 908, 448, 46);
+  document.getElementById('bg').innerHTML = `
+    <defs>
+      <pattern id="gin" width="36" height="36" patternUnits="userSpaceOnUse">
+        <rect width="36" height="36" fill="#fff6fb"/><rect width="18" height="36" fill="#fcc0e4" opacity=".22"/><rect width="36" height="18" fill="#fcc0e4" opacity=".22"/></pattern>
+      <pattern id="ndot" width="80" height="80" patternUnits="userSpaceOnUse">
+        <path transform="translate(8 8) scale(.13)" d="${HEART}" fill="#fcc0e4" opacity=".7"/>
+        <g transform="translate(48 40) scale(.4)" fill="#fcc0e4" opacity=".8"><path d="M22 50V10L50 4V42" fill="none" stroke="#fcc0e4" stroke-width="6"/><ellipse cx="14" cy="52" rx="11" ry="8"/><ellipse cx="42" cy="44" rx="11" ry="8"/></g></pattern>
+    </defs>
+    <g transform="translate(10 16)" fill="#6c4848" opacity=".28">${bumps(36)}<path d="${body}"/></g>
+    <g fill="#a82454">${bumps(37)}<path d="${body}"/></g>
+    <g fill="#fff">${bumps(31)}<path d="${body}"/></g>
+    <g fill="#fcc0e4">${pts.map(p => `<path transform="translate(${p.x - 8} ${p.y - 9}) scale(.16)" d="${HEART}"/>`).join('')}</g>
+    <g fill="#f8a8d6">${along(rr(78, 84, 944, 484, 56), 20).map(p => `<circle cx="${p.x}" cy="${p.y}" r="3.2"/>`).join('')}</g>
+    <path d="${inner}" fill="url(#gin)"/><path d="${inner}" fill="url(#ndot)"/>
+    <path d="${rr(112, 118, 876, 416, 36)}" fill="none" stroke="#e98cc0" stroke-width="3" stroke-dasharray="9 7"/>
+    ${pearls(inner, 7)}`;
+})();
+const VB = { bowS:'0 0 120 94', bowP:'0 0 120 94', chocoheart:'0 0 100 92', berryS:'0 0 80 92', rose:'0 0 100 100', spark:'0 0 100 100', heart:'0 0 100 92', truffle:'0 0 100 100', note:'0 0 54 64', note2:'0 0 54 64' };
+const D = [
+  ['bowP', 14, 30, 150, -16, ''], ['bowS', 880, 8, 190, 14, ''],
+  ['chocoheart', 960, 500, 120, 14, ''], ['berryS', 1040, 430, 60, 18, ''],
+  ['rose', 40, 550, 70, 0, '#f78fb2'], ['truffle', 110, 580, 56, 0, ''],
+  ['note', 22, 300, 52, -14, ''], ['note2', 1046, 210, 48, 12, ''], ['note', 520, 590, 46, 10, ''],
+  ['heart', 600, 598, 40, -12, '#e8789d'],
+  ['spark', 250, 34, 42, 0, ''], ['spark', 820, 40, 34, 0, ''], ['spark', 1050, 300, 36, 0, ''], ['spark', 20, 420, 30, 0, ''],
+];
+const deco = document.getElementById('deco');
+for (const [k, x, y, s, r, col] of D) {
+  const [, , vw, vh] = VB[k].split(' ').map(Number);
+  deco.insertAdjacentHTML('beforeend', `<svg class="u" viewBox="${VB[k]}" style="left:${x}px;top:${y}px;width:${s}px;height:${s * vh / vw}px;z-index:4;transform:rotate(${r}deg);color:${col};filter:drop-shadow(3px 5px 0 rgba(108,72,72,.3))${k === 'spark' ? ' drop-shadow(0 0 6px #f59fd2)' : ''}"><use href="#${k}"/></svg>`);
+}
+</script>
+</body>
+</html>
