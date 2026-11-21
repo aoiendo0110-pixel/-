@@ -13,11 +13,11 @@
 const Q=new URLSearchParams(location.search);
 const W=+(Q.get('w')||1920), H=+(Q.get('h')||1080);
 
-const LINE='#b98f7b';
+const LINE='#7a4434';
 const P={
-  cream:'#fdf4ea', ivory:'#fffaf4', beige:'#f3e1c8', biscuit:'#ead0ad',
-  pink1:'#fde6ec', pink2:'#fad3df', pink3:'#f6bdcf', rose:'#f0a6bd',
-  berry:'#f5a9bb', choco:'#c29680', chocoD:'#a17565', chocoL:'#dcbba5', white:'#fffdfb'
+  cream:'#fff6f3', ivory:'#fffaf6', beige:'#e9c28e', biscuit:'#e8b98a',
+  pink1:'#fbd9e2', pink2:'#f8c6d4', pink3:'#ff9fbc', rose:'#e2506a',
+  berry:'#e2506a', choco:'#85503f', chocoD:'#5c3125', chocoL:'#b07a64', white:'#fffdfb'
 };
 
 // ---------- utils ----------
@@ -71,13 +71,13 @@ function fBerry(cx,cy,s,rot,dip){
   const lw=lwOf(s), T=d=>tp(d,cx,cy,s,rot), id='b'+(uid++);
   let g=O([[T(BERRY),P.berry]],lw);
   if(dip){
-    const col=dip==='choco'?P.choco:dip==='pink'?P.pink2:P.ivory;
+    const col=dip==='choco'?P.choco:dip==='pink'?'#f7a6bf':P.ivory;
     const wave='M-0.6,0.04 Q-0.42,0.16 -0.26,0.06 Q-0.12,0.18 0,0.06 Q0.14,0.18 0.26,0.06 Q0.42,0.16 0.6,0.04';
     g+=`<clipPath id="${id}"><path d="${T(BERRY)}"/></clipPath><g clip-path="url(#${id})"><path d="${T(wave+' L0.6,0.7 L-0.6,0.7 Z')}" fill="${col}"/>${Ln(T(wave),lw)}</g>`;
   }
   for(const [x,y] of [[-0.2,-0.18],[0.2,-0.18],[0,-0.06],[-0.24,0.0],[0.24,0.0]]){ if(dip&&y>0.0)continue;
-    g+=Ln(T(`M${x},${y} L${x},${y+0.06}`),lw*0.8)}
-  g+=Ln(T('M-0.3,-0.36 Q-0.14,-0.24 0,-0.34 Q0.14,-0.24 0.3,-0.36'),lw)+Ln(T('M0,-0.34 L0,-0.52'),lw)+Ln(T('M-0.16,-0.36 L-0.2,-0.5'),lw)+Ln(T('M0.16,-0.36 L0.2,-0.5'),lw);
+    g+=Ln(T(`M${x},${y} L${x},${y+0.06}`),lw*0.8,'#ffe7a6')}
+  const G='#5f9a6e';g+=Ln(T('M-0.3,-0.36 Q-0.14,-0.24 0,-0.34 Q0.14,-0.24 0.3,-0.36'),lw*1.3,G)+Ln(T('M0,-0.34 L0,-0.52'),lw*1.3,G)+Ln(T('M-0.16,-0.36 L-0.2,-0.5'),lw*1.3,G)+Ln(T('M0.16,-0.36 L0.2,-0.5'),lw*1.3,G);
   return g;
 }
 function fCandy(cx,cy,s,rot){
@@ -162,7 +162,7 @@ let svg='';
 
 // ---- ground: cream with flat dots ----
 svg+=`<rect width="${W}" height="${H}" fill="${P.cream}"/>`;
-for(let y=10;y<CAKE_TOP+40;y+=40)for(let x=((y/40)%2)*20;x<W+20;x+=40) svg+=`<circle cx="${x}" cy="${y}" r="${(y/40)%2?4:5.5}" fill="${(y/40)%2?P.beige:P.pink3}"/>`;
+for(let j=0,y=10;y<CAKE_TOP+40;y+=20,j++)for(let x=(j%2)*20;x<W+20;x+=40) svg+=`<circle cx="${x}" cy="${y}" r="${j%2?4.2:5.2}" fill="${j%2?P.choco:P.berry}"/>`;
 
 // ---- arch panels ----
 const arch=(cx,top,hw,bot)=>`M${f(cx-hw)},${bot} L${f(cx-hw)},${f(top+hw)} A${f(hw)},${f(hw)} 0 0 1 ${f(cx+hw)},${f(top+hw)} L${f(cx+hw)},${bot} Z`;
@@ -200,8 +200,8 @@ for(let i=0;i<n;i++){
 }
 
 // ---- top: lace + ribbon swags + bows with wavy tails ----
-svg+=`<rect width="${W}" height="34" fill="${P.pink2}"/>`;
-{let it=[];for(let x=0;x<W+30;x+=28)it.push([circ(x,34,14),P.white]);svg+=O(it,3);svg+=`<rect y="0" width="${W}" height="32" fill="${P.pink2}"/>`+Ln(`M0,33 L${W},33`,3);
+svg+=`<rect width="${W}" height="34" fill="#ffdbe5"/>`;
+{let it=[];for(let x=0;x<W+30;x+=28)it.push([circ(x,34,14),P.white]);svg+=O(it,3);svg+=`<rect y="0" width="${W}" height="32" fill="#ffdbe5"/>`+Ln(`M0,33 L${W},33`,3);
  for(let x=0;x<W+30;x+=28)svg+=`<circle cx="${x}" cy="40" r="3" fill="${LINE}"/>`;}
 for(let i=0;i<=n;i++){
   const gx=i*U;
@@ -217,18 +217,18 @@ for(let i=0;i<n;i++){
   svg+=O([[ribbonPoly(pts,26),P.pink3]],LW*0.8);
   for(let t=0.08;t<0.95;t+=0.06){const x=(1-t)*(1-t)*x1+2*(1-t)*t*(x1+x2)/2+t*t*x2,y=(1-t)*(1-t)*72+2*(1-t)*t*150+t*t*72;svg+=`<circle cx="${f(x)}" cy="${f(y)}" r="2.6" fill="${P.white}"/>`}
 }
-for(let i=0;i<=n;i++){const gx=i*U;svg+=fFlower(gx-56,84,17,P.white)+fFlower(gx+56,84,17,P.white)+fBow(gx,66,70,0,i%2?P.rose:P.pink3,P.pink1)}
+for(let i=0;i<=n;i++){const gx=i*U;svg+=fFlower(gx-56,84,17,P.white)+fFlower(gx+56,84,17,P.white)+fBow(gx,66,70,0,i%2?P.rose:P.pink3)}
 
 // ---- cake border ----
 {
   const gt=CAKE_TOP+52, c1=gt+88, c2=c1+46, rb=H-128;
   // sponge
-  svg+=`<rect x="0" y="${gt}" width="${W}" height="${rb-gt}" fill="${P.chocoL}"/>`;
+  svg+=`<rect x="0" y="${gt}" width="${W}" height="${rb-gt}" fill="#93573f"/>`;
   // pink cream wave layer
   let top=`M0,${c1}`,bot='';
   for(let x=0;x<=W;x+=60){top+=` Q${x+30},${c1-12} ${x+60},${c1}`}
   let wv=`M0,${c2}`;for(let x=0;x<=W;x+=60){wv+=` Q${x+30},${c2+12} ${x+60},${c2}`}
-  svg+=`<path d="${top} L${W+60},${c2} L0,${c2} Z" fill="${P.pink2}"/><path d="${wv} L${W+60},${c1} L0,${c1} Z" fill="${P.pink2}"/>`;
+  svg+=`<path d="${top} L${W+60},${c2} L0,${c2} Z" fill="#ffd3df"/><path d="${wv} L${W+60},${c1} L0,${c1} Z" fill="#ffd3df"/>`;
   svg+=Ln(top,LW)+Ln(wv,LW);
   // berry dots in cream
   for(let x=30;x<W;x+=60) svg+=fHeart(x,(c1+c2)/2,20,0,P.berry);
