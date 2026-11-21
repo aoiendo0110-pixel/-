@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>しょこら 外見の特徴ステッカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Great+Vibes&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<!--
+  外見の特徴「ステッカー詰め合わせ」（しょこら公式カラー、コラージュ・封入用の素材）
+  特徴ごとに形も色も違うダイカットステッカー。
+   ふつうに開く … ゆるく重ねて組んだかたまり（out/look_frame.png）
+   #parts       … 1枚ずつ並べる（node export_stickers.js → out/look_stickers/*.png）
+  python3 build_frame.py look → look_frame.html
+  （前の版: src_look_rosette.html / src_look_palette.html / src_look_package.html）
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:transparent}
+body{font-family:"Zen Maru Gothic",sans-serif;padding:40px;color:#4a3234}
+.frame{position:relative;width:1280px;height:1010px}
+:root.parts .frame{width:1500px;height:auto;display:flex;flex-wrap:wrap;gap:60px;align-items:center;padding:30px}
+.stk{position:absolute;filter:drop-shadow(6px 0 0 #fff) drop-shadow(-6px 0 0 #fff) drop-shadow(0 6px 0 #fff) drop-shadow(0 -6px 0 #fff)
+  drop-shadow(4px 7px 0 rgba(108,72,72,.22))}
+:root.parts .stk{position:relative;left:auto !important;top:auto !important;transform:none !important;margin:20px}
+.stk > svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.stk .t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
+.k{font-family:"Great Vibes";line-height:.9}
+.hm{font-family:"Hachi Maru Pop"}
+.mp{font-family:"Mochiy Pop One"}
+</style>
+</head>
+<body>
+{{DEFS}}
+<div class="frame" id="frame"></div>
+
+<script>
+{{HELPERS}}
+const PARTS = location.hash === '#parts';
+if (PARTS) document.documentElement.classList.add('parts');
+const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+const circ = (cx, cy, r) => `M${cx - r} ${cy}A${r} ${r} 0 1 0 ${cx + r} ${cy}A${r} ${r} 0 1 0 ${cx - r} ${cy}Z`;
+const DEFS = `<defs>
+  <pattern id="wd" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#a82454"/><circle cx="8" cy="8" r="2.6" fill="#fff" opacity=".35"/></pattern>
+  <pattern id="cd" width="18" height="18" patternUnits="userSpaceOnUse"><rect width="18" height="18" fill="#6c4848"/><circle cx="9" cy="9" r="3.2" fill="#fcc0e4" opacity=".75"/></pattern>
+  <pattern id="gk" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="#fff"/><rect width="14" height="28" fill="#fcc0e4" opacity=".45"/><rect width="28" height="14" fill="#fcc0e4" opacity=".45"/></pattern>
+  <pattern id="hp2" width="40" height="40" patternUnits="userSpaceOnUse"><path transform="translate(12 12) scale(.14)" d="${HEART}" fill="#fcc0e4" opacity=".7"/></pattern>
+  <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f59fd2"/><stop offset="1" stop-color="#d76aa6"/></linearGradient>
+</defs>`;
+
+/* ステッカー: [名前, x, y, 回転, 幅, 高さ, SVG中身, 文字HTML] */
+const S = [];
+// タイトル（レースの楕円ラベル）
+S.push(['title', 380, 10, -4, 540, 250, (() => {
+  const o = 'M270 20C440 20 520 70 520 125S440 230 270 230S20 180 20 125S100 20 270 20Z', pts = along(o, 26);
+  return `<g fill="#fff">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="16"/>`).join('')}<path d="${o}"/></g>
+    <g fill="#fcc0e4">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4"/>`).join('')}</g>
+    <path d="M270 44C420 44 492 86 492 125S420 206 270 206S48 164 48 125S120 44 270 44Z" fill="url(#gk)" stroke="#e98cc0" stroke-width="3" stroke-dasharray="8 6"/>`;
+})(), `<span class="k" style="font-size:52px;color:#e98cc0">my looks</span>
+  <span class="mp" style="font-size:58px;color:#a82454;-webkit-text-stroke:10px #fff;paint-order:stroke fill;letter-spacing:.06em">外見の特徴</span>`]);
+// 1 髪：リボンのバナー
+S.push(['hair', 30, 250, -8, 560, 240, `
+  <path d="M70 70L0 84L30 145L0 206L80 196Z" fill="#7d1a3e"/><path d="M490 70L560 84L530 145L560 206L480 196Z" fill="#7d1a3e"/>
+  <path d="M50 40Q280 6 510 40V200Q280 166 50 200Z" fill="url(#wd)"/>
+  <path d="M66 54Q280 22 494 54V186Q280 154 66 186Z" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="7 6" opacity=".85"/>`,
+  `<span class="hm" style="font-size:20px;color:#fcc0e4;margin-top:-8px">♡ Hair ♡</span>
+   <span class="mp" style="font-size:34px;color:#fff;line-height:1.25">赤髪ぱっつん前髪</span>
+   <span class="mp" style="font-size:24px;color:#fcc0e4">ドリルツインテール</span>`]);
+// 2 目：もこもこ雲
+S.push(['eyes', 880, 210, 7, 380, 260, (() => {
+  const b = rr(50, 50, 280, 160, 70), pts = along(b, 46);
+  return `<g fill="#f59fd2">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="42"/>`).join('')}<path d="${b}"/></g>
+    <g fill="#fff8fc">${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="34"/>`).join('')}<path d="${b}"/></g>
+    <path d="${b}" fill="url(#hp2)"/>`;
+})(), `<span class="k" style="font-size:40px;color:#84609c">Eyes</span>
+  <span class="mp" style="font-size:40px;color:#84609c;line-height:1.25">おっとり</span><span class="mp" style="font-size:46px;color:#84609c">紫目</span>`]);
+// 3 身長体重：チョコのスカラップ
+S.push(['size', 930, 500, -10, 300, 300, (() => {
+  let s = ''; for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2; s += `<circle cx="${150 + Math.cos(a) * 128}" cy="${150 + Math.sin(a) * 128}" r="22"/>`; }
+  return `<g fill="url(#cd)">${s}<circle cx="150" cy="150" r="128"/></g>
+    <circle cx="150" cy="150" r="104" fill="#fff8fc"/><circle cx="150" cy="150" r="94" fill="none" stroke="#a83c60" stroke-width="2.5" stroke-dasharray="6 5"/>`;
+})(), `<span class="k" style="font-size:38px;color:#e98cc0">Size</span>
+  <span class="mp" style="font-size:46px;color:#6c4848;line-height:1.1">160<small style="font-size:26px">cm</small></span>
+  <span class="mp" style="font-size:46px;color:#a82454;line-height:1.1">48<small style="font-size:26px">kg</small></span>`]);
+// 4 バスト：ハート
+S.push(['bust', 40, 520, 9, 340, 310, `
+  <path transform="scale(3.4)" d="${HEART}" fill="url(#hg)"/>
+  <path transform="translate(30 26) scale(2.8)" d="${HEART}" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="3 2.4"/>
+  <ellipse cx="88" cy="90" rx="34" ry="16" fill="#fff" opacity=".55" transform="rotate(-35 88 90)"/>`,
+  `<span class="k" style="font-size:38px;color:#fff;margin-top:-40px">Bust</span>
+   <span class="mp" style="font-size:36px;color:#fff;line-height:1.2">大きめバスト</span>
+   <span class="mp" style="font-size:44px;color:#a82454;-webkit-text-stroke:8px #fff;paint-order:stroke fill">Eカップ</span>`]);
+// 5 体型：ギンガムの吹き出し
+S.push(['style', 420, 500, -5, 460, 230, `
+  <path d="M60 20H400A40 40 0 0 1 440 60V150A40 40 0 0 1 400 190H170L120 230L130 190H60A40 40 0 0 1 20 150V60A40 40 0 0 1 60 20Z" fill="url(#gk)" stroke="#a83c60" stroke-width="7" stroke-linejoin="round"/>
+  <path d="M60 36H400A24 24 0 0 1 424 60V150A24 24 0 0 1 400 174H60A24 24 0 0 1 36 150V60A24 24 0 0 1 60 36Z" fill="#fff" opacity=".7"/>`,
+  `<span style="margin-top:-30px" class="k"><span style="font-size:36px;color:#e98cc0">Style</span></span>
+   <span class="hm" style="font-size:28px;color:#6c4848">全体的に少し</span>
+   <span class="mp" style="font-size:40px;color:#a82454">お姉さん体型</span>`]);
+// 6 ほっぺ：おもち
+S.push(['cheek', 440, 760, 6, 400, 230, `
+  <path d="M40 180C10 120 60 30 200 26C340 22 396 110 370 180C356 214 310 220 200 220C90 220 52 210 40 180Z" fill="#fffafc" stroke="#f9b2dc" stroke-width="6"/>
+  <ellipse cx="70" cy="196" rx="22" ry="12" fill="#f9b2dc" opacity=".85"/><ellipse cx="330" cy="196" rx="22" ry="12" fill="#f9b2dc" opacity=".85"/>
+  <path d="M150 56Q200 34 250 56" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>`,
+  `<span class="k" style="font-size:36px;color:#e98cc0;margin-top:6px">Cheek</span>
+   <span class="hm" style="font-size:28px;color:#6c4848">白い</span>
+   <span class="mp" style="font-size:38px;color:#a82454">もちもちほっぺ</span>`]);
+
+const f = document.getElementById('frame');
+f.insertAdjacentHTML('beforeend', `<svg width="0" height="0" style="position:absolute">${DEFS}</svg>`);
+for (const [n, x, y, r, w, h, svg, html] of S) {
+  f.insertAdjacentHTML('beforeend', `<div class="stk" data-name="${n}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;transform:rotate(${r}deg)">
+    <svg viewBox="0 0 ${w} ${h}">${svg}</svg><div class="t">${html}</div></div>`);
+}
+// 小さいステッカー（かたまりの時だけ、すき間に散らす）
+const VB = { bowP:'0 0 120 94', bowS:'0 0 120 94', chocoheart:'0 0 100 92', berryS:'0 0 80 92', heart:'0 0 100 92', spark:'0 0 100 100', star:'0 0 100 100', cherry:'0 0 100 100' };
+const D = [['bowS', 300, 40, 130, -18, ''], ['bowP', 920, 40, 140, 14, ''], ['chocoheart', 830, 800, 110, 14, ''], ['berryS', 370, 470, 62, -16, ''],
+  ['cherry', 1150, 840, 90, 10, ''], ['heart', 640, 440, 54, 12, '#a82454'], ['heart', 20, 870, 46, -14, '#f59fd2'], ['star', 1180, 160, 54, 12, '#f0e4a8'],
+  ['spark', 40, 190, 44, 0, ''], ['spark', 870, 470, 40, 0, ''], ['spark', 380, 960, 36, 0, ''], ['spark', 1220, 760, 36, 0, '']];
+if (!PARTS) for (const [k, x, y, s, r, col] of D) {
+  const [, , vw, vh] = VB[k].split(' ').map(Number);
+  f.insertAdjacentHTML('beforeend', `<svg viewBox="${VB[k]}" style="position:absolute;overflow:visible;left:${x}px;top:${y}px;width:${s}px;height:${s * vh / vw}px;z-index:6;transform:rotate(${r}deg);color:${col};filter:drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 4px 0 #fff) drop-shadow(0 -4px 0 #fff) drop-shadow(3px 5px 0 rgba(108,72,72,.22))"><use href="#${k}"/></svg>`);
+}
+</script>
+</body>
+</html>
