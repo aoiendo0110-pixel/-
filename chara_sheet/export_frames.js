@@ -8,7 +8,7 @@ const fs = require('fs');
   fs.mkdirSync(path.join(__dirname, 'out'), { recursive: true });
   const browser = await chromium.launch();
   for (const [hash, suffix] of [['', ''], ['#blank', '_blank']]) {
-    const page = await browser.newPage({ viewport: { width: 1300, height: 1400 }, deviceScaleFactor: 2 });
+    const page = await browser.newPage({ viewport: { width: 1400, height: 1400 }, deviceScaleFactor: 2 });
     await page.goto('file://' + path.join(__dirname, `${name}_frame.html`) + hash);
     await page.evaluate(() => document.fonts.ready);
     await page.waitForTimeout(600);

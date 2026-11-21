@@ -7,8 +7,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Hachi+Maru+Pop&family=Great+Vibes&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
 <!--
-  外見の特徴「お菓子のパッケージ（品質表示ラベル）」デザイン（しょこら公式カラー）
-  中身は .label の表を編集。
+  外見の特徴「メイクパレット」デザイン（しょこら公式カラー）
+  ふたの鏡に見出し、6色のアイシャドウ＝6つの特徴。中身は SHADES を編集。
+  （前のパッケージ風は src_look_package.html）
   python3 build_frame.py look → look_frame.html → node export_frames.js look
   → out/look_frame.png（文字入り）/ out/look_frame_blank.png（空）… 背景透過・2倍
 -->
@@ -16,47 +17,24 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:transparent}
 body{font-family:"Zen Maru Gothic",sans-serif;padding:40px;color:#4a3234}
-.frame{position:relative;width:1140px;height:900px}
+.frame{position:relative;width:1240px;height:1300px}
 .u{position:absolute;overflow:visible;pointer-events:none}
+#case{position:absolute;left:0;top:0;width:1240px;height:1300px;overflow:visible}
 
-/* 箱 */
-.box{position:absolute;left:20px;top:20px;width:1100px;height:860px;border-radius:26px;overflow:hidden;
-  background:repeating-linear-gradient(90deg,#fcc0e4 0 34px,#fdd3ec 34px 40px,#fcc0e4 40px 74px,#fff 74px 78px);
-  box-shadow:0 0 0 6px #fff,14px 18px 0 6px rgba(108,72,72,.28)}
-.box::after{content:"";position:absolute;inset:0;border-radius:26px;pointer-events:none;
-  background:linear-gradient(120deg,rgba(255,255,255,.35) 0 18%,transparent 18% 60%,rgba(255,255,255,.18) 60% 64%,transparent 64%)}
-/* 上の帯（ブランド） */
-.band{position:absolute;left:0;right:0;top:0;height:150px;background:linear-gradient(180deg,#7c5656,#6c4848 60%,#553a3c);display:flex;align-items:center;justify-content:center;gap:24px}
-.band::after{content:"";position:absolute;left:0;right:0;bottom:-18px;height:18px;
-  background:radial-gradient(circle at 18px 0,#6c4848 17px,transparent 17.5px) 0 0/36px 18px repeat-x}
-.brand{text-align:center;color:#f0e4a8}
-.brand .s{font-family:"Great Vibes";font-size:72px;line-height:.95}
-.brand .e{font-family:"Mochiy Pop One";font-size:16px;letter-spacing:.5em;color:#fcc0e4;margin-top:4px}
-.band .logo{width:84px;height:84px}
+/* 鏡の文字 */
+.mirror{position:absolute;left:170px;top:92px;width:900px;height:300px;z-index:3;text-align:center;padding-top:34px}
+.mirror .s{font-family:"Great Vibes";font-size:58px;line-height:1;color:#a83c60;opacity:.9}
+.mirror h1{font-family:"Mochiy Pop One";font-weight:400;font-size:84px;line-height:1.15;color:#a82454;letter-spacing:.06em;
+  -webkit-text-stroke:10px #fff;paint-order:stroke fill;filter:drop-shadow(3px 5px 0 rgba(168,36,84,.25))}
+.mirror .lip{font-family:"Hachi Maru Pop";font-size:26px;color:#a82454;margin-top:4px}
 
-/* 品質表示ラベル */
-.label{position:absolute;left:84px;top:206px;width:820px;background:#fff;border:4px solid #4a3234;border-radius:6px;z-index:2;
-  box-shadow:6px 8px 0 rgba(108,72,72,.18)}
-.label .cap{display:flex;align-items:center;justify-content:space-between;padding:10px 22px;border-bottom:4px solid #4a3234;background:#fff}
-.label .cap b{font-family:"Mochiy Pop One";font-weight:400;font-size:34px;letter-spacing:.12em;color:#a82454}
-.label .cap span{font-size:18px;font-weight:900;letter-spacing:.2em;color:#6c4848}
-.label table{width:100%;border-collapse:collapse}
-.label th,.label td{border-bottom:2.5px solid #4a3234;padding:14px 20px;vertical-align:top;text-align:left}
-.label tr:last-child th,.label tr:last-child td{border-bottom:none}
-.label th{width:170px;background:#fdd3ec;border-right:2.5px solid #4a3234;font-size:22px;font-weight:900;letter-spacing:.12em;white-space:nowrap}
-.label td{font-size:27px;font-weight:900;line-height:1.5}
-.label td em{font-style:normal;color:#a82454}
-.label td .k{font-size:31px}
-.label td.big{font-family:"Mochiy Pop One";font-weight:400;font-size:34px;letter-spacing:.04em}
-.note{position:absolute;left:84px;top:720px;z-index:2;font-size:22px;font-weight:900;color:#4a3234;background:#fff;padding:6px 18px;border:2.5px solid #4a3234;border-radius:999px}
-.note b{color:#a82454}
-:root.blank .label td,:root.blank .note{color:transparent}
-:root.blank .label td em{color:transparent}
-
-/* 右下：バーコード */
-.code{position:absolute;right:46px;bottom:34px;z-index:2;background:#fff;padding:12px 16px 8px;border-radius:8px;border:2.5px solid #4a3234;text-align:center}
-.code svg{display:block;width:170px;height:80px}
-.code span{font-family:"Zen Maru Gothic";font-weight:900;font-size:16px;letter-spacing:.24em}
+/* 色のラベル */
+.shade{position:absolute;z-index:3;width:330px;text-align:center}
+.shade .no{display:inline-block;font-family:"Mochiy Pop One";font-size:15px;letter-spacing:.2em;color:#fff;background:#6c4848;padding:3px 14px;border-radius:999px;margin-bottom:6px}
+.shade b{display:block;font-size:30px;font-weight:900;line-height:1.25;color:#a82454;white-space:nowrap}
+.shade small{display:block;font-size:20px;font-weight:900;line-height:1.35;color:#4a3234;margin-top:3px;white-space:nowrap}
+:root.blank .shade b,:root.blank .shade small{visibility:hidden}
+:root.blank .mirror h1,:root.blank .mirror .lip{visibility:hidden}
 </style>
 </head>
 <body>
@@ -213,24 +191,9 @@ body{font-family:"Zen Maru Gothic",sans-serif;padding:40px;color:#4a3234}
   </defs>
 </svg>
 <div class="frame">
-  <div class="box">
-    <div class="band">
-      <svg class="logo" viewBox="0 0 100 100" id="logoL"></svg>
-      <div class="brand"><div class="s">Chocolat de Shokora</div><div class="e">SWEET CHOCOLATIER</div></div>
-      <svg class="logo" viewBox="0 0 100 100" id="logoR"></svg>
-    </div>
-    <div class="label">
-      <div class="cap"><b>外見の特徴</b><span>品質表示</span></div>
-      <table>
-        <tr><th>名　称</th><td class="big">しょこら</td></tr>
-        <tr><th>原材料名</th><td><span class="k"><em>赤髪</em>ぱっつん前髪</span>、<span class="k"><em>ドリルツインテール</em></span>、<br>おっとり<em>紫目</em>、白い<em>もちもちほっぺ</em></td></tr>
-        <tr><th>内容量</th><td class="big"><em>160</em>cm / <em>48</em>kg</td></tr>
-        <tr><th>特記事項</th><td>大きめバスト（<em>Eカップ</em>）<br>全体的に少し<em>お姉さん体型</em></td></tr>
-      </table>
-    </div>
-    <div class="note">※<b>甘さ</b>にご注意ください♡</div>
-    <div class="code"><svg id="bar" viewBox="0 0 170 80" preserveAspectRatio="none"></svg><span>4 960214 1900</span></div>
-  </div>
+  <svg id="case" viewBox="0 0 1240 1300" aria-hidden="true"></svg>
+  <div class="mirror"><div class="s">Shokora's Look Palette</div><h1>外見の特徴</h1><div class="lip">♡ my looks ♡</div></div>
+  <div id="shades"></div>
   <div id="deco"></div>
 </div>
 
@@ -293,33 +256,90 @@ css.setProperty('--dotband', uri(`<svg ${NS} width="90" height="90" viewBox="0 0
 
 
 if (location.hash === '#blank') document.documentElement.classList.add('blank');
-/* ブランドのハートロゴ */
-const logo = `<circle cx="50" cy="50" r="44" fill="none" stroke="#f0e4a8" stroke-width="4"/><circle cx="50" cy="50" r="36" fill="none" stroke="#f0e4a8" stroke-width="1.6" stroke-dasharray="3 3"/>
-  <path transform="translate(28 30) scale(.44)" d="${HEART}" fill="#fcc0e4"/>`;
-document.getElementById('logoL').innerHTML = logo; document.getElementById('logoR').innerHTML = logo;
-/* バーコード（ハートつき） */
+const rr = (x, y, w, h, r) => `M${x + r} ${y}H${x + w - r}A${r} ${r} 0 0 1 ${x + w} ${y + r}V${y + h - r}A${r} ${r} 0 0 1 ${x + w - r} ${y + h}H${x + r}A${r} ${r} 0 0 1 ${x} ${y + h - r}V${y + r}A${r} ${r} 0 0 1 ${x + r} ${y}Z`;
+
+/* [色, 見出し, 補足] */
+const SHADES = [
+  ['#a83c60', '赤髪ぱっつん前髪', 'ドリルツインテール'],
+  ['#84609c', 'おっとり紫目', ''],
+  ['#f0e4a8', '160cm / 48kg', ''],
+  ['#fcc0e4', '大きめバスト', 'Eカップ'],
+  ['#6c4848', 'お姉さん体型', '全体的に少し'],
+  ['#fdeef6', 'もちもちほっぺ', '白くてもちもち'],
+];
+const PAN = { cx: [290, 620, 950], cy: [680, 1040], r: 88 };
+
 (() => {
-  let x = 4, g = '', i = 0;
-  while (x < 166) { const w = [2, 4, 2, 6, 2, 3][(i * 7) % 6]; g += `<rect x="${x}" y="0" width="${w}" height="${i % 9 === 0 ? 80 : 70}" fill="#4a3234"/>`; x += w + [2, 3, 2, 4][(i * 5) % 4]; i++; }
-  document.getElementById('bar').innerHTML = g + `<path transform="translate(73 20) scale(.24)" d="${HEART}" fill="#a82454" stroke="#fff" stroke-width="12"/>`;
+  const lid = rr(60, 20, 1120, 430, 70), glass = rr(110, 66, 1020, 338, 46);
+  const base = rr(60, 470, 1120, 810, 70), well = rr(100, 508, 1040, 734, 48);
+  let pans = '';
+  SHADES.forEach(([c], i) => {
+    const x = PAN.cx[i % 3], y = PAN.cy[Math.floor(i / 3)] - 70, r = PAN.r;
+    pans += `
+      <circle cx="${x}" cy="${y + 6}" r="${r + 14}" fill="#a83c60" opacity=".18"/>
+      <circle cx="${x}" cy="${y}" r="${r + 14}" fill="url(#goldG)" stroke="#fff" stroke-width="4"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="${c}"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="url(#shim)"/>
+      <circle cx="${x}" cy="${y}" r="${r}" fill="url(#glit)" opacity=".85"/>
+      <path transform="translate(${x - 34} ${y - 29}) scale(.68)" d="${HEART}" fill="#000" opacity=".1"/>
+      <path transform="translate(${x - 36} ${y - 31}) scale(.68)" d="${HEART}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="5"/>
+      ${i === 5 ? `<circle cx="${x - 34}" cy="${y + 26}" r="20" fill="#f9b2dc" opacity=".75"/><circle cx="${x + 34}" cy="${y + 26}" r="20" fill="#f9b2dc" opacity=".75"/>` : ''}
+      <path d="M${x - 58} ${y - 38}A72 72 0 0 1 ${x - 12} ${y - 70}" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="10" stroke-linecap="round"/>`;
+  });
+  let glitter = '';
+  for (let i = 0; i < 26; i++) glitter += `<circle cx="${(i * 37) % 90 + 5}" cy="${(i * 53) % 90 + 5}" r="${1 + (i % 3) * .6}" fill="#fff"/>`;
+  document.getElementById('case').innerHTML = `
+    <defs>
+      <linearGradient id="caseG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fee6f3"/><stop offset=".45" stop-color="#fcc0e4"/><stop offset="1" stop-color="#f2a2cf"/></linearGradient>
+      <linearGradient id="goldG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffbe8"/><stop offset=".5" stop-color="#f0e4a8"/><stop offset="1" stop-color="#cdb46e"/></linearGradient>
+      <linearGradient id="mirG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#fdeef6"/><stop offset="1" stop-color="#f9d6ea"/></linearGradient>
+      <radialGradient id="shim" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".18"/></radialGradient>
+      <pattern id="glit" width="100" height="100" patternUnits="userSpaceOnUse">${glitter}</pattern>
+      <pattern id="quiltS" width="34" height="34" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <path d="M0 0H34M0 0V34" stroke="#fff" stroke-opacity=".55" stroke-width="2"/><circle r="2.6" fill="#fff"/></pattern>
+      <clipPath id="mc"><path d="${glass}"/></clipPath>
+    </defs>
+    <path d="${lid}" fill="#6c4848" opacity=".25" transform="translate(12 18)"/><path d="${base}" fill="#6c4848" opacity=".25" transform="translate(12 18)"/>
+    <rect x="300" y="436" width="640" height="48" rx="20" fill="url(#goldG)" stroke="#fff" stroke-width="4"/>
+    <path d="M320 460H920" stroke="#cdb46e" stroke-width="3" stroke-dasharray="40 14"/>
+    <path d="${lid}" fill="url(#caseG)" stroke="#fff" stroke-width="6"/>
+    <path d="${lid}" fill="url(#quiltS)"/>
+    <path d="${rr(84, 44, 1072, 382, 56)}" fill="none" stroke="url(#goldG)" stroke-width="10"/>
+    <path d="${glass}" fill="url(#mirG)" stroke="#fff" stroke-width="5"/>
+    <g clip-path="url(#mc)" fill="#fff" opacity=".85">
+      <path d="M130 360L360 66L420 66L190 400Z"/><path d="M220 400L450 66L470 66L240 400Z"/><path d="M900 400L1100 120L1120 140L940 400Z" opacity=".6"/></g>
+    <path d="${base}" fill="url(#caseG)" stroke="#fff" stroke-width="6"/>
+    <path d="${base}" fill="url(#quiltS)"/>
+    <path d="${well}" fill="#fff6fb" stroke="url(#goldG)" stroke-width="10"/>
+    <path d="${rr(118, 526, 1004, 698, 36)}" fill="none" stroke="#f59fd2" stroke-width="3" stroke-dasharray="9 7"/>
+    ${pans}
+    <path d="${rr(560, 1260, 120, 34, 14)}" fill="url(#goldG)" stroke="#fff" stroke-width="4"/>
+    <path transform="translate(606 1266) scale(.28)" d="${HEART}" fill="#a82454"/>`;
+  document.getElementById('shades').innerHTML = SHADES.map(([c, t, s], i) => {
+    const x = PAN.cx[i % 3], y = PAN.cy[Math.floor(i / 3)] - 70 + PAN.r + 24;
+    return `<div class="shade" style="left:${x - 165}px;top:${y}px"><span class="no">No.0${i + 1}</span><b>${t}</b>${s ? `<small>${s}</small>` : ''}</div>`;
+  }).join('');
 })();
-/* 金のシール（スカラップ） */
-const seal = (() => {
-  let s = ''; for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; s += `<circle cx="${100 + Math.cos(a) * 84}" cy="${100 + Math.sin(a) * 84}" r="16"/>`; }
-  return `<svg class="u" viewBox="0 0 200 200" style="left:900px;top:150px;width:210px;height:210px;z-index:5;transform:rotate(14deg);filter:drop-shadow(4px 6px 0 rgba(108,72,72,.3))">
-    <defs><radialGradient id="sg" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#fffbe8"/><stop offset=".5" stop-color="#f0e4a8"/><stop offset="1" stop-color="#c9ae64"/></radialGradient>
-    <path id="arc" d="M50 102A50 50 0 0 1 150 102"/><path id="arc2" d="M52 98A48 48 0 0 0 148 98"/></defs>
-    <g fill="url(#sg)" stroke="#fff" stroke-width="3">${s}<circle cx="100" cy="100" r="84"/></g>
-    <circle cx="100" cy="100" r="70" fill="none" stroke="#a82454" stroke-width="3"/><circle cx="100" cy="100" r="62" fill="none" stroke="#a82454" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <text font-family="Mochiy Pop One" font-size="13" fill="#a82454" letter-spacing="1.5"><textPath href="#arc" startOffset="50%" text-anchor="middle">SWEET &amp; BITTER</textPath></text>
-    <text font-family="Mochiy Pop One" font-size="12" fill="#a82454" letter-spacing="2" dy="12"><textPath href="#arc2" startOffset="50%" text-anchor="middle">SINCE 0214</textPath></text>
-    <path transform="translate(84 86) scale(.32)" d="${HEART}" fill="#a82454"/></svg>`;
-})();
-document.getElementById('deco').insertAdjacentHTML('beforeend', seal);
-/* 飾り（少なめ：パッケージらしく） */
-const VB = { chocoheart:'0 0 100 92', berryS:'0 0 80 92', spark:'0 0 100 100', truffle:'0 0 100 100' };
-const D = [['chocoheart', 1000, 520, 130, 14, ''], ['berryS', 1058, 460, 64, 20, ''], ['truffle', 940, 640, 70, 0, ''],
-  ['spark', 980, 400, 40, 0, ''], ['spark', 30, 840, 34, 0, '']];
+
+/* ブラシとリップ */
+const brush = `<svg class="u" viewBox="0 0 80 420" style="left:1150px;top:300px;width:76px;height:400px;z-index:5;transform:rotate(16deg);filter:drop-shadow(4px 6px 0 rgba(108,72,72,.3))">
+  <defs><linearGradient id="bg2" x1="0" x2="1"><stop offset="0" stop-color="#fffbe8"/><stop offset=".5" stop-color="#f0e4a8"/><stop offset="1" stop-color="#cdb46e"/></linearGradient></defs>
+  <path d="M40 4C14 30 10 80 22 118H58C70 80 66 30 40 4Z" fill="#6c4848" stroke="#fff" stroke-width="4"/>
+  <path d="M40 10C28 40 26 80 32 112" stroke="#8a6262" stroke-width="4" fill="none"/>
+  <path d="M40 4C26 18 22 34 22 50" stroke="#fcc0e4" stroke-width="8" fill="none" stroke-linecap="round" opacity=".8"/>
+  <rect x="20" y="116" width="40" height="64" rx="6" fill="url(#bg2)" stroke="#fff" stroke-width="4"/>
+  <path d="M24 178H56L50 410Q40 418 30 410Z" fill="#a82454" stroke="#fff" stroke-width="4"/>
+  <path transform="translate(30 330) scale(.2)" d="${HEART}" fill="#fcc0e4"/></svg>`;
+const lip = `<svg class="u" viewBox="0 0 90 260" style="left:20px;top:690px;width:84px;height:240px;z-index:5;transform:rotate(-14deg);filter:drop-shadow(4px 6px 0 rgba(108,72,72,.3))">
+  <path d="M26 70V24Q26 4 64 2V70Z" fill="#a82454" stroke="#fff" stroke-width="4"/><path d="M32 66V26Q34 12 46 8" stroke="#fff" stroke-opacity=".5" stroke-width="5" fill="none"/>
+  <rect x="18" y="68" width="54" height="40" rx="5" fill="#f0e4a8" stroke="#fff" stroke-width="4"/>
+  <rect x="12" y="104" width="66" height="150" rx="10" fill="#fcc0e4" stroke="#fff" stroke-width="4"/>
+  <path transform="translate(30 166) scale(.3)" d="${HEART}" fill="#a82454"/></svg>`;
+document.getElementById('deco').insertAdjacentHTML('beforeend', brush + lip);
+const VB = { bowP:'0 0 120 94', bowS:'0 0 120 94', spark:'0 0 100 100', heart:'0 0 100 92', chocoheart:'0 0 100 92' };
+const D = [['bowP', 10, 0, 170, -18, ''], ['bowS', 1080, 0, 150, 16, ''],
+  ['spark', 1110, 230, 44, 0, ''], ['spark', 30, 440, 38, 0, ''], ['spark', 1190, 1100, 40, 0, ''], ['spark', 420, 1270, 32, 0, ''],
+  ['heart', 1170, 820, 50, 16, '#a82454'], ['heart', 40, 1100, 40, -12, '#a82454'], ['chocoheart', 1120, 1180, 110, 14, '']];
 for (const [k, x, y, s, r, col] of D) {
   const [, , vw, vh] = VB[k].split(' ').map(Number);
   document.getElementById('deco').insertAdjacentHTML('beforeend', `<svg class="u" viewBox="${VB[k]}" style="left:${x}px;top:${y}px;width:${s}px;height:${s * vh / vw}px;z-index:6;transform:rotate(${r}deg);color:${col};filter:drop-shadow(3px 5px 0 rgba(108,72,72,.28))${k === 'spark' ? ' drop-shadow(0 0 6px #f59fd2)' : ''}"><use href="#${k}"/></svg>`);
